@@ -1,0 +1,56 @@
+# Deploy the Next.js stack to the droplet (compose in repo root). Set DO_WEB_URL for post-deploy curl.
+# If this workflow lives in a monorepo, set compose_subdirectory to "web" and move paths under on.push.paths.
+# Configure DO_* in GitHub: Settings → Environments → development (or repo Variables / Secrets).
+# On the server, keep PUBLIC_HOST, AUTH_*, AVCD_API_URL in .env next to docker-compose.yml (rsync excludes .env).
+
+name: Deploy web to DigitalOcean (dev)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "lib/**"
+      - "public/**"
+      - "auth.ts"
+      - "*.ts"
+      - "*.tsx"
+      - "package.json"
+      - "package-lock.json"
+      - "next.config.ts"
+      - "Dockerfile"
+      - "docker-compose.yml"
+      - ".github/**"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-web-do-dev
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy web stack
+        uses: Avocado-Technology/avcd-actions/droplet-compose-deploy@v1
+        with:
+          deploy_host: ${{ vars.DO_DEPLOY_HOST || secrets.DO_DEPLOY_HOST }}
+          deploy_user: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER }}
+          deploy_path: ${{ vars.DO_DEPLOY_PATH || secrets.DO_DEPLOY_PATH }}
+          ssh_key: ${{ secrets.DO_DEPLOY_SSH_KEY }}
+          compose_subdirectory: "."
+          public_host: ""
+          acme_email: ""
+          pass_compose_tls_env: "false"
+          clear_published_ports: "none"
+          verify_mode: http
+          verify_url: ${{ vars.DO_WEB_URL }}
+          verify_body_substring: ""
+          verify_http_insecure_first: "false"

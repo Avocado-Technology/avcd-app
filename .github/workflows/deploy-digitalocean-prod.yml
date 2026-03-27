@@ -1,0 +1,42 @@
+# Deploy web to **prod** (tag *-release or manual). Set DO_WEB_URL for verification.
+# Monorepo: use compose_subdirectory "web" and adjust checkout paths as needed.
+
+name: Deploy web to DigitalOcean (prod)
+
+on:
+  push:
+    tags:
+      - "*-release"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-web-do-prod
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy web stack
+        uses: Avocado-Technology/avcd-actions/droplet-compose-deploy@v1
+        with:
+          deploy_host: ${{ vars.DO_DEPLOY_HOST || secrets.DO_DEPLOY_HOST }}
+          deploy_user: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER }}
+          deploy_path: ${{ vars.DO_DEPLOY_PATH || secrets.DO_DEPLOY_PATH }}
+          ssh_key: ${{ secrets.DO_DEPLOY_SSH_KEY }}
+          compose_subdirectory: "."
+          public_host: ""
+          acme_email: ""
+          pass_compose_tls_env: "false"
+          clear_published_ports: "none"
+          verify_mode: http
+          verify_url: ${{ vars.DO_WEB_URL }}
+          verify_body_substring: ""
+          verify_http_insecure_first: "false"
