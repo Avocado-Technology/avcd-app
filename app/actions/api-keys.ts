@@ -12,6 +12,10 @@ export type CreatedApiKey = {
 
 type Fail = { ok: false; error: string };
 
+function isConnectionFail(r: Response | Fail): r is Fail {
+  return "error" in r;
+}
+
 async function readErrorDetail(res: Response): Promise<string> {
   try {
     const j: unknown = await res.json();
@@ -24,6 +28,49 @@ async function readErrorDetail(res: Response): Promise<string> {
     /* ignore */
   }
   return res.statusText || "Request failed";
+}
+
+function failFromNetworkError(apiBase: string, err: unknown): Fail {
+  const hintDocker =
+    apiBase.includes("://api:") || apiBase.includes("://api/")
+      ? " If Next.js runs on your machine (not inside Docker), use http://127.0.0.1:<host-port> instead of http://api:8000."
+      : "";
+  if (err instanceof Error) {
+    const code =
+      "cause" in err && err.cause instanceof Error
+        ? (err.cause as Error & { code?: string }).code
+        : (err as Error & { code?: string }).code;
+    if (code === "ECONNREFUSED" || code === "ENOTFOUND") {
+      return {
+        ok: false,
+        error: `Cannot reach the API at ${apiBase} (${code}). Nothing is listening there from Next.js’s process—start the API (e.g. repo root: docker compose up api -d, or api/: uv run …), then check: curl -sSf ${apiBase}/health . If Next runs inside Docker, use AVCD_API_URL=http://api:8000 instead of 127.0.0.1.${hintDocker}`,
+      };
+    }
+    const msg = err.message;
+    if (/fetch|network|ECONNREFUSED|ENOTFOUND/i.test(msg)) {
+      return {
+        ok: false,
+        error: `Cannot reach the API at ${apiBase}. Start the API and verify curl -sSf ${apiBase}/health . For Next.js in Docker use AVCD_API_URL=http://api:8000 .${hintDocker}`,
+      };
+    }
+    return { ok: false, error: msg };
+  }
+  return {
+    ok: false,
+    error: `Cannot reach the API at ${apiBase}. Start the API (docker compose up api or uvicorn) and run curl -sSf ${apiBase}/health .${hintDocker}`,
+  };
+}
+
+async function apiFetch(
+  apiBase: string,
+  url: string,
+  init?: RequestInit,
+): Promise<Response | Fail> {
+  try {
+    return await fetch(url, init);
+  } catch (err) {
+    return failFromNetworkError(apiBase, err);
+  }
 }
 
 async function portalAccessToken(): Promise<string | Fail> {
@@ -58,12 +105,13 @@ async function portalAccessToken(): Promise<string | Fail> {
     return { ok: false, error: msg };
   }
 
-  const res = await fetch(`${base}/auth/portal/token`, {
+  const res = await apiFetch(base, `${base}/auth/portal/token`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify({ email, name }),
     cache: "no-store",
   });
+  if (isConnectionFail(res)) return res;
 
   if (!res.ok) {
     const detail = await readErrorDetail(res);
@@ -78,13 +126,19 @@ async function portalAccessToken(): Promise<string | Fail> {
     if (res.status === 404) {
       return {
         ok: false,
-        error: "Portal token issuance is disabled on this API.",
+        error:
+          "Portal token is disabled (API returned 404). Ensure AUTH_PORTAL_ENABLED=true on the API.",
       };
     }
     return { ok: false, error: detail };
   }
 
-  const data = (await res.json()) as { access_token?: string };
+  let data: { access_token?: string };
+  try {
+    data = (await res.json()) as { access_token?: string };
+  } catch {
+    return { ok: false, error: "API returned invalid JSON for portal token." };
+  }
   const token = data.access_token?.trim();
   if (!token) {
     return { ok: false, error: "API returned no access token." };
@@ -111,7 +165,7 @@ export async function createApiKeyAction(
     return { ok: false, error: msg };
   }
 
-  const res = await fetch(`${base}/auth/api-keys`, {
+  const res = await apiFetch(base, `${base}/auth/api-keys`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${tokenOrFail}`,
@@ -121,12 +175,13 @@ export async function createApiKeyAction(
     body: JSON.stringify({ name: trimmed }),
     cache: "no-store",
   });
+  if (isConnectionFail(res)) return res;
 
   if (res.status === 404) {
     return {
       ok: false,
       error:
-        "API keys are disabled on this deployment, or the endpoint is unavailable.",
+        "API keys are disabled (404). Set AUTH_API_KEYS_ENABLED=true on the API.",
     };
   }
 
@@ -141,12 +196,22 @@ export async function createApiKeyAction(
     return { ok: false, error: await readErrorDetail(res) };
   }
 
-  const data = (await res.json()) as {
+  let data: {
     keyId?: string;
     name?: string;
     apiKey?: string;
     createdAt?: string;
   };
+  try {
+    data = (await res.json()) as {
+      keyId?: string;
+      name?: string;
+      apiKey?: string;
+      createdAt?: string;
+    };
+  } catch {
+    return { ok: false, error: "API returned invalid JSON when creating the key." };
+  }
   if (!data.keyId || !data.name || !data.apiKey || !data.createdAt) {
     return { ok: false, error: "API returned an unexpected response." };
   }
@@ -181,11 +246,16 @@ export async function revokeApiKeyAction(keyId: string): Promise<
     return { ok: false, error: msg };
   }
 
-  const res = await fetch(`${base}/auth/api-keys/${encodeURIComponent(id)}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${tokenOrFail}` },
-    cache: "no-store",
-  });
+  const res = await apiFetch(
+    base,
+    `${base}/auth/api-keys/${encodeURIComponent(id)}`,
+    {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${tokenOrFail}` },
+      cache: "no-store",
+    },
+  );
+  if (isConnectionFail(res)) return res;
 
   if (res.status === 204) {
     return { ok: true };

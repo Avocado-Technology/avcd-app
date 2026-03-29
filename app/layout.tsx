@@ -21,7 +21,8 @@ const fontBody = Newsreader({
 
 export const metadata: Metadata = {
   title: "AVCD Tech",
-  description: "Sign in with Google to access AVCD Tech.",
+  description:
+    "Sign in to download the MCP bundle and copy your bearer token for Claude Desktop.",
 };
 
 export default async function RootLayout({

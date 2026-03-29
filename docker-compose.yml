@@ -19,8 +19,6 @@ services:
       - default
       - avcd_edge
     env_file:
-      - path: .env.local
-        required: false
       - path: .env
         required: false
     environment:
@@ -28,7 +26,7 @@ services:
       AUTH_SECRET: ${AUTH_SECRET:-}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      AVCD_API_URL: ${AVCD_API_URL:-http://api:8000}
+      AVCD_API_URL: ${AVCD_API_URL}
     labels:
       - traefik.enable=true
       - traefik.http.routers.avcd-web.rule=Host(`${PUBLIC_HOST:-localhost}`)

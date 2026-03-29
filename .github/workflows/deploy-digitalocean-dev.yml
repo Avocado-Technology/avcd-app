@@ -1,4 +1,5 @@
-# Deploy the Next.js stack to the droplet (compose in repo root). Set DO_WEB_URL for post-deploy curl.
+# Deploy the Next.js stack to the droplet (compose in repo root).
+# Required environment variable: DO_WEB_URL (full HTTPS URL); verify step fails if empty.
 # If this workflow lives in a monorepo, set compose_subdirectory to "web" and move paths under on.push.paths.
 # Configure DO_* in GitHub: Settings → Environments → development (or repo Variables / Secrets).
 # On the server, keep PUBLIC_HOST, AUTH_*, AVCD_API_URL in .env next to docker-compose.yml (rsync excludes .env).
@@ -11,10 +12,12 @@ on:
     paths:
       - "app/**"
       - "lib/**"
+      - "components/**"
       - "public/**"
       - "auth.ts"
       - "*.ts"
       - "*.tsx"
+      - "middleware.ts"
       - "package.json"
       - "package-lock.json"
       - "next.config.ts"
@@ -52,5 +55,5 @@ jobs:
           clear_published_ports: "none"
           verify_mode: http
           verify_url: ${{ vars.DO_WEB_URL }}
-          verify_body_substring: ""
+          verify_body_substring: "AVCD Tech"
           verify_http_insecure_first: "false"

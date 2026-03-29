@@ -24,7 +24,7 @@ Example: `http://localhost:3000/api/auth/callback/google`
 
 The web app does **not** call the FastAPI backend for sign-in; only Auth.js + Google OAuth.
 
-**API keys (home page):** After sign-in, the home page **mints one browser API key** automatically and offers **Copy** and **Refresh key** (revokes the current key and mints another). Server actions call FastAPI using **`AVCD_API_URL`** (server-only). For `next dev`, set e.g. `AVCD_API_URL=http://localhost:8000` in `web/.env.local`. Docker Compose sets `AVCD_API_URL=http://api:8000` for the `web` service. The API needs **`JWT_SECRET`** and **`AUTH_API_KEYS_ENABLED=true`**.
+**API keys (home page):** After sign-in, the home page **mints one browser API key** automatically and offers **Copy** and **Refresh**. Server actions call FastAPI using **`AVCD_API_URL`** (server-only). For `next dev`, set e.g. `AVCD_API_URL=http://127.0.0.1:8000` in `web/.env.local`. Docker Compose sets `AVCD_API_URL=http://api:8000` for the `web` service. The API needs **`JWT_SECRET`**, **`AUTH_API_KEYS_ENABLED=true`**, and portal token enabled (**`AUTH_PORTAL_ENABLED`**, default true). Compose defaults **`AUTH_API_KEYS_ENABLED`** to **false** unless your repo-root **`.env`** sets it to **true** (see repo [`.env.example`](../.env.example)). End-to-end details: [`TOKEN_FLOW.md`](TOKEN_FLOW.md).
 
 ## Run
 
@@ -57,4 +57,7 @@ docker compose up --build -d
 ```
 
 See [`docker-compose.yml`](docker-compose.yml) in this folder for Traefik labels and `avcd_edge`.
-# avcd-app
+
+## Droplet deploy (GitHub Actions)
+
+CI uses the org composite **droplet-compose-deploy** (same pattern as API). Configure environments, `DO_WEB_URL`, and server `.env` per [`docs/deploy-droplet.md`](docs/deploy-droplet.md).
