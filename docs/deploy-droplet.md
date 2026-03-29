@@ -13,7 +13,7 @@ Workflows:
 - [`.github/workflows/deploy-digitalocean-dev.yml`](../.github/workflows/deploy-digitalocean-dev.yml) — `environment: development`, pushes to `main` (path filters) or manual
 - [`.github/workflows/deploy-digitalocean-prod.yml`](../.github/workflows/deploy-digitalocean-prod.yml) — tag `*-release` or manual
 
-Post-deploy verification curls **`DO_WEB_URL`** (strict TLS) and expects HTTP **200** with body containing **`AVCD Tech`** (matches site metadata title).
+When **`DO_WEB_URL`** is set, post-deploy verification curls that URL (strict TLS) and expects HTTP **200** with body containing **`AVCD Tech`**. If **`DO_WEB_URL`** is unset, the workflow still deploys but skips that check (you will see a warning in the log).
 
 ## GitHub variables and secrets
 
@@ -24,7 +24,7 @@ Configure **Settings → Environments** → `development` / `production` (recomm
 | `DO_DEPLOY_HOST` | Variable or secret | SSH host |
 | `DO_DEPLOY_USER` | Variable or secret | SSH user |
 | `DO_DEPLOY_PATH` | Variable or secret | Absolute deploy path on the server (**use a path used only for this repo**; rsync uses `--delete`) |
-| `DO_WEB_URL` | Variable | Full URL checked after deploy, e.g. `https://dev.example.com/` (must return 200 through Traefik) |
+| `DO_WEB_URL` | Variable | Optional but recommended: full URL for post-deploy curl, e.g. `https://dev.example.com/` (must return 200 through Traefik and include “AVCD Tech” in the body when set) |
 | `DO_DEPLOY_SSH_KEY` | **Secret** | Private SSH key (never commit) |
 
 Use a **different** `DO_DEPLOY_PATH` than the Traefik and API stacks on the same droplet.

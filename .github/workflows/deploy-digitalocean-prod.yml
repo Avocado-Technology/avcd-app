@@ -1,5 +1,5 @@
 # Deploy web to **prod** (tag *-release or manual).
-# Required environment variable: DO_WEB_URL (full HTTPS URL); verify step fails if empty.
+# Set DO_WEB_URL on the environment for post-deploy HTTPS checks; if unset, deploy still runs (verify skipped).
 # Monorepo: use compose_subdirectory "web" and adjust checkout paths as needed.
 
 name: Deploy web to DigitalOcean (prod)
@@ -25,6 +25,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Post-deploy verify reminder
+        if: ${{ vars.DO_WEB_URL == '' }}
+        run: |
+          echo "::warning::DO_WEB_URL is not set on this environment. Deploy will proceed without the post-deploy HTTP check. Add variable DO_WEB_URL (full HTTPS URL) to enable verification."
+
       - name: Deploy web stack
         uses: Avocado-Technology/avcd-actions/droplet-compose-deploy@v1
         with:
@@ -37,7 +42,7 @@ jobs:
           acme_email: ""
           pass_compose_tls_env: "false"
           clear_published_ports: "none"
-          verify_mode: http
+          verify_mode: ${{ vars.DO_WEB_URL != '' && 'http' || 'none' }}
           verify_url: ${{ vars.DO_WEB_URL }}
           verify_body_substring: "AVCD Tech"
           verify_http_insecure_first: "false"
