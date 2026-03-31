@@ -31,7 +31,7 @@ jobs:
           deploy_path: ${{ vars.DO_DEPLOY_PATH || secrets.DO_DEPLOY_PATH }}
           ssh_key: ${{ secrets.DO_DEPLOY_SSH_KEY }}
           compose_subdirectory: "."
-          public_host: ""
+          public_host: ${{ vars.DO_PUBLIC_HOST || secrets.DO_PUBLIC_HOST }}
           acme_email: ""
           pass_compose_tls_env: "false"
           clear_published_ports: "none"
