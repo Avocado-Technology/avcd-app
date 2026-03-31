@@ -2,7 +2,8 @@
 #
 # Attaches to the shared Docker network `avcd_edge` (external — create it first: Traefik stack or
 # `docker network create avcd_edge`). Same pattern as avcd-api on the dev/prod droplet.
-# Set PUBLIC_HOST to your real hostname (same as Traefik). Put AUTH_* etc. in `.env` on the server (rsync excludes it).
+# PUBLIC_HOST defaults to `localhost` for local `docker compose` (labels interpolate without a `.env`).
+# On the droplet set PUBLIC_HOST in `.env` or CI to your real DNS name (same as Traefik). AUTH_* etc. in `.env`.
 # AVCD_API_URL defaults to http://api:8000 when unset (Compose on avcd_edge).
 # Traefik routes this service at priority 50; the API router uses /api at priority 110.
 # Server-side calls to FastAPI default to http://api:8000 (override AVCD_API_URL if your API DNS name differs).
@@ -31,7 +32,7 @@ services:
       AVCD_API_URL: ${AVCD_API_URL:-http://api:8000}
     labels:
       - traefik.enable=true
-      - traefik.http.routers.avcd-web.rule=Host(`${PUBLIC_HOST:?set PUBLIC_HOST}`)
+      - traefik.http.routers.avcd-web.rule=Host(`${PUBLIC_HOST:-localhost}`)
       - traefik.http.routers.avcd-web.entrypoints=websecure
       - traefik.http.routers.avcd-web.tls=true
       - traefik.http.routers.avcd-web.tls.certresolver=le
