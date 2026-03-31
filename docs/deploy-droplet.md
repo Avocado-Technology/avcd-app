@@ -8,6 +8,8 @@ uses: Avocado-Technology/avcd-actions/droplet-compose-deploy@v1
 
 ([`avcd-actions`](https://github.com/Avocado-Technology/avcd-actions) — tag `v1`.)
 
+**If web deploy fails with `PUBLIC_HOST is missing` after rsync:** the composite on the host is almost certainly outdated (it must export `PUBLIC_HOST` and/or write `.compose.ci.env` before `docker compose up`). Push the latest `droplet-compose-deploy` to **`avcd-actions`** and **move the `v1` tag** to that commit (or pin the workflow `uses:` line to that commit SHA until you update the tag). Workflows reference `...@v1`, not your app repo, so CI keeps using whatever GitHub resolves for `v1`.
+
 Workflows:
 
 - [`.github/workflows/deploy-digitalocean-dev.yml`](../.github/workflows/deploy-digitalocean-dev.yml) — `environment: development`
