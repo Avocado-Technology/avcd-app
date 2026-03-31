@@ -48,6 +48,6 @@ jobs:
           pass_compose_tls_env: "false"
           clear_published_ports: "none"
           verify_mode: http
-          verify_url: ${{ vars.DO_WEB_HEALTH_URL }}
+          verify_url: ${{ vars.DO_WEB_HEALTH_URL || secrets.DO_WEB_HEALTH_URL }}
           verify_body_substring: '"status":"ok"'
           verify_http_insecure_first: "false"
