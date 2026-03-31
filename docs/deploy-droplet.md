@@ -24,7 +24,7 @@ Use a **different** `DO_DEPLOY_PATH` on the droplet than Traefik and the API (ea
 | `DO_DEPLOY_HOST` | Variable or secret | SSH host |
 | `DO_DEPLOY_USER` | Variable or secret | SSH user |
 | `DO_DEPLOY_PATH` | Variable or secret | Absolute deploy path on the server (e.g. `/home/deploy/avcd-web`) |
-| `DO_PUBLIC_HOST` | Variable or secret | Hostname only (no `https://`), same as Traefik / server `.env` `PUBLIC_HOST`. Exported on the droplet before `docker compose up` so Traefik labels interpolate (web and API stacks use `pass_compose_tls_env: false`). |
+| `DO_PUBLIC_HOST` or `PUBLIC_HOST` | Variable or secret | Hostname only (no `https://`), same as Traefik / server `.env` `PUBLIC_HOST`. Exported on the droplet before `docker compose up` so Traefik labels interpolate. `DO_PUBLIC_HOST` is preferred; `PUBLIC_HOST` is accepted as an alias. |
 | `DO_WEB_HEALTH_URL` | Variable | Full HTTPS URL for post-deploy verify, e.g. `https://dev.example.com/health` |
 | `DO_DEPLOY_SSH_KEY` | **Secret** | Private SSH key (never commit) |
 
