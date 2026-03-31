@@ -57,10 +57,8 @@ jobs:
           fi
           echo "host=$H" >> "$GITHUB_OUTPUT"
 
-      # Requires avcd-actions droplet-compose-deploy that exports PUBLIC_HOST / .compose.ci.env when
-      # pass_compose_tls_env=false. After changing the composite, update the v1 tag or pin: uses: ...@<sha>
       - name: Deploy web stack
-        uses: Avocado-Technology/avcd-actions/droplet-compose-deploy@v1
+        uses: ./.github/actions/droplet-compose-deploy
         with:
           deploy_host: ${{ vars.DO_DEPLOY_HOST || secrets.DO_DEPLOY_HOST }}
           deploy_user: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER }}

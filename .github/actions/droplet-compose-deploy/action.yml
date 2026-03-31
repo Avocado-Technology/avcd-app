@@ -1,0 +1,351 @@
+# Composite: rsync checkout root to a host over SSH, then docker compose up in compose_subdirectory.
+# Vendored in avcd-web as `.github/actions/droplet-compose-deploy` (org copy: avcd-actions/droplet-compose-deploy).
+# Traefik: pass TLS env, clear ports 80/443, verify whoami. API/web: pass_compose_tls_env false, export PUBLIC_HOST + .compose.ci.env for label interpolation.
+
+name: Droplet Docker Compose deploy
+description: Rsync repository to a path on a VM and run docker compose in a chosen subdirectory
+
+inputs:
+  deploy_host:
+    description: Droplet hostname or IP
+    required: true
+  deploy_user:
+    description: SSH user
+    required: true
+  deploy_path:
+    description: Absolute path to app directory on the server
+    required: true
+  ssh_key:
+    description: Private SSH key (PEM, full block)
+    required: true
+  compose_subdirectory:
+    description: Directory under deploy_path containing docker-compose.yml (e.g. traefik, api, or . for standalone)
+    required: true
+  public_host:
+    description: Hostname for PUBLIC_HOST (no https://). Required with pass_compose_tls_env for Traefik; optional for stacks that only need compose label interpolation (e.g. Next.js web) when pass_compose_tls_env is false.
+    required: false
+    default: ""
+  acme_email:
+    description: When pass_compose_tls_env is true, ACME_EMAIL for docker compose
+    required: false
+    default: ""
+  pass_compose_tls_env:
+    description: If true, require public_host and acme_email and export them on the remote before compose up
+    required: false
+    default: "true"
+  clear_published_ports:
+    description: Space-separated host ports to free (docker stop publishers) before compose up; empty or 'none' skips (use for API on same host as Traefik)
+    required: false
+    default: "80 443"
+  rsync_extra_excludes:
+    description: Optional extra rsync --exclude lines (one pattern per line)
+    required: false
+    default: ""
+  verify_mode:
+    description: Post-deploy check — traefik_whoami (HTTPS /whoami), http (verify_url), or none
+    required: false
+    default: traefik_whoami
+  verify_https:
+    description: When verify_mode is traefik_whoami, run TLS verification after route probe
+    required: false
+    default: "true"
+  verify_url:
+    description: When verify_mode is http, full URL to curl (e.g. https://api.example.com/health)
+    required: false
+    default: ""
+  verify_body_substring:
+    description: When verify_mode is http, optional substring the body must contain (e.g. "status":"ok")
+    required: false
+    default: ""
+  verify_http_insecure_first:
+    description: When verify_mode is http, first retries use curl -k (ignore TLS) then strict TLS if substring matches
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Validate deploy configuration
+      shell: bash
+      env:
+        DEPLOY_HOST: ${{ inputs.deploy_host }}
+        DEPLOY_USER_VAL: ${{ inputs.deploy_user }}
+        DEPLOY_PATH_VAL: ${{ inputs.deploy_path }}
+        DEPLOY_KEY_VAL: ${{ inputs.ssh_key }}
+        PUBLIC_HOST_VAL: ${{ inputs.public_host }}
+        ACME_EMAIL_VAL: ${{ inputs.acme_email }}
+        PASS_TLS: ${{ inputs.pass_compose_tls_env }}
+        VERIFY_MODE: ${{ inputs.verify_mode }}
+        VERIFY_URL: ${{ inputs.verify_url }}
+      run: |
+        set -euo pipefail
+        err() { echo "::error title=Deploy configuration::$1"; exit 1; }
+        [ -n "$DEPLOY_HOST" ] || err "deploy_host is empty. Set DO_DEPLOY_HOST (environment variable or secret)."
+        [ -n "$DEPLOY_USER_VAL" ] || err "deploy_user is empty. Set DO_DEPLOY_USER."
+        [ -n "${DEPLOY_PATH_VAL:-}" ] || err "deploy_path is empty. Set DO_DEPLOY_PATH."
+        case "$DEPLOY_PATH_VAL" in
+          /*) ;;
+          *) err "deploy_path must be absolute (start with /), not ~ or relative." ;;
+        esac
+        [ -n "$DEPLOY_KEY_VAL" ] || err "ssh_key is empty. Set DO_DEPLOY_SSH_KEY."
+        if [ "${PASS_TLS}" = "true" ]; then
+          [ -n "${PUBLIC_HOST_VAL:-}" ] || err "public_host is empty but pass_compose_tls_env=true. Set DO_PUBLIC_HOST."
+          [ -n "${ACME_EMAIL_VAL:-}" ] || err "acme_email is empty but pass_compose_tls_env=true. Set DO_ACME_EMAIL."
+        fi
+        if [ "$VERIFY_MODE" = "http" ]; then
+          [ -n "${VERIFY_URL:-}" ] || err "verify_mode=http requires verify_url (full URL)."
+        fi
+
+    - name: Install rsync and OpenSSH client
+      shell: bash
+      run: |
+        sudo apt-get update -qq
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends rsync openssh-client
+
+    - name: Configure SSH key
+      shell: bash
+      env:
+        SSH_PRIVATE_KEY: ${{ inputs.ssh_key }}
+      run: |
+        set -euo pipefail
+        install -d -m 700 ~/.ssh
+        umask 077
+        printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -H "${{ inputs.deploy_host }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+    - name: Ensure remote deploy directory exists
+      shell: bash
+      run: |
+        set -euo pipefail
+        ssh -i "$HOME/.ssh/deploy_key" -o StrictHostKeyChecking=accept-new \
+          -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+          "${{ inputs.deploy_user }}@${{ inputs.deploy_host }}" \
+          "mkdir -p -- '${{ inputs.deploy_path }}'"
+
+    - name: Rsync repository to droplet
+      shell: bash
+      env:
+        RSYNC_EXTRA: ${{ inputs.rsync_extra_excludes }}
+      run: |
+        set -euo pipefail
+        export RSYNC_RSH="ssh -i $HOME/.ssh/deploy_key -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=$HOME/.ssh/known_hosts"
+        extra=()
+        if [ -n "${RSYNC_EXTRA:-}" ]; then
+          while IFS= read -r line || [ -n "$line" ]; do
+            [ -z "$line" ] && continue
+            extra+=(--exclude="$line")
+          done <<< "$RSYNC_EXTRA"
+        fi
+        rsync -avzr --delete \
+          --exclude='.git/' \
+          --exclude='.github/' \
+          --exclude='node_modules/' \
+          --exclude='web/node_modules/' \
+          --exclude='mcp/avcd-graphql/node_modules/' \
+          --exclude='api/.venv/' \
+          --exclude='.venv/' \
+          --exclude='web/.next/' \
+          --exclude='.env' \
+          --exclude='api/.env' \
+          --exclude='traefik/.env' \
+          --exclude='web/.env.local' \
+          --exclude='.cursor' \
+          "${extra[@]}" \
+          ./ "${{ inputs.deploy_user }}@${{ inputs.deploy_host }}:${{ inputs.deploy_path }}/"
+
+    - name: Docker Compose up on droplet
+      shell: bash
+      env:
+        PUBLIC_HOST_IN: ${{ inputs.public_host }}
+        ACME_EMAIL_IN: ${{ inputs.acme_email }}
+        PASS_TLS_IN: ${{ inputs.pass_compose_tls_env }}
+        PORTS_IN: ${{ inputs.clear_published_ports }}
+      run: |
+        set -euo pipefail
+        PH_B64=$(printf '%s' "$PUBLIC_HOST_IN" | base64 -w0)
+        AE_B64=$(printf '%s' "$ACME_EMAIL_IN" | base64 -w0)
+        PASS_TLS_B64=$(printf '%s' "$PASS_TLS_IN" | base64 -w0)
+        PORTS_B64=$(printf '%s' "$PORTS_IN" | base64 -w0)
+        ssh -i "$HOME/.ssh/deploy_key" -o StrictHostKeyChecking=accept-new \
+          -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+          "${{ inputs.deploy_user }}@${{ inputs.deploy_host }}" bash -s <<REMOTE_SCRIPT
+        set -euo pipefail
+        cd '${{ inputs.deploy_path }}/${{ inputs.compose_subdirectory }}'
+        PH_DEC=\$(printf '%s' "$PH_B64" | base64 -d)
+        PASS_TLS=\$(printf '%s' "$PASS_TLS_B64" | base64 -d)
+        if [ "\$PASS_TLS" = "true" ]; then
+          export ACME_EMAIL=\$(printf '%s' "$AE_B64" | base64 -d)
+        fi
+        # Shell env has highest precedence for Compose interpolation; keep in sync with .compose.ci.env.
+        if [ -n "\$PH_DEC" ]; then
+          export PUBLIC_HOST="\$PH_DEC"
+        fi
+        rm -f .compose.ci.env
+        if [ -n "\$PH_DEC" ]; then
+          printf 'PUBLIC_HOST=%s\n' "\$PH_DEC" > .compose.ci.env
+        fi
+        docker compose down --remove-orphans 2>/dev/null || true
+        PORTS=\$(printf '%s' "$PORTS_B64" | base64 -d)
+        if [ -n "\$PORTS" ] && [ "\$PORTS" != "none" ]; then
+          for port in \$PORTS; do
+            ids=\$(docker ps -q --filter "publish=\$port" 2>/dev/null || true)
+            if [ -n "\$ids" ]; then docker stop \$ids 2>/dev/null || true; fi
+          done
+        fi
+        docker network inspect avcd_edge >/dev/null 2>&1 || docker network create avcd_edge
+        # When any --env-file is passed, Compose may not auto-load .env for interpolation; pass both so
+        # server secrets stay available while CI PUBLIC_HOST wins (later file).
+        if [ -f .env ] && [ -f .compose.ci.env ]; then
+          docker compose --env-file .env --env-file .compose.ci.env up -d --pull always
+        elif [ -f .compose.ci.env ]; then
+          docker compose --env-file .compose.ci.env up -d --pull always
+        elif [ -f .env ]; then
+          docker compose --env-file .env up -d --pull always
+        else
+          docker compose up -d --pull always
+        fi
+        REMOTE_SCRIPT
+
+    - name: Verify Traefik whoami (HTTPS)
+      if: ${{ inputs.verify_mode == 'traefik_whoami' && inputs.verify_https == 'true' }}
+      shell: bash
+      env:
+        PUBLIC_HOST_CHK: ${{ inputs.public_host }}
+        ACME_EMAIL_CHK: ${{ inputs.acme_email }}
+        DEPLOY_HOST_CH: ${{ inputs.deploy_host }}
+        DEPLOY_USER_CH: ${{ inputs.deploy_user }}
+        DEPLOY_PATH_CH: ${{ inputs.deploy_path }}
+        COMPOSE_SUB_CH: ${{ inputs.compose_subdirectory }}
+      run: |
+        set -euo pipefail
+        url="https://${PUBLIC_HOST_CHK}/whoami"
+        echo "Checking $url (TLS certificate, Traefik route, whoami)..."
+        (command -v getent >/dev/null && getent ahosts "${PUBLIC_HOST_CHK}" | head -5) || true
+        (command -v dig >/dev/null && dig +short A "${PUBLIC_HOST_CHK}" 2>/dev/null | head -5) || true
+        dump_remote_diag() {
+          {
+            echo "cd '${DEPLOY_PATH_CH}/${COMPOSE_SUB_CH}'"
+            echo "export PUBLIC_HOST=\"${PUBLIC_HOST_CHK}\""
+            echo "export ACME_EMAIL=\"${ACME_EMAIL_CHK}\""
+            echo 'docker compose ps -a 2>&1 || true'
+            echo 'docker compose logs --tail=150 traefik 2>&1 || true'
+            echo 'docker compose logs --tail=50 whoami 2>&1 || true'
+            echo "curl -skS -D- --max-time 20 -o /tmp/whoami.from_public \"https://${PUBLIC_HOST_CHK}/whoami\" || true"
+            echo "curl -skS -D- --max-time 20 -H \"Host: ${PUBLIC_HOST_CHK}\" -o /tmp/whoami.local \"https://127.0.0.1/whoami\" || true"
+          } | ssh -i "$HOME/.ssh/deploy_key" -o StrictHostKeyChecking=accept-new \
+            -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+            "${DEPLOY_USER_CH}@${DEPLOY_HOST_CH}" bash -s
+        }
+        ROUTE_MAX_ATTEMPTS=12
+        route_ok=0
+        for i in $(seq 1 "$ROUTE_MAX_ATTEMPTS"); do
+          body_f=$(mktemp); err_f=$(mktemp); set +e
+          http_code=$(curl -skS --max-time 25 --connect-timeout 15 -o "$body_f" -w '%{http_code}' "$url" 2>"$err_f")
+          curl_ec=$?; set -e
+          rm -f "$err_f"
+          out=$(head -c 4000 "$body_f" || true); rm -f "$body_f"
+          if [ "$curl_ec" -eq 0 ] && echo "$out" | grep -q 'Hostname:'; then route_ok=1; echo "$out" | head -8; break; fi
+          echo "Attempt $i/$ROUTE_MAX_ATTEMPTS: curl_ec=$curl_ec http_code=${http_code:-n/a}"
+          sleep 10
+        done
+        if [ "$route_ok" != 1 ]; then
+          echo "::error title=HTTPS verification failed::No valid whoami from $url"
+          dump_remote_diag || true
+          exit 1
+        fi
+        TLS_MAX_ATTEMPTS=24
+        tls_ok=0
+        for i in $(seq 1 "$TLS_MAX_ATTEMPTS"); do
+          body_f=$(mktemp); err_f=$(mktemp); set +e
+          http_code=$(curl -sS --max-time 25 --connect-timeout 15 -o "$body_f" -w '%{http_code}' "$url" 2>"$err_f")
+          curl_ec=$?; set -e
+          rm -f "$err_f"
+          out=$(head -c 4000 "$body_f" || true); rm -f "$body_f"
+          if [ "$curl_ec" -eq 0 ] && echo "$out" | grep -q 'Hostname:'; then tls_ok=1; echo "$out" | head -8; break; fi
+          echo "Attempt $i/$TLS_MAX_ATTEMPTS strict TLS: curl_ec=$curl_ec"
+          sleep 10
+        done
+        if [ "$tls_ok" != 1 ]; then
+          echo "::error::Strict TLS verify failed for $url"
+          dump_remote_diag || true
+          exit 1
+        fi
+
+    - name: Verify Traefik (skip strict TLS)
+      if: ${{ inputs.verify_mode == 'traefik_whoami' && inputs.verify_https != 'true' }}
+      shell: bash
+      env:
+        PUBLIC_HOST_CHK: ${{ inputs.public_host }}
+      run: |
+        set -euo pipefail
+        url="https://${PUBLIC_HOST_CHK}/whoami"
+        for i in $(seq 1 12); do
+          out=$(curl -skS --max-time 25 --connect-timeout 15 "$url" || true)
+          if echo "$out" | grep -q 'Hostname:'; then echo "$out" | head -8; exit 0; fi
+          sleep 10
+        done
+        echo "::error::whoami route failed for $url"
+        exit 1
+
+    - name: Verify HTTP URL
+      if: ${{ inputs.verify_mode == 'http' }}
+      shell: bash
+      env:
+        URL: ${{ inputs.verify_url }}
+        SUB: ${{ inputs.verify_body_substring }}
+        INSEC_FIRST: ${{ inputs.verify_http_insecure_first }}
+      run: |
+        set -euo pipefail
+        echo "Checking $URL"
+        route_ok=0
+        for i in $(seq 1 15); do
+          body_f=$(mktemp); err_f=$(mktemp)
+          set +e
+          if [ "$INSEC_FIRST" = "true" ]; then
+            http_code=$(curl -skS --max-time 25 --connect-timeout 15 -o "$body_f" -w '%{http_code}' "$URL" 2>"$err_f")
+          else
+            http_code=$(curl -sS --max-time 25 --connect-timeout 15 -o "$body_f" -w '%{http_code}' "$URL" 2>"$err_f")
+          fi
+          curl_ec=$?
+          set -e
+          rm -f "$err_f"
+          out=$(cat "$body_f" 2>/dev/null || true); rm -f "$body_f"
+          sub_ok=1
+          if [ -n "$SUB" ]; then
+            echo "$out" | grep -qF "$SUB" || sub_ok=0
+          fi
+          if [ "$curl_ec" -eq 0 ] && [ "$http_code" = "200" ] && [ "$sub_ok" -eq 1 ]; then
+            route_ok=1
+            echo "HTTP verify OK (insecure=${INSEC_FIRST})"
+            echo "$out" | head -c 800
+            break
+          fi
+          echo "Attempt $i: curl_ec=${curl_ec} http_code=${http_code:-n/a}"
+          sleep 5
+        done
+        if [ "$route_ok" != 1 ]; then
+          echo "::error::HTTP verify failed for $URL (expected 200${SUB:+, body containing substring})"
+          exit 1
+        fi
+        if [ "$INSEC_FIRST" = "true" ]; then
+          echo "Strict TLS retry (no -k)..."
+          tls_ok=0
+          for i in $(seq 1 12); do
+            body_f=$(mktemp); err_f=$(mktemp)
+            set +e
+            http_code=$(curl -sS --max-time 25 --connect-timeout 15 -o "$body_f" -w '%{http_code}' "$URL" 2>"$err_f")
+            curl_ec=$?
+            set -e
+            rm -f "$err_f"
+            out=$(cat "$body_f" || true); rm -f "$body_f"
+            sub_ok=1
+            if [ -n "$SUB" ]; then echo "$out" | grep -qF "$SUB" || sub_ok=0; fi
+            if [ "$curl_ec" -eq 0 ] && [ "$http_code" = "200" ] && [ "$sub_ok" -eq 1 ]; then tls_ok=1; break; fi
+            sleep 5
+          done
+          if [ "$tls_ok" != 1 ]; then
+            echo "::error::Strict TLS verify failed for $URL after insecure success"
+            exit 1
+          fi
+        fi

@@ -3,12 +3,12 @@
 The Next.js app runs in Docker with **`output: "standalone"`** (see [`Dockerfile`](../Dockerfile)) and joins the shared Docker network **`avcd_edge`** so **Traefik** can terminate TLS and route by host. CI uses the org composite:
 
 ```yaml
-uses: Avocado-Technology/avcd-actions/droplet-compose-deploy@v1
+uses: ./.github/actions/droplet-compose-deploy
 ```
 
-([`avcd-actions`](https://github.com/Avocado-Technology/avcd-actions) — tag `v1`.)
+The composite is **vendored** under [`.github/actions/droplet-compose-deploy`](../.github/actions/droplet-compose-deploy) so deploys do not depend on the org repo’s `avcd-actions@v1` tag staying in sync. **Traefik** and **API** stacks can keep using `Avocado-Technology/avcd-actions/droplet-compose-deploy@v1` or vendor the same folder.
 
-**If web deploy fails with `PUBLIC_HOST is missing` after rsync:** the composite on the host is almost certainly outdated (it must export `PUBLIC_HOST` and/or write `.compose.ci.env` before `docker compose up`). Push the latest `droplet-compose-deploy` to **`avcd-actions`** and **move the `v1` tag** to that commit (or pin the workflow `uses:` line to that commit SHA until you update the tag). Workflows reference `...@v1`, not your app repo, so CI keeps using whatever GitHub resolves for `v1`.
+**`avcd-app` (or any fork):** copy `.github/actions/droplet-compose-deploy/` and the `uses: ./.github/actions/droplet-compose-deploy` workflow lines from this repo so behavior matches.
 
 Workflows:
 
