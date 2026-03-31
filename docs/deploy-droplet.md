@@ -1,6 +1,6 @@
-# Deploy web (DigitalOcean / SSH)
+# Deploy web (DigitalOcean / Traefik)
 
-Deployments use the org composite:
+The Next.js app runs in Docker with **`output: "standalone"`** (see [`Dockerfile`](../Dockerfile)) and joins the shared Docker network **`avcd_edge`** so **Traefik** can terminate TLS and route by host. CI uses the org composite:
 
 ```yaml
 uses: Avocado-Technology/avcd-actions/droplet-compose-deploy@v1
@@ -10,47 +10,68 @@ uses: Avocado-Technology/avcd-actions/droplet-compose-deploy@v1
 
 Workflows:
 
-- [`.github/workflows/deploy-digitalocean-dev.yml`](../.github/workflows/deploy-digitalocean-dev.yml) — `environment: development`, pushes to `main` (path filters) or manual
+- [`.github/workflows/deploy-digitalocean-dev.yml`](../.github/workflows/deploy-digitalocean-dev.yml) — `environment: development`
 - [`.github/workflows/deploy-digitalocean-prod.yml`](../.github/workflows/deploy-digitalocean-prod.yml) — tag `*-release` or manual
-
-When **`DO_WEB_URL`** is set, post-deploy verification curls that URL (strict TLS) and expects HTTP **200** with body containing **`AVCD Tech`**. If **`DO_WEB_URL`** is unset, the workflow still deploys but skips that check (you will see a warning in the log).
 
 ## GitHub variables and secrets
 
 Configure **Settings → Environments** → `development` / `production` (recommended), or **Settings → Secrets and variables → Actions** at the repo level.
 
+Use a **different** `DO_DEPLOY_PATH` on the droplet than Traefik and the API (each stack rsyncs with `--delete` to its own directory).
+
 | Name | Type | Purpose |
 |------|------|---------|
 | `DO_DEPLOY_HOST` | Variable or secret | SSH host |
 | `DO_DEPLOY_USER` | Variable or secret | SSH user |
-| `DO_DEPLOY_PATH` | Variable or secret | Absolute deploy path on the server (**use a path used only for this repo**; rsync uses `--delete`) |
-| `DO_WEB_URL` | Variable | Optional but recommended: full URL for post-deploy curl, e.g. `https://dev.example.com/` (must return 200 through Traefik and include “AVCD Tech” in the body when set) |
+| `DO_DEPLOY_PATH` | Variable or secret | Absolute deploy path on the server (e.g. `/home/deploy/avcd-web`) |
+| `DO_WEB_HEALTH_URL` | Variable | Full HTTPS URL for post-deploy verify, e.g. `https://dev.example.com/health` |
 | `DO_DEPLOY_SSH_KEY` | **Secret** | Private SSH key (never commit) |
 
-Use a **different** `DO_DEPLOY_PATH` than the Traefik and API stacks on the same droplet.
+The health endpoint is served at **`/health`** (see [`app/health/route.ts`](../app/health/route.ts)) and returns JSON including `"status":"ok"` for CI.
 
 ### Private **avcd-actions** (“Cannot access repositories”)
 
-In **avcd-actions**: **Settings → Actions → General → Access** — allow **avcd-web** (or the whole org). The **avcd-api** repo documents the same composite and droplet pattern in its `docs/deploy-droplet.md`.
+In **avcd-actions**: **Settings → Actions → General → Access** — add **avcd-web** (or allow the whole org). Otherwise workflows fail before any deploy step runs.
+
+Alternatively make **avcd-actions** **public** if it only contains the composite.
+
+## Deploy order on a new host
+
+1. **Traefik** — creates **`avcd_edge`** (or run `docker network create avcd_edge` once before anything else).
+2. **API** — joins `avcd_edge`; `/api` routes work.
+3. **Web** (this repo) — joins `avcd_edge`; host rule uses `PUBLIC_HOST` (see [`docker-compose.yml`](../docker-compose.yml), priority **50**, below API path rules).
 
 ## `.env` on the server
 
-Rsync excludes `.env`. After the first deploy, create `.env` on the droplet under `DO_DEPLOY_PATH` (see [.env.example](../.env.example)).
+Rsync excludes `.env`. After the first deploy, create `.env` under `DO_DEPLOY_PATH` (same directory as `docker-compose.yml`). Copy from [`.env.example`](../.env.example).
 
-**Required for Traefik routing:** set **`PUBLIC_HOST`** to the same hostname Traefik uses (e.g. `dev.example.com`). It is interpolated into compose labels; without it, routing uses `localhost` and HTTPS verification will fail.
+| Variable | Notes |
+|----------|--------|
+| `PUBLIC_HOST` | Hostname Traefik matches (no `https://`), e.g. `app.example.com`. Required for Traefik labels. |
+| `AUTH_URL` | **Public** origin: `https://<PUBLIC_HOST>`. Do **not** use `http://web:3000` or OAuth will fail. |
+| `AUTH_SECRET` | Strong secret (`openssl rand -base64 32`). |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth Web client. |
+| `AVCD_API_URL` | For server actions inside Docker on `avcd_edge`, use **`http://api:8000`** (same pattern as [`.env.example`](../.env.example)). |
 
-**Auth:** set **`AUTH_URL`** to the public origin (e.g. `https://dev.example.com`), **`AUTH_SECRET`**, and Google OAuth vars. Do not leave `AUTH_URL` at `http://localhost:3000` on a deployed host.
+Optional: `NEXT_PUBLIC_AVCD_API_URL` if you need a public API base in the browser (e.g. `https://<same-host>/api`).
 
-**API:** set **`AVCD_API_URL`** for server-side calls. With API and web on the same Docker host attached to **`avcd_edge`**, use **`http://api:8000`** (service name from the API compose project), unless your layout differs.
+## Google Cloud Console
 
-Optional: **`NEXT_PUBLIC_AVCD_API_URL`** for the signed-in MCP installer hint (browser-visible API base).
+For production (and dev) hostnames:
 
-## Traefik + shared Docker network
+- **Authorized JavaScript origins**: `https://<PUBLIC_HOST>`
+- **Authorized redirect URIs**: `https://<PUBLIC_HOST>/api/auth/callback/google` (exact match)
 
-Join **`avcd_edge`** (same network as Traefik and API). The deploy action ensures the network exists before `docker compose up`. Deploy **Traefik** (or run `docker network create avcd_edge` once) before relying on TLS routers.
+## Same host as Traefik
 
-The web router uses **priority 50**; API **`/api`** uses higher priority so paths do not collide.
+The workflow passes `clear_published_ports: "none"` so Traefik keeps ports 80/443. Runtime TLS and `PUBLIC_HOST` come from the server `.env` and Traefik, not from CI (`pass_compose_tls_env: "false"`), matching **avcd-api**.
 
-## Related docs
+Set **`DO_WEB_HEALTH_URL`** to `https://<PUBLIC_HOST>/health` so CI can verify the site after deploy.
 
-Same deployment model as **avcd-api** and **avcd-traefik** (`docs/deploy-droplet.md` in each repo).
+## Sizing
+
+Running Traefik, API (Mongo/Redis), and Next.js on **one** droplet needs enough **RAM and CPU** for builds at deploy time and steady-state traffic. Prefer a plan that comfortably fits all stacks or split Traefik/API and web later.
+
+## Monorepo note
+
+If the Git checkout root is a monorepo, set `compose_subdirectory` in the workflow to the folder that contains this repo’s `docker-compose.yml` (not `"."` at monorepo root unless compose lives there).

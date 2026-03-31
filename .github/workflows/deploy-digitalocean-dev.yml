@@ -1,8 +1,5 @@
-# Deploy the Next.js stack to the droplet (compose in repo root).
-# Set DO_WEB_URL on the environment for post-deploy HTTPS checks; if unset, deploy still runs (verify skipped).
-# If this workflow lives in a monorepo, set compose_subdirectory to "web" and move paths under on.push.paths.
+# Deploy Next.js web stack from this repository root (Docker + Traefik on avcd_edge).
 # Configure DO_* in GitHub: Settings → Environments → development (or repo Variables / Secrets).
-# On the server, keep PUBLIC_HOST, AUTH_*, AVCD_API_URL in .env next to docker-compose.yml (rsync excludes .env).
 
 name: Deploy web to DigitalOcean (dev)
 
@@ -12,17 +9,14 @@ on:
     paths:
       - "app/**"
       - "lib/**"
-      - "components/**"
+      - "types/**"
       - "public/**"
-      - "auth.ts"
-      - "*.ts"
-      - "*.tsx"
-      - "middleware.ts"
+      - "docker-compose.yml"
+      - "Dockerfile"
+      - "next.config.ts"
       - "package.json"
       - "package-lock.json"
-      - "next.config.ts"
-      - "Dockerfile"
-      - "docker-compose.yml"
+      - "auth.ts"
       - ".github/**"
   workflow_dispatch:
 
@@ -41,11 +35,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Post-deploy verify reminder
-        if: ${{ vars.DO_WEB_URL == '' }}
-        run: |
-          echo "::warning::DO_WEB_URL is not set on this environment. Deploy will proceed without the post-deploy HTTP check. Add variable DO_WEB_URL (full HTTPS URL, e.g. https://dev.example.com/) to enable verification."
-
       - name: Deploy web stack
         uses: Avocado-Technology/avcd-actions/droplet-compose-deploy@v1
         with:
@@ -58,7 +47,7 @@ jobs:
           acme_email: ""
           pass_compose_tls_env: "false"
           clear_published_ports: "none"
-          verify_mode: ${{ vars.DO_WEB_URL != '' && 'http' || 'none' }}
-          verify_url: ${{ vars.DO_WEB_URL }}
-          verify_body_substring: "AVCD Tech"
+          verify_mode: http
+          verify_url: ${{ vars.DO_WEB_HEALTH_URL }}
+          verify_body_substring: '"status":"ok"'
           verify_http_insecure_first: "false"

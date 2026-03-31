@@ -1,6 +1,6 @@
 /**
  * Base URL for server-side calls from Next.js to the AVCD FastAPI service.
- * Not exposed to the browser — set `AVCD_API_URL` in web/.env.local or Compose.
+ * Not exposed to the browser — set `AVCD_API_URL` in .env.local, Docker Compose, or Vercel env.
  */
 export function getAvcdApiBaseUrl(): string {
   const raw = process.env.AVCD_API_URL?.trim();
