@@ -96,6 +96,29 @@ runs:
           [ -n "${VERIFY_URL:-}" ] || err "verify_mode=http requires verify_url (full URL)."
         fi
 
+    - name: Resolve effective public host (Compose / Traefik)
+      id: compose_public_host
+      shell: bash
+      env:
+        IN_PH: ${{ inputs.public_host }}
+        IN_VU: ${{ inputs.verify_url }}
+        PASS_TLS: ${{ inputs.pass_compose_tls_env }}
+        VERIFY_MODE: ${{ inputs.verify_mode }}
+      run: |
+        set -euo pipefail
+        H="${IN_PH:-}"
+        if [ -z "$H" ] && [ -n "${IN_VU:-}" ]; then
+          U="$IN_VU"
+          H="${U#https://}"
+          H="${H#http://}"
+          H="${H%%/*}"
+        fi
+        if [ "${PASS_TLS}" != "true" ] && [ "${VERIFY_MODE}" = "http" ] && [ -z "$H" ]; then
+          echo "::error::public_host is empty and verify_url has no hostname to derive from. Set public_host or a full verify_url (e.g. https://dev.example.com/health)."
+          exit 1
+        fi
+        echo "effective=$H" >> "$GITHUB_OUTPUT"
+
     - name: Install rsync and OpenSSH client
       shell: bash
       run: |
@@ -157,7 +180,7 @@ runs:
     - name: Docker Compose up on droplet
       shell: bash
       env:
-        PUBLIC_HOST_IN: ${{ inputs.public_host }}
+        PUBLIC_HOST_IN: ${{ steps.compose_public_host.outputs.effective }}
         ACME_EMAIL_IN: ${{ inputs.acme_email }}
         PASS_TLS_IN: ${{ inputs.pass_compose_tls_env }}
         PORTS_IN: ${{ inputs.clear_published_ports }}
@@ -211,7 +234,7 @@ runs:
       if: ${{ inputs.verify_mode == 'traefik_whoami' && inputs.verify_https == 'true' }}
       shell: bash
       env:
-        PUBLIC_HOST_CHK: ${{ inputs.public_host }}
+        PUBLIC_HOST_CHK: ${{ steps.compose_public_host.outputs.effective }}
         ACME_EMAIL_CHK: ${{ inputs.acme_email }}
         DEPLOY_HOST_CH: ${{ inputs.deploy_host }}
         DEPLOY_USER_CH: ${{ inputs.deploy_user }}
@@ -276,7 +299,7 @@ runs:
       if: ${{ inputs.verify_mode == 'traefik_whoami' && inputs.verify_https != 'true' }}
       shell: bash
       env:
-        PUBLIC_HOST_CHK: ${{ inputs.public_host }}
+        PUBLIC_HOST_CHK: ${{ steps.compose_public_host.outputs.effective }}
       run: |
         set -euo pipefail
         url="https://${PUBLIC_HOST_CHK}/whoami"

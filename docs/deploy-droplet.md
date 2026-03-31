@@ -26,8 +26,8 @@ Use a **different** `DO_DEPLOY_PATH` on the droplet than Traefik and the API (ea
 | `DO_DEPLOY_HOST` | Variable or secret | SSH host |
 | `DO_DEPLOY_USER` | Variable or secret | SSH user |
 | `DO_DEPLOY_PATH` | Variable or secret | Absolute deploy path on the server (e.g. `/home/deploy/avcd-web`) |
-| `DO_PUBLIC_HOST` or `PUBLIC_HOST` | Variable or secret | Hostname only (no `https://`), same as Traefik / server `.env` `PUBLIC_HOST`. CI passes this into the deploy composite so Traefik labels interpolate. If unset, the workflow derives the hostname from **`DO_WEB_URL`** or **`DO_WEB_HEALTH_URL`** (scheme + path stripped). |
-| `DO_WEB_HEALTH_URL` | Variable | Full HTTPS URL for post-deploy verify, e.g. `https://dev.example.com/health` |
+| `DO_PUBLIC_HOST` or `PUBLIC_HOST` | Variable or secret | Hostname for Traefik (optional if **`DO_WEB_HEALTH_URL`** is set). The workflow “Resolve Traefik public hostname” step fills `public_host`; the **vendored composite** also derives the hostname from **`verify_url`** (`DO_WEB_HEALTH_URL`) when `public_host` is empty so `.compose.ci.env` always gets the right `PUBLIC_HOST`. |
+| `DO_WEB_HEALTH_URL` | Variable | Full HTTPS URL for post-deploy verify, e.g. `https://dev.example.com/health` (also used to infer hostname for Compose if needed). |
 | `DO_DEPLOY_SSH_KEY` | **Secret** | Private SSH key (never commit) |
 
 The health endpoint is served at **`/health`** (see [`app/health/route.ts`](../app/health/route.ts)) and returns JSON including `"status":"ok"` for CI.
