@@ -23,6 +23,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Resolve Traefik public hostname
+        id: traefik_host
+        env:
+          H1: ${{ vars.DO_PUBLIC_HOST || secrets.DO_PUBLIC_HOST }}
+          H2: ${{ vars.PUBLIC_HOST || secrets.PUBLIC_HOST }}
+          U1: ${{ vars.DO_WEB_URL || secrets.DO_WEB_URL }}
+          U2: ${{ vars.DO_WEB_HEALTH_URL || secrets.DO_WEB_HEALTH_URL }}
+        run: |
+          set -euo pipefail
+          H="${H1:-}"; [ -n "$H" ] || H="${H2:-}"
+          if [ -z "$H" ]; then
+            U="${U1:-}"; [ -n "$U" ] || U="${U2:-}"
+            if [ -n "$U" ]; then
+              H="${U#https://}"; H="${H#http://}"; H="${H%%/*}"
+            fi
+          fi
+          if [ -z "$H" ]; then
+            echo "::error::Set DO_PUBLIC_HOST, PUBLIC_HOST, DO_WEB_URL, or DO_WEB_HEALTH_URL for this environment."
+            exit 1
+          fi
+          echo "host=$H" >> "$GITHUB_OUTPUT"
+
       - name: Deploy web stack
         uses: Avocado-Technology/avcd-actions/droplet-compose-deploy@v1
         with:
@@ -31,7 +53,7 @@ jobs:
           deploy_path: ${{ vars.DO_DEPLOY_PATH || secrets.DO_DEPLOY_PATH }}
           ssh_key: ${{ secrets.DO_DEPLOY_SSH_KEY }}
           compose_subdirectory: "."
-          public_host: ${{ vars.DO_PUBLIC_HOST || secrets.DO_PUBLIC_HOST || vars.PUBLIC_HOST || secrets.PUBLIC_HOST }}
+          public_host: ${{ steps.traefik_host.outputs.host }}
           acme_email: ""
           pass_compose_tls_env: "false"
           clear_published_ports: "none"
