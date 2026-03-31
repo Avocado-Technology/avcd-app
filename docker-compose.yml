@@ -35,6 +35,8 @@ services:
       AVCD_API_URL: ${AVCD_API_URL:-http://api:8000}
     labels:
       - traefik.enable=true
+      # Required when the service joins more than one network; otherwise Traefik may pick the project bridge IP and return 404.
+      - traefik.docker.network=avcd_edge
       - traefik.http.routers.avcd-web.rule=Host(`${PUBLIC_HOST:-localhost}`)
       - traefik.http.routers.avcd-web.entrypoints=websecure
       - traefik.http.routers.avcd-web.tls=true

@@ -220,13 +220,13 @@ runs:
         # When any --env-file is passed, Compose may not auto-load .env for interpolation; pass both so
         # server secrets stay available while CI PUBLIC_HOST wins (later file).
         if [ -f .env ] && [ -f .compose.ci.env ]; then
-          docker compose --env-file .env --env-file .compose.ci.env up -d --pull always
+          docker compose --env-file .env --env-file .compose.ci.env up -d --pull always --force-recreate
         elif [ -f .compose.ci.env ]; then
-          docker compose --env-file .compose.ci.env up -d --pull always
+          docker compose --env-file .compose.ci.env up -d --pull always --force-recreate
         elif [ -f .env ]; then
-          docker compose --env-file .env up -d --pull always
+          docker compose --env-file .env up -d --pull always --force-recreate
         else
-          docker compose up -d --pull always
+          docker compose up -d --pull always --force-recreate
         fi
         REMOTE_SCRIPT
 
