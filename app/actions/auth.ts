@@ -17,6 +17,74 @@ import { signOut } from "@/auth";
  * that endpoint; `prompt: "select_account"` on sign-in is the usual pattern.
  */
 export async function signOutFromApp() {
-  await signOut({ redirect: false, redirectTo: "/" });
+  // #region agent log
+  fetch("http://127.0.0.1:7747/ingest/68ebbb71-aba6-417b-a281-d3987e458ee7", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "64ac3a",
+    },
+    body: JSON.stringify({
+      sessionId: "64ac3a",
+      hypothesisId: "A",
+      runId: "pre-fix",
+      location: "app/actions/auth.ts:signOutFromApp",
+      message: "enter",
+      data: {},
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
+
+  const result = await signOut({ redirect: false, redirectTo: "/" });
+
+  // #region agent log
+  const r =
+    result && typeof result === "object" && result !== null
+      ? (result as Record<string, unknown>)
+      : null;
+  const redirectField =
+    typeof r?.redirect === "string" ? r.redirect.slice(0, 220) : null;
+  fetch("http://127.0.0.1:7747/ingest/68ebbb71-aba6-417b-a281-d3987e458ee7", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "64ac3a",
+    },
+    body: JSON.stringify({
+      sessionId: "64ac3a",
+      hypothesisId: "A",
+      runId: "pre-fix",
+      location: "app/actions/auth.ts:signOutFromApp",
+      message: "after signOut redirect:false",
+      data: {
+        redirectField,
+        isGoogleLogout: redirectField?.includes("accounts.google.com") ?? false,
+        cookieOps: Array.isArray(r?.cookies) ? r.cookies.length : null,
+      },
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
+
+  // #region agent log
+  fetch("http://127.0.0.1:7747/ingest/68ebbb71-aba6-417b-a281-d3987e458ee7", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "64ac3a",
+    },
+    body: JSON.stringify({
+      sessionId: "64ac3a",
+      hypothesisId: "C",
+      runId: "pre-fix",
+      location: "app/actions/auth.ts:signOutFromApp",
+      message: "before redirect(/)",
+      data: {},
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
+
   redirect("/");
 }

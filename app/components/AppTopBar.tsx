@@ -81,7 +81,33 @@ export function AppTopBar({ session }: Props) {
           </p>
         ) : null}
       </div>
-      <form action={signOutFromApp} style={{ flexShrink: 0, margin: 0 }}>
+      <form
+        action={signOutFromApp}
+        style={{ flexShrink: 0, margin: 0 }}
+        onSubmit={() => {
+          // #region agent log
+          fetch(
+            "http://127.0.0.1:7747/ingest/68ebbb71-aba6-417b-a281-d3987e458ee7",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Debug-Session-Id": "64ac3a",
+              },
+              body: JSON.stringify({
+                sessionId: "64ac3a",
+                hypothesisId: "B",
+                runId: "pre-fix",
+                location: "AppTopBar.tsx:form onSubmit",
+                message: "client sign-out form submit",
+                data: { hrefLen: window.location.href.length },
+                timestamp: Date.now(),
+              }),
+            },
+          ).catch(() => {});
+          // #endregion
+        }}
+      >
         <SignOutSubmitButton
           label="Sign out"
           pendingLabel="Signing out…"

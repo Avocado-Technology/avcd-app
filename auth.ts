@@ -45,6 +45,38 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // #region agent log
+      fetch("http://127.0.0.1:7747/ingest/68ebbb71-aba6-417b-a281-d3987e458ee7", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Debug-Session-Id": "64ac3a",
+        },
+        body: JSON.stringify({
+          sessionId: "64ac3a",
+          hypothesisId: "D",
+          runId: "pre-fix",
+          location: "auth.ts:callbacks.redirect",
+          message: "redirect callback",
+          data: {
+            urlIn: typeof url === "string" ? url.slice(0, 220) : String(url),
+            baseUrlIn: typeof baseUrl === "string" ? baseUrl.slice(0, 120) : null,
+            urlHasGoogle:
+              typeof url === "string" && url.includes("accounts.google.com"),
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      try {
+        if (new URL(url).origin === new URL(baseUrl).origin) return url;
+      } catch {
+        return baseUrl;
+      }
+      return baseUrl;
+    },
     async jwt({ token, account, trigger }) {
       const idTok = account?.id_token;
       const idOk = typeof idTok === "string" && idTok.length > 0;
