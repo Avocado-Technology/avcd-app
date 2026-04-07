@@ -61,6 +61,26 @@ inputs:
     description: When verify_mode is http, first retries use curl -k (ignore TLS) then strict TLS if substring matches
     required: false
     default: "false"
+  web_auth_secret:
+    description: When set with web Google inputs, writes server .env (AUTH_SECRET). Use secrets.WEB_AUTH_SECRET.
+    required: false
+    default: ""
+  web_google_client_id:
+    description: GOOGLE_CLIENT_ID for GitHub-managed web .env (required if web_auth_secret is set)
+    required: false
+    default: ""
+  web_google_client_secret:
+    description: GOOGLE_CLIENT_SECRET for GitHub-managed web .env (required if web_auth_secret is set)
+    required: false
+    default: ""
+  web_avcd_auth_url:
+    description: Optional AVCD_AUTH_URL (e.g. http://auth:8000). When empty, docker-compose default applies.
+    required: false
+    default: ""
+  web_auth_url:
+    description: Optional AUTH_URL (public Next.js origin). When empty, remote uses https://PUBLIC_HOST (no trailing slash).
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -77,6 +97,9 @@ runs:
         PASS_TLS: ${{ inputs.pass_compose_tls_env }}
         VERIFY_MODE: ${{ inputs.verify_mode }}
         VERIFY_URL: ${{ inputs.verify_url }}
+        WEB_AUTH_SECRET_IN: ${{ inputs.web_auth_secret }}
+        WEB_GCID_IN: ${{ inputs.web_google_client_id }}
+        WEB_GCS_IN: ${{ inputs.web_google_client_secret }}
       run: |
         set -euo pipefail
         err() { echo "::error title=Deploy configuration::$1"; exit 1; }
@@ -94,6 +117,10 @@ runs:
         fi
         if [ "$VERIFY_MODE" = "http" ]; then
           [ -n "${VERIFY_URL:-}" ] || err "verify_mode=http requires verify_url (full URL)."
+        fi
+        if [ -n "${WEB_AUTH_SECRET_IN:-}" ]; then
+          [ -n "${WEB_GCID_IN:-}" ] || err "web_google_client_id is required when web_auth_secret is set (GitHub-managed web .env)."
+          [ -n "${WEB_GCS_IN:-}" ] || err "web_google_client_secret is required when web_auth_secret is set (GitHub-managed web .env)."
         fi
 
     - name: Resolve effective public host (Compose / Traefik)
@@ -184,12 +211,36 @@ runs:
         ACME_EMAIL_IN: ${{ inputs.acme_email }}
         PASS_TLS_IN: ${{ inputs.pass_compose_tls_env }}
         PORTS_IN: ${{ inputs.clear_published_ports }}
+        WEB_AUTH_SECRET_IN: ${{ inputs.web_auth_secret }}
+        WEB_GCID_IN: ${{ inputs.web_google_client_id }}
+        WEB_GCS_IN: ${{ inputs.web_google_client_secret }}
+        WEB_AVCD_IN: ${{ inputs.web_avcd_auth_url }}
+        WEB_AURL_IN: ${{ inputs.web_auth_url }}
       run: |
         set -euo pipefail
+        if [ -n "${WEB_AUTH_SECRET_IN:-}" ]; then
+          [ -n "${PUBLIC_HOST_IN:-}" ] || {
+            echo "::error::GitHub-managed web .env requires a non-empty public hostname (set public_host or a full verify_url)."
+            exit 1
+          }
+        fi
         PH_B64=$(printf '%s' "$PUBLIC_HOST_IN" | base64 -w0)
         AE_B64=$(printf '%s' "$ACME_EMAIL_IN" | base64 -w0)
         PASS_TLS_B64=$(printf '%s' "$PASS_TLS_IN" | base64 -w0)
         PORTS_B64=$(printf '%s' "$PORTS_IN" | base64 -w0)
+        WEB_ENV_B64=""
+        if [ -n "${WEB_AUTH_SECRET_IN:-}" ]; then
+          WEB_PLAIN=$(
+            export E_AS="$WEB_AUTH_SECRET_IN"
+            export E_GID="$WEB_GCID_IN"
+            export E_GSEC="$WEB_GCS_IN"
+            export E_AVCD="$WEB_AVCD_IN"
+            export E_AURL="$WEB_AURL_IN"
+            export E_PH="$PUBLIC_HOST_IN"
+            python3 "$GITHUB_ACTION_PATH/render-web-env.py"
+          )
+          WEB_ENV_B64=$(printf '%s' "$WEB_PLAIN" | base64 -w0)
+        fi
         ssh -i "$HOME/.ssh/deploy_key" -o StrictHostKeyChecking=accept-new \
           -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
           "${{ inputs.deploy_user }}@${{ inputs.deploy_host }}" bash -s <<REMOTE_SCRIPT
@@ -207,6 +258,14 @@ runs:
         rm -f .compose.ci.env
         if [ -n "\$PH_DEC" ]; then
           printf 'PUBLIC_HOST=%s\n' "\$PH_DEC" > .compose.ci.env
+        fi
+        # GitHub-managed web .env (rsync never ships .env); body built on runner, written atomically on host
+        if [ -n "$WEB_ENV_B64" ]; then
+          umask 077
+          tmp=\$(mktemp)
+          printf '%s' "$WEB_ENV_B64" | base64 -d > "\$tmp"
+          chmod 600 "\$tmp"
+          mv -f "\$tmp" .env
         fi
         docker compose down --remove-orphans 2>/dev/null || true
         PORTS=\$(printf '%s' "$PORTS_B64" | base64 -d)

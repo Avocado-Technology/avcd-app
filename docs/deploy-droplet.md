@@ -30,6 +30,20 @@ Use a **different** `DO_DEPLOY_PATH` on the droplet than Traefik and the API (ea
 | `DO_WEB_HEALTH_URL` | Variable | Full HTTPS URL for post-deploy verify, e.g. `https://dev.example.com/health` (also used to infer hostname for Compose if needed). |
 | `DO_DEPLOY_SSH_KEY` | **Secret** | Private SSH key (never commit) |
 
+### Web app secrets (GitHub-managed `.env` on the droplet)
+
+If **`WEB_AUTH_SECRET`** is set, the vendored composite **writes** `DO_DEPLOY_PATH`/`docker-compose.yml` directory **`.env`** on each deploy (rsync never ships `.env`). Omit **`WEB_AUTH_SECRET`** only if you maintain `.env` on the server yourself.
+
+| Name | Type | Purpose |
+|------|------|--------|
+| `WEB_AUTH_SECRET` | **Secret** | Auth.js `AUTH_SECRET` (e.g. `openssl rand -base64 32`). |
+| `WEB_GOOGLE_CLIENT_ID` | **Secret** | Google OAuth web client ID (`GOOGLE_CLIENT_ID`). |
+| `WEB_GOOGLE_CLIENT_SECRET` | **Secret** | Google OAuth client secret (`GOOGLE_CLIENT_SECRET`). |
+| `WEB_AVCD_AUTH_URL` | Variable (optional) | Issuer base for `POST …/google/token`. If unset, [`docker-compose.yml`](../docker-compose.yml) defaults to `http://auth:8000`. |
+| `WEB_AUTH_URL` | Variable (optional) | Public site origin for NextAuth (`AUTH_URL`). If unset, CI sets `https://<PUBLIC_HOST>` (no trailing slash), using the hostname from `public_host` / `DO_WEB_HEALTH_URL`. |
+
+Values must be **single-line** (no raw newlines). **`NEXT_PUBLIC_AVCD_API_URL`** is not written by deploy: it is **build-time** in Next.js unless you add Docker build args (see [`Dockerfile`](../Dockerfile)); do not expect runtime `.env` alone to change the MCP installer hint on the home page.
+
 The health endpoint is served at **`/health`** (see [`app/health/route.ts`](../app/health/route.ts)) and returns JSON including `"status":"ok"` for CI.
 
 ### Private **avcd-actions** (“Cannot access repositories”)
@@ -46,17 +60,19 @@ Alternatively make **avcd-actions** **public** if it only contains the composite
 
 ## `.env` on the server
 
-Rsync excludes `.env`. After the first deploy, create `.env` under `DO_DEPLOY_PATH` (same directory as `docker-compose.yml`). Copy from [`.env.example`](../.env.example).
+Rsync excludes `.env`. **Recommended:** set **`WEB_AUTH_SECRET`** (+ Google secrets) in GitHub so CI writes `.env` on every deploy (see table above). **`PUBLIC_HOST`** for Traefik still comes from CI (`.compose.ci.env`), not from that file.
+
+**Manual fallback:** if you do **not** use GitHub-managed secrets, create `.env` under `DO_DEPLOY_PATH` (next to `docker-compose.yml`). Copy from [`.env.example`](../.env.example).
 
 | Variable | Notes |
 |----------|--------|
-| `PUBLIC_HOST` | Hostname Traefik matches (no `https://`), e.g. `app.example.com`. Required for Traefik labels. |
+| `PUBLIC_HOST` | From CI `.compose.ci.env` when using workflows; optional in manual `.env` if you export it another way. |
 | `AUTH_URL` | **Public** origin: `https://<PUBLIC_HOST>`. Do **not** use `http://web:3000` or OAuth will fail. |
 | `AUTH_SECRET` | Strong secret (`openssl rand -base64 32`). |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth Web client. |
-| `AVCD_API_URL` | For server actions inside Docker on `avcd_edge`, use **`http://api:8000`** (same pattern as [`.env.example`](../.env.example)). |
+| `AVCD_AUTH_URL` | On `avcd_edge`, typically **`http://auth:8000`** (compose default if omitted). |
 
-Optional: `NEXT_PUBLIC_AVCD_API_URL` if you need a public API base in the browser (e.g. `https://<same-host>/api`).
+Optional: `NEXT_PUBLIC_AVCD_API_URL` requires a **build** change to take effect in the browser (see note above).
 
 ## Google Cloud Console
 
@@ -67,7 +83,7 @@ For production (and dev) hostnames:
 
 ## Same host as Traefik
 
-The workflow passes `clear_published_ports: "none"` so Traefik keeps ports 80/443. Runtime TLS and `PUBLIC_HOST` come from the server `.env` and Traefik, not from CI (`pass_compose_tls_env: "false"`), matching **avcd-api**.
+The workflow passes `clear_published_ports: "none"` so Traefik keeps ports 80/443. **`PUBLIC_HOST`** is injected by CI (`.compose.ci.env`). **`AUTH_URL`** defaults to `https://<PUBLIC_HOST>` when not set in **`WEB_AUTH_URL`** (`pass_compose_tls_env: "false"`), matching **avcd-api**.
 
 Set **`DO_WEB_HEALTH_URL`** to `https://<PUBLIC_HOST>/health` so CI can verify the site after deploy.
 

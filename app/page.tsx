@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 
-import { ApiKeysPanel } from "./components/ApiKeysPanel";
+import { AvcdAccessTokenPanel } from "./components/AvcdAccessTokenPanel";
 import { GoogleLoginGate } from "./components/GoogleLoginGate";
 
 const MCP_BUNDLE_PATH = "/mcp/avcd-graphql.mcpb";
@@ -102,7 +102,7 @@ export default async function Home() {
           </p>
         ) : null}
 
-        <ApiKeysPanel />
+        <AvcdAccessTokenPanel />
       </div>
     </main>
   );

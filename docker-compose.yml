@@ -2,14 +2,24 @@
 #
 # Attaches to the shared Docker network `avcd_edge` (external — create it first: Traefik stack or
 # `docker network create avcd_edge`). Same pattern as avcd-api on the dev/prod droplet.
-# PUBLIC_HOST defaults to `localhost` so `docker compose up` works locally without extra env.
-# For deployment behind Traefik on a real DNS name, set PUBLIC_HOST (CI `.compose.ci.env` and/or server `.env`);
-# if it stays `localhost`, Traefik will only match Host: localhost and HTTPS on your domain will 404.
-# AVCD_API_URL defaults to http://api:8000 when unset (Compose on avcd_edge).
-# Traefik routes this service at priority 50; the API router uses /api at priority 110.
-# Server-side calls to FastAPI default to http://api:8000 (override AVCD_API_URL if your API DNS name differs).
+#
+# `environment` below uses Compose interpolation (${VAR:-default}): values come from the deploy shell
+# and/or `web/.env` next to this file. That matches CI/CD (export / write .env on the host, then compose up).
+# `env_file` still loads `.env` / `.env.local` into the container first; `environment` then overrides per key.
+# Caveat: if `AUTH_SECRET: ${AUTH_SECRET:-}` interpolates empty, it overrides the same key from env_file —
+# put secrets in `web/.env` (for interpolation) or export them before `docker compose up`, or duplicate into
+# `.env` when you only use `.env.local` for local secrets.
+#
+# Traefik label Host() uses `${PUBLIC_HOST:-localhost}` at compose parse time (same sources as above).
+#
+# Debug: set AUTH_DEBUG=1 in `.env` / `.env.local` only — do not add `AUTH_DEBUG: ${AUTH_DEBUG:-}` here
+# (empty would override). Tail logs: docker compose logs -f web
 #
 # For local all-in-one (Mongo + API + web without Traefik labels), use the repo-root docker-compose.yml instead.
+#
+# AVCD_AUTH_URL: default is the auth service on avcd_edge (same as Dockerfile). Override to http://host.docker.internal:8010
+# when only the web container runs and auth listens on the host (port 8010).
+# (`extra_hosts` enables host.docker.internal on Linux Docker Engine.)
 #
 services:
   web:
@@ -22,8 +32,12 @@ services:
     networks:
       - default
       - avcd_edge
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     env_file:
       - path: .env
+        required: false
+      - path: .env.local
         required: false
     environment:
       # Passed into the container; same value as Traefik Host() after interpolation (default localhost for local).
@@ -32,7 +46,7 @@ services:
       AUTH_SECRET: ${AUTH_SECRET:-}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      AVCD_API_URL: ${AVCD_API_URL:-http://api:8000}
+      AVCD_AUTH_URL: ${AVCD_AUTH_URL:-http://auth:8000}
     labels:
       - traefik.enable=true
       # Required when the service joins more than one network; otherwise Traefik may pick the project bridge IP and return 404.

@@ -1,6 +1,6 @@
-# Deep dive: from Google sign-in to MCP-ready API key
+# Deep dive: from Google sign-in to AVCD access JWT (web)
 
-This describes how the **opaque `avcd_*` token** on the signed-in home page is produced, which services participate, and what must be configured.
+This describes how the **access JWT** on the signed-in home page is produced, which services participate, and what must be configured. The Next.js app **does not call the main API**; it only uses the **auth issuer** when needed. Use the JWT yourself as `Authorization: Bearer …` against the API, or paste it into MCP (see below).
 
 ## End-to-end sequence
 
@@ -8,93 +8,86 @@ This describes how the **opaque `avcd_*` token** on the signed-in home page is p
 sequenceDiagram
   participant Browser
   participant Next as NextJS_server
-  participant Auth as AuthJS_Google
-  participant API as FastAPI
+  participant AuthJS as AuthJS_Google
+  participant Issuer as Auth_FastAPI
+  participant Mongo as MongoDB
 
-  Browser->>Auth: Sign in with Google
-  Auth-->>Browser: Session cookie (email, name)
+  Browser->>AuthJS: Sign in with Google
+  AuthJS-->>Browser: Session cookie
+  Note over Next: jwt callback exchanges Google id_token for AVCD JWT stores avcdAccessJwt in session cookie
 
   Browser->>Next: Load home (RSC + client)
-  Next->>Next: createApiKeyAction (server action)
+  Next->>Next: getAvcdAccessTokenAction (server action)
 
-  Next->>API: POST /auth/portal/token JSON email, name
-  Note over API: auth_portal_enabled, JWT_SECRET, Mongo upsert portal user
-  API-->>Next: access_token (HS256 JWT, sub portal ObjectId)
+  Note over Next: Uses avcdAccessJwt from cookie if still valid
+  Next->>Issuer: POST /google/token only if no cached AVCD JWT
+  Note over Issuer: GOOGLE_CLIENT_IDS, JWT_SECRET, Mongo upsert portal user
+  Issuer->>Mongo: upsert_portal_user
+  Issuer-->>Next: access_token (HS256 JWT, sub portal ObjectId)
 
-  Next->>API: POST /auth/api-keys Authorization Bearer JWT
-  Note over API: auth_api_keys_enabled, verify_bearer_token HS256
-  API-->>Next: 201 keyId, apiKey, createdAt
-
-  Next-->>Browser: Return key to ApiKeysPanel
+  Next-->>Browser: Return JWT to AvcdAccessTokenPanel
 ```
+
+Public URLs behind Traefik: issuer at **`https://PUBLIC_HOST/auth/google/token`**. Internal Docker often uses **`AVCD_AUTH_URL=http://auth:8000`**.
 
 ## Step-by-step
 
 ### 1. Google session (Next.js only)
 
-- [`auth.ts`](auth.ts) configures Google OAuth. No FastAPI call during login.
-- Session must include **email** (required for portal token body) and usually **name** (or derivable from email local-part in [`api-keys.ts` actions](app/actions/api-keys.ts)).
+- [`auth.ts`](auth.ts) configures Google OAuth. On sign-in, the **`jwt`** callback calls the auth issuer with the Google **`id_token`**, then stores the returned **`avcdAccessJwt`** in the Auth.js JWT cookie and **drops** the Google token so the session stays under typical **4KB** cookie limits.
+- If the issuer is unreachable at sign-in, the callback keeps **`googleIdToken`** (larger) as a fallback; [`lib/server/get-api-access-jwt.ts`](lib/server/get-api-access-jwt.ts) then exchanges it on demand via [`lib/server/session-token.ts`](lib/server/session-token.ts) (`getSessionJwt` / `getToken`).
+- **Expiry:** AVCD JWT TTL matches issuer settings (often ~1 hour). **Sign out and sign in again** when it expires or after fixing `AVCD_AUTH_URL` / issuer config.
 
-### 2. Portal JWT (`POST /auth/portal/token`)
+### 2. API access JWT (`POST .../google/token` on auth service)
 
-- Implemented in [`api/src/auth_routes.py`](../api/src/auth_routes.py) (`portal_issue_token`).
-- **Requires:** `AUTH_PORTAL_ENABLED=true` (default), `JWT_SECRET` set, Mongo reachable.
-- **Body:** `{ "email", "name" }` — email normalized to lowercase by Pydantic.
-- **Side effect:** `upsert_portal_user` → JWT `sub` is `portal:<ObjectId>` ([`portal_users.py`](../api/src/portal_users.py)).
-- **Not** authenticated with Google at the API boundary: the **Next server** must only forward the signed-in user’s email/name (trust boundary).
+- Implemented in [`auth/src/main.py`](../auth/src/main.py) (`google_issue_token`).
+- **Requires:** `JWT_SECRET`, `GOOGLE_CLIENT_IDS` (include your Next.js `GOOGLE_CLIENT_ID`), Mongo reachable (same DB as API for `portal_users`).
+- **Body:** `{ "id_token" }` — Google credential verified with `google-auth`.
+- **Side effect:** `upsert_portal_user` → JWT `sub` is `portal:<ObjectId>`.
 
-### 3. API key (`POST /auth/api-keys`)
+### 3. Web server action wiring
 
-- Implemented in [`api/src/api_key_routes.py`](../api/src/api_key_routes.py).
-- **Requires:** `AUTH_API_KEYS_ENABLED=true` (defaults to **false** in [`settings.py`](../api/src/settings.py) and in **root** [`docker-compose.yml`](../docker-compose.yml) `${AUTH_API_KEYS_ENABLED:-false}`).
-- **Header:** `Authorization: Bearer <portal JWT>`.
-- [`verify_bearer_token`](../api/src/auth.py) decodes HS256 with `JWT_SECRET`; `sub` becomes `owner_sub` for [`create_api_key`](../api/src/api_keys.py).
-- **Response:** One-time plaintext `apiKey` (`avcd_<uuid>_<secret>`).
+- [`app/actions/avcd-access-token.ts`](app/actions/avcd-access-token.ts): `getAvcdAccessTokenAction()` wraps [`getApiAccessJwt()`](lib/server/get-api-access-jwt.ts); [`lib/avcd-auth.ts`](lib/avcd-auth.ts) supplies **`AVCD_AUTH_URL`**.
+- **Browser never talks to FastAPI or the issuer** for this flow; only the Next **server** uses `fetch`.
 
-### 4. Web server action wiring
+### 4. Optional: API keys on the API (not used by web today)
 
-- [`app/actions/api-keys.ts`](app/actions/api-keys.ts): `portalAccessToken()` then `createApiKeyAction()` with `AVCD_API_URL` from [`lib/avcd-api.ts`](lib/avcd-api.ts).
-- **Browser never talks to FastAPI** for this flow; only the Next **server** uses `fetch`.
+- To mint an **opaque API key** (`avcd_…`), call the API yourself: `POST /auth/api-keys` with `Authorization: Bearer <this JWT>` when **`AUTH_API_KEYS_ENABLED=true`**. See [`api/src/api_key_routes.py`](../api/src/api_key_routes.py) and [`api/JWT_AUTH.md`](../api/JWT_AUTH.md).
 
-## Configuration checklist (token minting)
+## Configuration checklist (JWT on home page)
 
 | Layer | Variable / condition |
 |--------|----------------------|
-| API | `JWT_SECRET` non-empty |
-| API | `AUTH_PORTAL_ENABLED=true` (default) |
-| API | `AUTH_API_KEYS_ENABLED=true` (**required**; off → 404 on `/auth/api-keys`) |
-| API | Mongo + Redis up (Mongo used for portal users and API key docs) |
-| Web | `AVCD_API_URL` reachable **from the Next process** (host dev: `http://127.0.0.1:8000`; same Compose network: `http://api:8000`) |
-| Web | User signed in with Google; session has email |
+| Auth service | `JWT_SECRET` (must match API when you call the API with this JWT) |
+| Auth service | `GOOGLE_CLIENT_IDS` includes web OAuth client ID |
+| Auth service | Mongo reachable (`portal_users`) |
+| Web | **`AVCD_AUTH_URL`** reachable from Next (`http://127.0.0.1:8010` or `http://auth:8000` in Compose) |
+| Web | User signed in with Google; **sign in again** if token fails with “no Google sign-in token” (ID token is refreshed on login) |
 
 ## Quick manual verification
 
-From the host (API on port 8000):
+Auth issuer on port **8010** (local compose) or **8000** when calling the container directly:
 
 ```bash
-# Portal JWT (replace email/name)
-TOKEN=$(curl -sS -X POST http://127.0.0.1:8000/auth/portal/token \
+# Requires a real Google id_token from your app or OAuth playground
+TOKEN=$(curl -sS -X POST http://127.0.0.1:8010/google/token \
   -H "Content-Type: application/json" \
-  -d '{"email":"you@example.com","name":"You"}' | jq -r .access_token)
+  -d '{"id_token":"YOUR_ID_TOKEN"}' | jq -r .access_token)
 
-# API key (requires AUTH_API_KEYS_ENABLED=true)
-curl -sS -X POST http://127.0.0.1:8000/auth/api-keys \
-  -H "Authorization: Bearer '$TOKEN'" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"cli-test"}'
+# Example: call the API with the JWT (API must be up; enable routes as needed)
+curl -sS http://127.0.0.1:8000/health
 ```
 
-## Using the minted key
+## Using the JWT
 
 - **MCP / Claude:** paste as API bearer token or `AVCD_API_BEARER_TOKEN` (see MCP `manifest.json` `user_config.api_bearer_token`).
-- **GraphQL / REST:** `Authorization: Bearer <apiKey>` when the API accepts opaque keys for those routes (see [`api/JWT_AUTH.md`](../api/JWT_AUTH.md)).
+- **GraphQL / REST:** `Authorization: Bearer <JWT>` for routes that accept the portal JWT (see [`api/JWT_AUTH.md`](../api/JWT_AUTH.md)).
 
 ## Common failures
 
 | Symptom | Likely cause |
 |---------|----------------|
-| 404 on portal token | `AUTH_PORTAL_ENABLED=false` |
-| 503 on portal token | `JWT_SECRET` missing |
-| 404 on api-keys | `AUTH_API_KEYS_ENABLED=false` (very common with Compose default) |
-| Connection error in UI | API down; wrong `AVCD_API_URL` (e.g. `http://api:8000` from host Next) |
-| “Invalid token” on api-keys | Wrong `JWT_SECRET` between mint and verify; expired JWT (retry) |
+| No API sign-in credential | Sign out and sign in again. At sign-in the server must reach **`AVCD_AUTH_URL`** to store **`avcdAccessJwt`** in the session cookie (avoids oversized Google `id_token` cookies). With **`AUTH_DEBUG=1`**, check `[avcd:auth-debug]` logs. |
+| 503 on `/google/token` | `JWT_SECRET` or `GOOGLE_CLIENT_IDS` missing on auth service |
+| 401 on `/google/token` | Expired or invalid `id_token`; sign in again |
+| Connection error in UI | Auth down or wrong **`AVCD_AUTH_URL`** |

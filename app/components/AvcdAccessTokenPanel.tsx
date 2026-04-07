@@ -2,13 +2,7 @@
 
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
 
-import {
-  createApiKeyAction,
-  revokeApiKeyAction,
-} from "@/app/actions/api-keys";
-
-/** Stable label for the browser-minted key (listed in API if you query keys elsewhere). */
-const BROWSER_API_KEY_NAME = "Browser";
+import { getAvcdAccessTokenAction } from "@/app/actions/avcd-access-token";
 
 const btnPrimary: CSSProperties = {
   fontFamily: "var(--font-body)",
@@ -31,35 +25,31 @@ const btnSecondary: CSSProperties = {
   boxShadow: "none",
 };
 
-export function ApiKeysPanel() {
-  const [apiKey, setApiKey] = useState<string | null>(null);
-  const [keyId, setKeyId] = useState<string | null>(null);
+export function AvcdAccessTokenPanel() {
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copyHint, setCopyHint] = useState<string | null>(null);
 
-  const mint = useCallback(async () => {
+  const loadToken = useCallback(async () => {
     setError(null);
     try {
-      const r = await createApiKeyAction(BROWSER_API_KEY_NAME);
+      const r = await getAvcdAccessTokenAction();
       if (!r.ok) {
         setError(r.error);
-        setApiKey(null);
-        setKeyId(null);
+        setToken(null);
         return false;
       }
-      setApiKey(r.key.apiKey);
-      setKeyId(r.key.keyId);
+      setToken(r.token);
       return true;
     } catch (e) {
       const msg =
         e instanceof Error
           ? e.message
-          : "Something went wrong while creating the token.";
+          : "Something went wrong while loading the token.";
       setError(msg);
-      setApiKey(null);
-      setKeyId(null);
+      setToken(null);
       return false;
     }
   }, []);
@@ -69,7 +59,7 @@ export function ApiKeysPanel() {
     (async () => {
       setLoading(true);
       try {
-        await mint();
+        await loadToken();
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -77,21 +67,14 @@ export function ApiKeysPanel() {
     return () => {
       cancelled = true;
     };
-  }, [mint]);
+  }, [loadToken]);
 
   async function handleRefresh() {
     setBusy(true);
     setError(null);
     setCopyHint(null);
     try {
-      if (keyId) {
-        const rev = await revokeApiKeyAction(keyId);
-        if (!rev.ok) {
-          setError(rev.error);
-          return;
-        }
-      }
-      await mint();
+      await loadToken();
     } catch (e) {
       setError(
         e instanceof Error ? e.message : "Something went wrong while refreshing.",
@@ -130,7 +113,7 @@ export function ApiKeysPanel() {
           letterSpacing: "-0.02em",
         }}
       >
-        Token
+        Access token
       </h2>
       <p
         style={{
@@ -141,9 +124,12 @@ export function ApiKeysPanel() {
           lineHeight: 1.5,
         }}
       >
-        Paste into the MCP installer as the API bearer token (or set{" "}
-        <code style={{ fontSize: "0.88em" }}>AVCD_API_BEARER_TOKEN</code>
-        for stdio). <strong>Refresh</strong> revokes this secret and creates a new one.
+        This is your AVCD <strong>JWT</strong> (not an API key). Use it as{" "}
+        <code style={{ fontSize: "0.88em" }}>Authorization: Bearer …</code>{" "}
+        when calling the API, or paste it into the MCP installer / set{" "}
+        <code style={{ fontSize: "0.88em" }}>AVCD_API_BEARER_TOKEN</code> for
+        stdio. If it expired and refresh fails, sign out and sign in with Google
+        again.
       </p>
 
       {error ? (
@@ -174,9 +160,9 @@ export function ApiKeysPanel() {
             fontSize: "0.875rem",
           }}
         >
-          Generating token…
+          Loading token…
         </p>
-      ) : error && !apiKey ? (
+      ) : error && !token ? (
         <button
           type="button"
           style={btnSecondary}
@@ -185,7 +171,7 @@ export function ApiKeysPanel() {
             setBusy(true);
             setLoading(true);
             try {
-              await mint();
+              await loadToken();
             } finally {
               setLoading(false);
               setBusy(false);
@@ -194,7 +180,7 @@ export function ApiKeysPanel() {
         >
           Try again
         </button>
-      ) : apiKey ? (
+      ) : token ? (
         <div
           style={{
             borderRadius: "8px",
@@ -216,7 +202,7 @@ export function ApiKeysPanel() {
               marginBottom: "0.75rem",
             }}
           >
-            {apiKey}
+            {token}
           </div>
           {copyHint ? (
             <p
@@ -235,7 +221,7 @@ export function ApiKeysPanel() {
               type="button"
               style={btnPrimary}
               disabled={busy}
-              onClick={() => copySecret(apiKey)}
+              onClick={() => copySecret(token)}
             >
               Copy
             </button>
