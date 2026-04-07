@@ -202,9 +202,9 @@ export function GoogleLoginGate() {
               textAlign: "center",
             }}
           >
-            Sign out clears this app’s session. With an HTTPS site, you are also sent through
-            Google’s logout for this browser; on http://localhost, Google may skip that step—use a
-            deployed HTTPS URL for full Google logout. Other devices are unchanged.
+            Sign out clears this app’s session only. Your Google account may stay signed in in
+            this browser (that is normal). Use Google’s account chooser when signing in again, or
+            sign out of Google separately from google.com if you need to.
           </p>
         </div>
       </div>
