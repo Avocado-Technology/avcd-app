@@ -74,7 +74,7 @@ inputs:
     required: false
     default: ""
   web_avcd_auth_url:
-    description: Optional AVCD_AUTH_URL (e.g. http://auth:8000). When empty, docker-compose default applies.
+    description: Optional AVCD_AUTH_URL override. When empty, CI .env uses http://auth:8000 (same as docker-compose default).
     required: false
     default: ""
   web_auth_url:
@@ -230,6 +230,15 @@ runs:
         PORTS_B64=$(printf '%s' "$PORTS_IN" | base64 -w0)
         WEB_ENV_B64=""
         if [ -n "${WEB_AUTH_SECRET_IN:-}" ]; then
+          if [ -n "${GITHUB_ACTION_PATH:-}" ] && [ -f "${GITHUB_ACTION_PATH}/render-web-env.py" ]; then
+            RENDER_PY="${GITHUB_ACTION_PATH}/render-web-env.py"
+          else
+            RENDER_PY="${GITHUB_WORKSPACE}/.github/actions/droplet-compose-deploy/render-web-env.py"
+          fi
+          if [ ! -f "$RENDER_PY" ]; then
+            echo "::error::render-web-env.py not found (expected under the droplet-compose-deploy action directory)."
+            exit 1
+          fi
           WEB_PLAIN=$(
             export E_AS="$WEB_AUTH_SECRET_IN"
             export E_GID="$WEB_GCID_IN"
@@ -237,7 +246,7 @@ runs:
             export E_AVCD="$WEB_AVCD_IN"
             export E_AURL="$WEB_AURL_IN"
             export E_PH="$PUBLIC_HOST_IN"
-            python3 "$GITHUB_ACTION_PATH/render-web-env.py"
+            python3 "$RENDER_PY"
           )
           WEB_ENV_B64=$(printf '%s' "$WEB_PLAIN" | base64 -w0)
         fi

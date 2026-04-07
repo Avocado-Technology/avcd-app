@@ -39,7 +39,7 @@ If **`WEB_AUTH_SECRET`** is set, the vendored composite **writes** `DO_DEPLOY_PA
 | `WEB_AUTH_SECRET` | **Secret** | Auth.js `AUTH_SECRET` (e.g. `openssl rand -base64 32`). |
 | `WEB_GOOGLE_CLIENT_ID` | **Secret** | Google OAuth web client ID (`GOOGLE_CLIENT_ID`). |
 | `WEB_GOOGLE_CLIENT_SECRET` | **Secret** | Google OAuth client secret (`GOOGLE_CLIENT_SECRET`). |
-| `WEB_AVCD_AUTH_URL` | Variable (optional) | Issuer base for `POST …/google/token`. If unset, [`docker-compose.yml`](../docker-compose.yml) defaults to `http://auth:8000`. |
+| `WEB_AVCD_AUTH_URL` | Variable (optional) | Issuer base for `POST …/google/token`. If unset, CI-written `.env` still sets **`AVCD_AUTH_URL=http://auth:8000`** (override for Traefik, e.g. `https://your-host/auth`). |
 | `WEB_AUTH_URL` | Variable (optional) | Public site origin for NextAuth (`AUTH_URL`). If unset, CI sets `https://<PUBLIC_HOST>` (no trailing slash), using the hostname from `public_host` / `DO_WEB_HEALTH_URL`. |
 
 Values must be **single-line** (no raw newlines). **`NEXT_PUBLIC_AVCD_API_URL`** is not written by deploy: it is **build-time** in Next.js unless you add Docker build args (see [`Dockerfile`](../Dockerfile)); do not expect runtime `.env` alone to change the MCP installer hint on the home page.

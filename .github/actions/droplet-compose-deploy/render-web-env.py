@@ -23,15 +23,14 @@ def esc(s: str) -> str:
 def main() -> None:
     ph = os.environ["E_PH"]
     auth_url = (os.environ.get("E_AURL") or "").strip() or f"https://{ph}"
+    avcd = (os.environ.get("E_AVCD") or "").strip() or "http://auth:8000"
     lines = [
         "AUTH_SECRET=" + esc(os.environ["E_AS"]),
         "GOOGLE_CLIENT_ID=" + esc(os.environ["E_GID"]),
         "GOOGLE_CLIENT_SECRET=" + esc(os.environ["E_GSEC"]),
         "AUTH_URL=" + esc(auth_url),
+        "AVCD_AUTH_URL=" + esc(avcd),
     ]
-    avcd = (os.environ.get("E_AVCD") or "").strip()
-    if avcd:
-        lines.append("AVCD_AUTH_URL=" + esc(avcd))
     print("\n".join(lines) + "\n", end="")
 
 

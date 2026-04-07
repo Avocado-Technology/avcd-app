@@ -15,6 +15,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV AUTH_SECRET=build-time-placeholder-secret-min-32-chars-x
 ENV GOOGLE_CLIENT_ID=build-placeholder
 ENV GOOGLE_CLIENT_SECRET=build-placeholder
+# So server bundles keep runtime lookup for AVCD_AUTH_URL (same default as compose / runner image).
+ENV AVCD_AUTH_URL=http://auth:8000
 RUN npx next build
 
 FROM node:22-bookworm-slim AS runner
