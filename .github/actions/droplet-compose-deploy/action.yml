@@ -287,14 +287,15 @@ runs:
         docker network inspect avcd_edge >/dev/null 2>&1 || docker network create avcd_edge
         # When any --env-file is passed, Compose may not auto-load .env for interpolation; pass both so
         # server secrets stay available while CI PUBLIC_HOST wins (later file).
+        # --build rebuilds the image from the rsynced source on every deploy.
         if [ -f .env ] && [ -f .compose.ci.env ]; then
-          docker compose --env-file .env --env-file .compose.ci.env up -d --pull always --force-recreate
+          docker compose --env-file .env --env-file .compose.ci.env up -d --build --force-recreate
         elif [ -f .compose.ci.env ]; then
-          docker compose --env-file .compose.ci.env up -d --pull always --force-recreate
+          docker compose --env-file .compose.ci.env up -d --build --force-recreate
         elif [ -f .env ]; then
-          docker compose --env-file .env up -d --pull always --force-recreate
+          docker compose --env-file .env up -d --build --force-recreate
         else
-          docker compose up -d --pull always --force-recreate
+          docker compose up -d --build --force-recreate
         fi
         REMOTE_SCRIPT
 
