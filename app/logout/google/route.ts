@@ -1,8 +1,12 @@
 import { redirect } from "next/navigation";
 
+import { signOut } from "@/auth";
+
 /**
- * Legacy path from an older sign-out flow. Sign-out now goes straight to `/` after Auth.js.
+ * Legacy URL kept for bookmarks and prior deploys. Clears the Auth.js session
+ * (no Google `/Logout?continue=` hop), then sends the user home.
  */
-export function GET() {
+export async function GET() {
+  await signOut({ redirect: false, redirectTo: "/" });
   redirect("/");
 }
