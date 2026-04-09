@@ -45,6 +45,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // Allow relative URLs (paths starting with /)
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      // Allow same-origin URLs
+      try {
+        if (new URL(url).origin === new URL(baseUrl).origin) return url;
+      } catch {
+        return baseUrl;
+      }
+      // Default to baseUrl for external URLs
+      return baseUrl;
+    },
     async jwt({ token, account, trigger }) {
       const idTok = account?.id_token;
       const idOk = typeof idTok === "string" && idTok.length > 0;
