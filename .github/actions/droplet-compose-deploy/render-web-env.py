@@ -30,6 +30,7 @@ def main() -> None:
         "GOOGLE_CLIENT_SECRET=" + esc(os.environ["E_GSEC"]),
         "AUTH_URL=" + esc(auth_url),
         "AVCD_AUTH_URL=" + esc(avcd),
+        "AUTH_DEBUG=1",
     ]
     print("\n".join(lines) + "\n", end="")
 
