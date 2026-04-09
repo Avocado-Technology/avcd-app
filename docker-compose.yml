@@ -51,6 +51,14 @@ services:
       - traefik.enable=true
       # Required when the service joins more than one network; otherwise Traefik may pick the project bridge IP and return 404.
       - traefik.docker.network=avcd_edge
+      # High priority rule for NextAuth routes (must be higher than API's /api priority)
+      - traefik.http.routers.avcd-web-auth.rule=Host(`${PUBLIC_HOST:-localhost}`) && PathPrefix(`/api/auth`)
+      - traefik.http.routers.avcd-web-auth.entrypoints=websecure
+      - traefik.http.routers.avcd-web-auth.tls=true
+      - traefik.http.routers.avcd-web-auth.tls.certresolver=le
+      - traefik.http.routers.avcd-web-auth.priority=150
+      - traefik.http.routers.avcd-web-auth.service=avcd-web
+      # Default web route (lower priority than /api/auth)
       - traefik.http.routers.avcd-web.rule=Host(`${PUBLIC_HOST:-localhost}`)
       - traefik.http.routers.avcd-web.entrypoints=websecure
       - traefik.http.routers.avcd-web.tls=true
