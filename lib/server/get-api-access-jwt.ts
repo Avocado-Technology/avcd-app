@@ -5,6 +5,7 @@
 import { auth } from "@/auth";
 import { authDebug, dbgLen, isAuthDebugEnabled } from "@/lib/auth-debug";
 import { getAvcdAuthBaseUrl } from "@/lib/avcd-auth";
+import { getMcpServerUrl } from "@/lib/mcp-server-url";
 
 import {
   fetchBackend,
@@ -107,13 +108,18 @@ export async function getApiAccessJwt(): Promise<
     return { ok: false, error: msg };
   }
 
+  const mcpAudience = getMcpServerUrl();
+  
   const res = await fetchBackend(authBase, `${authBase}/google/token`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
     },
-    body: JSON.stringify({ id_token: idToken }),
+    body: JSON.stringify({ 
+      id_token: idToken,
+      resource: mcpAudience
+    }),
     cache: "no-store",
   });
   if (isConnectionFail(res)) {

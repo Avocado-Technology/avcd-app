@@ -1,4 +1,5 @@
 import { authDebug } from "@/lib/auth-debug";
+import { getMcpServerUrl } from "@/lib/mcp-server-url";
 
 /**
  * Calls the AVCD auth issuer (same as getApiAccessJwt). Used from the Auth.js jwt callback
@@ -13,6 +14,14 @@ export async function exchangeGoogleIdTokenForAvcdAccess(
     return null;
   }
   const base = raw.replace(/\/+$/, "");
+  const mcpAudience = getMcpServerUrl();
+  
+  authDebug("exchangeGoogle: starting", { 
+    authBase: base,
+    mcpAudience,
+    hasIdToken: Boolean(googleIdToken && googleIdToken.length > 0)
+  });
+  
   try {
     const res = await fetch(`${base}/google/token`, {
       method: "POST",
@@ -20,7 +29,10 @@ export async function exchangeGoogleIdTokenForAvcdAccess(
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({ id_token: googleIdToken }),
+      body: JSON.stringify({ 
+        id_token: googleIdToken,
+        resource: mcpAudience
+      }),
       cache: "no-store",
     });
     if (!res.ok) {

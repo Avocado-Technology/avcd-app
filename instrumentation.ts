@@ -1,4 +1,5 @@
 import { authDebug, isAuthDebugEnabled } from "@/lib/auth-debug";
+import { getMcpServerUrl } from "@/lib/mcp-server-url";
 
 /**
  * Runs once when the Node server starts (dev and production). Confirms AUTH_DEBUG is visible in the process.
@@ -21,5 +22,7 @@ export function register() {
     AUTH_DEBUG: process.env.AUTH_DEBUG ?? "(unset)",
     AVCD_AUTH_DEBUG: process.env.AVCD_AUTH_DEBUG ?? "(unset)",
     AVCD_AUTH_URL: process.env.AVCD_AUTH_URL ?? "(unset)",
+    AVCD_MCP_URL: process.env.AVCD_MCP_URL ?? "(unset)",
+    resolvedMcpUrl: getMcpServerUrl(),
   });
 }

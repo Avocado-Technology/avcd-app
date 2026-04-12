@@ -25,12 +25,25 @@ const btnSecondary: CSSProperties = {
   boxShadow: "none",
 };
 
-export function AvcdAccessTokenPanel() {
+export type AvcdAccessTokenPanelProps = {
+  /** Resolved on the server from PUBLIC_HOST / AVCD_MCP_URL so deploys show the right URL without a rebuild. */
+  mcpServerUrl: string;
+};
+
+export function AvcdAccessTokenPanel({ mcpServerUrl }: AvcdAccessTokenPanelProps) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copyHint, setCopyHint] = useState<string | null>(null);
+  const [mcpUrlCopyHint, setMcpUrlCopyHint] = useState<string | null>(null);
+  
+  // Determine environment based on URL
+  const environment = mcpServerUrl.includes('localhost') 
+    ? 'Local Development' 
+    : mcpServerUrl.includes('dev.avcd.ai')
+    ? 'Development'
+    : 'Production';
 
   const loadToken = useCallback(async () => {
     setError(null);
@@ -94,6 +107,17 @@ export function AvcdAccessTokenPanel() {
       setTimeout(() => setCopyHint(null), 3500);
     }
   }
+  
+  async function copyMcpUrl() {
+    try {
+      await navigator.clipboard.writeText(mcpServerUrl);
+      setMcpUrlCopyHint("MCP URL copied to clipboard.");
+      setTimeout(() => setMcpUrlCopyHint(null), 2500);
+    } catch {
+      setMcpUrlCopyHint("Could not copy — select and copy manually.");
+      setTimeout(() => setMcpUrlCopyHint(null), 3500);
+    }
+  }
 
   return (
     <section
@@ -131,6 +155,119 @@ export function AvcdAccessTokenPanel() {
         stdio. If it expired and refresh fails, sign out and sign in with Google
         again.
       </p>
+
+      {/* MCP Server Configuration Section */}
+      <div
+        style={{
+          marginBottom: "1rem",
+          padding: "0.75rem",
+          borderRadius: "6px",
+          background: "var(--avcd-surface-muted)",
+          border: "1px solid var(--avcd-border-light)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "0.5rem",
+          }}
+        >
+          <h3
+            style={{
+              margin: 0,
+              fontSize: "0.875rem",
+              fontFamily: "var(--font-display)",
+              fontWeight: 600,
+              color: "var(--avcd-text-on-light)",
+            }}
+          >
+            MCP Server Configuration
+          </h3>
+          <span
+            style={{
+              fontSize: "0.75rem",
+              fontFamily: "var(--font-body)",
+              color: "var(--avcd-text-muted)",
+              background: "var(--avcd-bg-deep)",
+              padding: "0.2rem 0.5rem",
+              borderRadius: "4px",
+            }}
+          >
+            {environment}
+          </span>
+        </div>
+        <p
+          style={{
+            margin: "0 0 0.5rem",
+            fontSize: "0.8125rem",
+            fontFamily: "var(--font-body)",
+            color: "var(--avcd-text-muted)",
+            lineHeight: 1.5,
+          }}
+        >
+          This token is valid for the MCP server at:
+        </p>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            marginBottom: "0.5rem",
+          }}
+        >
+          <code
+            style={{
+              flex: 1,
+              padding: "0.4rem 0.6rem",
+              borderRadius: "4px",
+              background: "var(--avcd-bg-deep)",
+              color: "var(--avcd-text-on-dark)",
+              fontFamily: "ui-monospace, monospace",
+              fontSize: "0.75rem",
+              wordBreak: "break-all",
+            }}
+          >
+            {mcpServerUrl}
+          </code>
+          <button
+            type="button"
+            style={{
+              ...btnSecondary,
+              padding: "0.35rem 0.7rem",
+              fontSize: "0.8125rem",
+            }}
+            onClick={copyMcpUrl}
+          >
+            Copy URL
+          </button>
+        </div>
+        {mcpUrlCopyHint ? (
+          <p
+            style={{
+              margin: 0,
+              fontSize: "0.75rem",
+              fontFamily: "var(--font-body)",
+              color: "var(--avcd-accent-sage)",
+            }}
+          >
+            {mcpUrlCopyHint}
+          </p>
+        ) : null}
+        <p
+          style={{
+            margin: "0.5rem 0 0",
+            fontSize: "0.75rem",
+            fontFamily: "var(--font-body)",
+            color: "var(--avcd-text-muted)",
+            lineHeight: 1.4,
+          }}
+        >
+          <strong>Usage:</strong> Copy the token below and paste it into Claude Desktop
+          bundle configuration or Claude Web MCP server settings.
+        </p>
+      </div>
 
       {error ? (
         <p

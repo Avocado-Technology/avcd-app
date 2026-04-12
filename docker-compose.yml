@@ -41,6 +41,7 @@ services:
         required: false
     environment:
       # Passed into the container; same value as Traefik Host() after interpolation (default localhost for local).
+      # MCP connector URL for users is derived as https://${PUBLIC_HOST}/mcp when AVCD_MCP_URL is unset (see lib/mcp-server-url.ts).
       PUBLIC_HOST: ${PUBLIC_HOST:-localhost}
       AUTH_URL: ${AUTH_URL:-http://localhost:3000}
       AUTH_SECRET: ${AUTH_SECRET:-}

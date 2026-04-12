@@ -1,15 +1,18 @@
 import { auth } from "@/auth";
+import { getMcpServerUrl } from "@/lib/mcp-server-url";
 
 import { AvcdAccessTokenPanel } from "./components/AvcdAccessTokenPanel";
+import { OAuthCredentialsPanel } from "./components/OAuthCredentialsPanel";
 import { GoogleLoginGate } from "./components/GoogleLoginGate";
 
 const MCP_BUNDLE_PATH = "/mcp/avcd-graphql.mcpb";
 
 export default async function Home() {
   const session = await auth();
+  const mcpServerUrl = getMcpServerUrl();
 
   if (!session) {
-    return <GoogleLoginGate />;
+    return <GoogleLoginGate mcpServerUrl={mcpServerUrl} />;
   }
 
   const publicApiBase = process.env.NEXT_PUBLIC_AVCD_API_URL?.trim();
@@ -102,7 +105,9 @@ export default async function Home() {
           </p>
         ) : null}
 
-        <AvcdAccessTokenPanel />
+        <AvcdAccessTokenPanel mcpServerUrl={mcpServerUrl} />
+        
+        <OAuthCredentialsPanel />
       </div>
     </main>
   );

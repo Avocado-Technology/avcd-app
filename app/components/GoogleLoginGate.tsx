@@ -46,7 +46,12 @@ function GoogleMark({ size = 20 }: { size?: number }) {
   );
 }
 
-export function GoogleLoginGate() {
+export type GoogleLoginGateProps = {
+  /** Shown so users know which MCP URL to use in Claude (full token appears after sign-in). */
+  mcpServerUrl: string;
+};
+
+export function GoogleLoginGate({ mcpServerUrl }: GoogleLoginGateProps) {
   const [signingIn, setSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -142,6 +147,54 @@ export function GoogleLoginGate() {
             Sign in with Google. You will always see Google’s account chooser so you can pick
             or add a different account after signing out.
           </p>
+          <div
+            style={{
+              margin: "1rem 0 0",
+              padding: "0.75rem 0.85rem",
+              borderRadius: "8px",
+              background: "rgba(245, 240, 232, 0.08)",
+              border: "1px solid rgba(245, 240, 232, 0.12)",
+            }}
+          >
+            <p
+              style={{
+                margin: 0,
+                fontSize: "0.7rem",
+                fontWeight: 600,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: "rgba(245, 240, 232, 0.55)",
+                fontFamily: "var(--font-body)",
+              }}
+            >
+              MCP server URL (Claude Web / Desktop)
+            </p>
+            <code
+              style={{
+                display: "block",
+                marginTop: "0.45rem",
+                fontSize: "0.78rem",
+                lineHeight: 1.45,
+                wordBreak: "break-all",
+                fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                color: "rgba(245, 240, 232, 0.92)",
+              }}
+            >
+              {mcpServerUrl}
+            </code>
+            <p
+              style={{
+                margin: "0.55rem 0 0",
+                fontSize: "0.78rem",
+                lineHeight: 1.45,
+                color: "rgba(245, 240, 232, 0.72)",
+                fontFamily: "var(--font-body)",
+              }}
+            >
+              After you sign in, this page shows your <strong>bearer token</strong> to paste into
+              Claude’s MCP connector settings together with this URL.
+            </p>
+          </div>
         </div>
 
         <div style={{ padding: "1.5rem 1.5rem 1.35rem" }}>
