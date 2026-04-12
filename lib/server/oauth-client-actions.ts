@@ -58,3 +58,30 @@ export async function getOAuthClientAction() {
     return { ok: false, error: "Network error" };
   }
 }
+
+export async function revokeOAuthClientAction() {
+  const tokenResult = await getApiAccessJwt();
+  if (!tokenResult.ok) {
+    return { ok: false, error: "Not authenticated" };
+  }
+
+  const authBase = getAvcdAuthBaseUrl();
+  
+  try {
+    const response = await fetch(`${authBase}/oauth/clients`, {
+      method: "DELETE",
+      headers: {
+        "Authorization": `Bearer ${tokenResult.token}`,
+      },
+    });
+
+    if (!response.ok) {
+      return { ok: false, error: "Failed to revoke client" };
+    }
+
+    const data = await response.json();
+    return { ok: true, revoked: data.revoked };
+  } catch {
+    return { ok: false, error: "Network error" };
+  }
+}

@@ -1,21 +1,16 @@
 import { auth } from "@/auth";
-import {
-  getMcpServerUrl,
-  getOAuthAuthorizationServerUrl,
-  getMcpResourceMetadataUrl,
-} from "@/lib/mcp-server-url";
+import { getMcpServerUrl } from "@/lib/mcp-server-url";
 
 import { AvcdAccessTokenPanel } from "./components/AvcdAccessTokenPanel";
 import { ClaudeConnectionSteps } from "./components/ClaudeConnectionSteps";
 import { GoogleLoginGate } from "./components/GoogleLoginGate";
+import { OAuthCredentialsPanel } from "./components/OAuthCredentialsPanel";
 
 const MCP_BUNDLE_PATH = "/mcp/avcd-graphql.mcpb";
 
 export default async function Home() {
   const session = await auth();
   const mcpServerUrl = getMcpServerUrl();
-  const authIssuerUrl = getOAuthAuthorizationServerUrl();
-  const resourceMetadataUrl = getMcpResourceMetadataUrl();
 
   if (!session) {
     return <GoogleLoginGate mcpServerUrl={mcpServerUrl} />;
@@ -111,12 +106,13 @@ export default async function Home() {
           </p>
         ) : null}
 
-          <ClaudeConnectionSteps
-          mcpServerUrl={mcpServerUrl}
-          authIssuerUrl={authIssuerUrl}
-          resourceMetadataUrl={resourceMetadataUrl}
-        />
+        {/* OAuth client credentials - primary method */}
+        <OAuthCredentialsPanel mcpServerUrl={mcpServerUrl} />
 
+        {/* Connection instructions for both OAuth and manual bearer */}
+        <ClaudeConnectionSteps mcpServerUrl={mcpServerUrl} />
+
+        {/* Access token for manual/fallback/API use */}
         <AvcdAccessTokenPanel mcpServerUrl={mcpServerUrl} />
       </div>
     </main>

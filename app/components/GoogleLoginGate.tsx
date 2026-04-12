@@ -191,9 +191,8 @@ export function GoogleLoginGate({ mcpServerUrl }: GoogleLoginGateProps) {
                 fontFamily: "var(--font-body)",
               }}
             >
-              After you sign in, this page shows step-by-step instructions for both{" "}
-              <strong>OAuth discovery</strong> (automatic) and <strong>manual bearer token</strong>{" "}
-              configuration methods.
+              After you sign in, you&apos;ll generate an OAuth client to connect Claude Web{" "}
+              with automated authentication. Manual bearer token method also available as fallback.
             </p>
           </div>
         </div>

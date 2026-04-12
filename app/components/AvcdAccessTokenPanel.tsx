@@ -148,12 +148,12 @@ export function AvcdAccessTokenPanel({ mcpServerUrl }: AvcdAccessTokenPanelProps
           lineHeight: 1.5,
         }}
       >
-        This is your AVCD <strong>Bearer access token</strong> (JWT). Use it for{" "}
-        <strong>manual MCP configuration</strong> (when the client asks for a bearer token or API key),{" "}
-        <strong>direct API calls</strong>, or <strong>bundle/installer</strong> fields{" "}
-        (<code style={{ fontSize: "0.88em" }}>AVCD_API_BEARER_TOKEN</code> for stdio). OAuth-capable clients{" "}
-        will obtain this token automatically via the authorization server — no copy from this page needed.{" "}
-        If expired, use <strong>Refresh token</strong> or sign out and sign in again.
+        This is your AVCD <strong>Bearer access token</strong> (JWT). If you&apos;re using OAuth (recommended, see above),{" "}
+        you don&apos;t need this token — Claude obtains it automatically. This token is for:{" "}
+        <strong>(1)</strong> Manual Bearer configuration if OAuth doesn&apos;t work,{" "}
+        <strong>(2)</strong> Direct API calls from your code,{" "}
+        <strong>(3)</strong> Claude Desktop bundle/stdio (<code style={{ fontSize: "0.88em" }}>AVCD_API_BEARER_TOKEN</code> env var).{" "}
+        Tokens expire after 1 hour. Use <strong>Refresh token</strong> or sign out and sign in again if expired.
       </p>
 
       {/* MCP Server Configuration Section */}
