@@ -144,7 +144,7 @@ export function GoogleLoginGate({ mcpServerUrl }: GoogleLoginGateProps) {
               fontFamily: "var(--font-body)",
             }}
           >
-            Sign in with Google. You will always see Google’s account chooser so you can pick
+            Sign in with Google. You will always see Google&apos;s account chooser so you can pick
             or add a different account after signing out.
           </p>
           <div
@@ -191,8 +191,9 @@ export function GoogleLoginGate({ mcpServerUrl }: GoogleLoginGateProps) {
                 fontFamily: "var(--font-body)",
               }}
             >
-              After you sign in, this page shows your <strong>bearer token</strong> to paste into
-              Claude’s MCP connector settings together with this URL.
+              After you sign in, this page shows step-by-step instructions for both{" "}
+              <strong>OAuth discovery</strong> (automatic) and <strong>manual bearer token</strong>{" "}
+              configuration methods.
             </p>
           </div>
         </div>
@@ -255,8 +256,8 @@ export function GoogleLoginGate({ mcpServerUrl }: GoogleLoginGateProps) {
               textAlign: "center",
             }}
           >
-            Sign out clears this app’s session only. Your Google account may stay signed in in
-            this browser (that is normal). Use Google’s account chooser when signing in again, or
+            Sign out clears this app&apos;s session only. Your Google account may stay signed in in
+            this browser (that is normal). Use Google&apos;s account chooser when signing in again, or
             sign out of Google separately from google.com if you need to.
           </p>
         </div>
