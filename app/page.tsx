@@ -2,7 +2,6 @@ import { auth } from "@/auth";
 import { getMcpServerUrl } from "@/lib/mcp-server-url";
 
 import { AvcdAccessTokenPanel } from "./components/AvcdAccessTokenPanel";
-import { OAuthCredentialsPanel } from "./components/OAuthCredentialsPanel";
 import { GoogleLoginGate } from "./components/GoogleLoginGate";
 
 const MCP_BUNDLE_PATH = "/mcp/avcd-graphql.mcpb";
@@ -106,8 +105,6 @@ export default async function Home() {
         ) : null}
 
         <AvcdAccessTokenPanel mcpServerUrl={mcpServerUrl} />
-        
-        <OAuthCredentialsPanel />
       </div>
     </main>
   );
