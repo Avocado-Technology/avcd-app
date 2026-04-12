@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { getMcpServerUrl } from "@/lib/mcp-server-url";
 
 import { AvcdAccessTokenPanel } from "./components/AvcdAccessTokenPanel";
+import { ClaudeConnectionSteps } from "./components/ClaudeConnectionSteps";
 import { GoogleLoginGate } from "./components/GoogleLoginGate";
 
 const MCP_BUNDLE_PATH = "/mcp/avcd-graphql.mcpb";
@@ -34,7 +35,7 @@ export default async function Home() {
       <div
         style={{
           width: "100%",
-          maxWidth: "26rem",
+          maxWidth: "min(32rem, 100%)",
           textAlign: "left",
           display: "flex",
           flexDirection: "column",
@@ -103,6 +104,8 @@ export default async function Home() {
             </code>
           </p>
         ) : null}
+
+        <ClaudeConnectionSteps mcpServerUrl={mcpServerUrl} />
 
         <AvcdAccessTokenPanel mcpServerUrl={mcpServerUrl} />
       </div>
