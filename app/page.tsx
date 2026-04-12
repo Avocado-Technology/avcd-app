@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { getSession } from "@auth0/nextjs-auth0";
 import { getMcpServerUrl } from "@/lib/mcp-server-url";
 
 import { AvcdAccessTokenPanel } from "./components/AvcdAccessTokenPanel";
@@ -9,10 +9,10 @@ import { OAuthCredentialsPanel } from "./components/OAuthCredentialsPanel";
 const MCP_BUNDLE_PATH = "/mcp/avcd-graphql.mcpb";
 
 export default async function Home() {
-  const session = await auth();
+  const session = await getSession();
   const mcpServerUrl = getMcpServerUrl();
 
-  if (!session) {
+  if (!session || !session.user) {
     return <GoogleLoginGate mcpServerUrl={mcpServerUrl} />;
   }
 

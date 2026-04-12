@@ -1,11 +1,11 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import type { Session } from "next-auth";
+import type { UserProfile } from "@auth0/nextjs-auth0/client";
 import Link from "next/link";
 
 type Props = {
-  session: Session;
+  session: { user: UserProfile };
 };
 
 const signOutButtonStyle: CSSProperties = {
@@ -94,7 +94,7 @@ export function AppTopBar({ session }: Props) {
           </p>
         ) : null}
       </div>
-      <Link href="/logout/google" prefetch={false} style={signOutButtonStyle}>
+      <Link href="/api/auth/logout" prefetch={false} style={signOutButtonStyle}>
         Sign out
       </Link>
     </header>

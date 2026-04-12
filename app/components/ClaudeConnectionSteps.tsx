@@ -93,10 +93,7 @@ export function ClaudeConnectionSteps({
         </p>
         <ol style={{ ...olStyle, paddingLeft: "1.5rem" }}>
           <li style={stepBase}>
-            <strong>Generate OAuth client</strong> in the <strong>OAuth Client Credentials</strong> panel above (one-time setup)
-          </li>
-          <li style={stepBase}>
-            <strong>Copy the Client ID</strong> from the panel
+            <strong>Copy the OAuth Client ID</strong> from the <strong>OAuth Client Credentials</strong> panel above
           </li>
           <li style={stepBase}>
             In <strong>Claude Web</strong>: Open Settings → Connectors → Add MCP Server
@@ -111,13 +108,13 @@ export function ClaudeConnectionSteps({
             Select <strong>OAuth</strong> as the authentication method
           </li>
           <li style={stepBase}>
-            <strong>Paste your Client ID</strong>
+            <strong>Paste the Client ID</strong> you copied
           </li>
           <li style={stepBase}>
-            Click <strong>Connect</strong> — Claude will open your browser for Google sign-in
+            Click <strong>Connect</strong> — Claude will open your browser for Auth0/Google sign-in
           </li>
           <li style={stepBase}>
-            After sign-in, Claude obtains the access token automatically. <strong>Done!</strong>
+            Sign in with your Google account (via Auth0). Claude obtains the access token automatically. <strong>Done!</strong>
           </li>
         </ol>
       </div>

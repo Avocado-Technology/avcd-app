@@ -1,18 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState, type CSSProperties } from "react";
-import { generateOAuthClientAction, getOAuthClientAction, revokeOAuthClientAction } from "@/lib/server/oauth-client-actions";
+import { useCallback, useState, type CSSProperties } from "react";
 
 export type OAuthCredentialsPanelProps = {
   mcpServerUrl: string;
 };
 
-type OAuthClient = {
-  client_id: string;
-  redirect_uris: string[];
-  created_at: string;
-  last_used_at?: string;
-};
+// Auth0 MCP Client - static, shared by all users
+const AUTH0_MCP_CLIENT_ID = process.env.NEXT_PUBLIC_AUTH0_MCP_CLIENT_ID || "cc5qINMngWbIsn02ZRC7zPMEpFkqe58y";
+const AUTH0_DOMAIN = process.env.NEXT_PUBLIC_AUTH0_ISSUER_BASE_URL?.replace('https://', '') || "avcdtech.us.auth0.com";
 
 const btnPrimary: CSSProperties = {
   fontFamily: "var(--font-body)",
@@ -36,14 +32,9 @@ const btnSecondary: CSSProperties = {
 };
 
 export function OAuthCredentialsPanel({ mcpServerUrl }: OAuthCredentialsPanelProps) {
-  const [client, setClient] = useState<OAuthClient | null>(null);
-  const [newCredentials, setNewCredentials] = useState<OAuthClient | null>(null);
-  const [loadingExisting, setLoadingExisting] = useState(true);
-  const [generating, setGenerating] = useState(false);
-  const [revoking, setRevoking] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [clientIdCopyHint, setClientIdCopyHint] = useState<string | null>(null);
   const [mcpUrlCopyHint, setMcpUrlCopyHint] = useState<string | null>(null);
+  const [authUrlCopyHint, setAuthUrlCopyHint] = useState<string | null>(null);
   
   // Determine environment from mcpServerUrl
   const environment = mcpServerUrl.includes('localhost') 
@@ -52,94 +43,9 @@ export function OAuthCredentialsPanel({ mcpServerUrl }: OAuthCredentialsPanelPro
     ? 'Development'
     : 'Production';
 
-  // Load existing client on mount
-  useEffect(() => {
-    let cancelled = false;
-    
-    async function loadExisting() {
-      setLoadingExisting(true);
-      setError(null);
-      try {
-        const result = await getOAuthClientAction();
-        if (!cancelled) {
-          if (result.ok && result.client) {
-            setClient(result.client);
-          }
-        }
-      } catch (e) {
-        if (!cancelled) {
-          setError(e instanceof Error ? e.message : "Failed to load OAuth client");
-        }
-      } finally {
-        if (!cancelled) {
-          setLoadingExisting(false);
-        }
-      }
-    }
-    
-    loadExisting();
-    
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  async function handleGenerate() {
-    setGenerating(true);
-    setError(null);
-    
-    try {
-      const result = await generateOAuthClientAction("Claude Web MCP Client");
-      
-      if (result.ok) {
-        setNewCredentials(result.client);
-        setClient(result.client);
-      } else {
-        // If error is "already has client", try to load it
-        if (result.error.includes("already has")) {
-          const loadResult = await getOAuthClientAction();
-          if (loadResult.ok && loadResult.client) {
-            setClient(loadResult.client);
-            setError("You already have an OAuth client. Using existing client.");
-          } else {
-            setError(result.error);
-          }
-        } else {
-          setError(result.error);
-        }
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to generate client");
-    } finally {
-      setGenerating(false);
-    }
-  }
-
-  async function handleRevoke() {
-    if (!confirm("Are you sure you want to revoke this OAuth client? You'll need to generate a new one to reconnect Claude Web.")) {
-      return;
-    }
-    
-    setRevoking(true);
-    setError(null);
-    
-    try {
-      const result = await revokeOAuthClientAction();
-      
-      if (result.ok) {
-        setClient(null);
-        setNewCredentials(null);
-        setClientIdCopyHint("Client revoked successfully");
-        setTimeout(() => setClientIdCopyHint(null), 2000);
-      } else {
-        setError(result.error || "Failed to revoke client");
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to revoke client");
-    } finally {
-      setRevoking(false);
-    }
-  }
+  // Auth0 OAuth URLs
+  const authorizationUrl = `https://${AUTH0_DOMAIN}/authorize`;
+  const tokenUrl = `https://${AUTH0_DOMAIN}/oauth/token`;
 
   const copyToClipboard = useCallback(async (text: string, setHint: (msg: string | null) => void) => {
     try {
@@ -199,8 +105,8 @@ export function OAuthCredentialsPanel({ mcpServerUrl }: OAuthCredentialsPanelPro
           lineHeight: 1.5,
         }}
       >
-        Generate an OAuth client to connect Claude Web with automated authentication (recommended).
-        Claude will handle token refresh automatically.
+        Use this OAuth client ID to connect Claude with automated authentication via Auth0 (recommended).
+        All users share the same client ID. Claude will handle token refresh automatically using PKCE.
       </p>
 
       {/* MCP Server URL - always visible */}
@@ -251,123 +157,111 @@ export function OAuthCredentialsPanel({ mcpServerUrl }: OAuthCredentialsPanelPro
         </button>
       </div>
 
-      {loadingExisting && (
-        <div style={{ padding: "1rem", textAlign: "center", color: "var(--avcd-text-muted)", fontSize: "0.875rem" }}>
-          Loading existing client...
+      {/* Auth0 MCP Client ID - Static, shared by all users */}
+      <div
+        style={{
+          padding: "0.75rem",
+          borderRadius: "6px",
+          background: "var(--avcd-surface-light)",
+          border: "1px solid var(--avcd-border-light)",
+          marginBottom: "1rem",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+          <h3
+            style={{
+              margin: 0,
+              fontSize: "0.875rem",
+              fontFamily: "var(--font-display)",
+              fontWeight: 600,
+              color: "var(--avcd-text-on-light)",
+            }}
+          >
+            OAuth Client ID
+          </h3>
+          {clientIdCopyHint && (
+            <span style={{ fontSize: "0.75rem", color: "var(--avcd-text-muted)", fontStyle: "italic" }}>
+              {clientIdCopyHint}
+            </span>
+          )}
         </div>
-      )}
-
-      {!loadingExisting && !client && !newCredentials && (
-        <button
-          onClick={handleGenerate}
-          disabled={generating}
-          style={{ ...btnPrimary, opacity: generating ? 0.6 : 1, cursor: generating ? "wait" : "pointer" }}
-        >
-          {generating ? "Generating..." : "Generate OAuth Client"}
-        </button>
-      )}
-
-      {!loadingExisting && (client || newCredentials) && (
-        <div
+        <code
           style={{
-            padding: "0.75rem",
-            borderRadius: "6px",
-            background: "var(--avcd-surface-light)",
-            border: "1px solid var(--avcd-border-light)",
+            display: "block",
+            fontSize: "0.8125rem",
+            fontFamily: "ui-monospace, monospace",
+            color: "var(--avcd-text-on-light)",
+            wordBreak: "break-all",
+            marginBottom: "0.75rem",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-            <h3
-              style={{
-                margin: 0,
-                fontSize: "0.875rem",
-                fontFamily: "var(--font-display)",
-                fontWeight: 600,
-                color: "var(--avcd-text-on-light)",
-              }}
-            >
-              Client ID
-            </h3>
-            {clientIdCopyHint && (
-              <span style={{ fontSize: "0.75rem", color: "var(--avcd-text-muted)", fontStyle: "italic" }}>
-                {clientIdCopyHint}
-              </span>
-            )}
+          {AUTH0_MCP_CLIENT_ID}
+        </code>
+
+        <button
+          onClick={() => copyToClipboard(AUTH0_MCP_CLIENT_ID, setClientIdCopyHint)}
+          style={btnSecondary}
+        >
+          Copy Client ID
+        </button>
+      </div>
+
+      {/* Auth0 OAuth URLs */}
+      <div
+        style={{
+          padding: "0.75rem",
+          borderRadius: "6px",
+          background: "var(--avcd-surface-light)",
+          border: "1px solid var(--avcd-border-light)",
+        }}
+      >
+        <h3
+          style={{
+            margin: "0 0 0.75rem",
+            fontSize: "0.875rem",
+            fontFamily: "var(--font-display)",
+            fontWeight: 600,
+            color: "var(--avcd-text-on-light)",
+          }}
+        >
+          OAuth Configuration
+        </h3>
+        
+        <div style={{ marginBottom: "0.75rem" }}>
+          <div style={{ fontSize: "0.75rem", color: "var(--avcd-text-muted)", marginBottom: "0.25rem" }}>
+            <strong>Authorization URL:</strong>
           </div>
           <code
             style={{
               display: "block",
-              fontSize: "0.8125rem",
+              fontSize: "0.75rem",
               fontFamily: "ui-monospace, monospace",
               color: "var(--avcd-text-on-light)",
               wordBreak: "break-all",
-              marginBottom: "0.75rem",
+              marginBottom: "0.5rem",
             }}
           >
-            {(client || newCredentials)?.client_id}
+            {authorizationUrl}
           </code>
-
-          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.75rem" }}>
-            <button
-              onClick={() => copyToClipboard((client || newCredentials)!.client_id, setClientIdCopyHint)}
-              style={btnSecondary}
-            >
-              Copy Client ID
-            </button>
-            <button
-              onClick={handleRevoke}
-              disabled={revoking}
-              style={{
-                ...btnSecondary,
-                opacity: revoking ? 0.6 : 1,
-                cursor: revoking ? "wait" : "pointer",
-                color: "#9b4444",
-              }}
-            >
-              {revoking ? "Revoking..." : "Revoke Client"}
-            </button>
-          </div>
-
-          <div style={{ fontSize: "0.75rem", color: "var(--avcd-text-muted)", marginBottom: "0.5rem" }}>
-            <strong>Redirect URIs:</strong>
-          </div>
-          <ul style={{ margin: "0 0 0.75rem", paddingLeft: "1.25rem", fontSize: "0.75rem", color: "var(--avcd-text-muted)" }}>
-            {(client || newCredentials)?.redirect_uris.map((uri: string) => (
-              <li key={uri}>
-                <code style={{ fontSize: "0.7em", fontFamily: "ui-monospace, monospace" }}>{uri}</code>
-              </li>
-            ))}
-          </ul>
-
-          <div style={{ fontSize: "0.75rem", color: "var(--avcd-text-muted)" }}>
-            <div>
-              <strong>Created:</strong> {new Date((client || newCredentials)!.created_at).toLocaleString()}
-            </div>
-            {((client || newCredentials)?.last_used_at) && (
-              <div>
-                <strong>Last used:</strong> {new Date((client || newCredentials)!.last_used_at!).toLocaleString()}
-              </div>
-            )}
-          </div>
+          <button
+            onClick={() => copyToClipboard(authorizationUrl, setAuthUrlCopyHint)}
+            style={{ ...btnSecondary, fontSize: "0.8125rem", padding: "0.35rem 0.7rem" }}
+          >
+            Copy Auth URL
+          </button>
+          {authUrlCopyHint && (
+            <span style={{ marginLeft: "0.5rem", fontSize: "0.75rem", color: "var(--avcd-text-muted)", fontStyle: "italic" }}>
+              {authUrlCopyHint}
+            </span>
+          )}
         </div>
-      )}
 
-      {error && (
-        <div
-          style={{
-            marginTop: "1rem",
-            padding: "0.75rem",
-            borderRadius: "6px",
-            background: "rgba(155, 68, 68, 0.1)",
-            border: "1px solid rgba(155, 68, 68, 0.3)",
-            color: "#9b4444",
-            fontSize: "0.875rem",
-            fontFamily: "var(--font-body)",
-          }}
-        >
-          {error}
+        <div style={{ fontSize: "0.75rem", color: "var(--avcd-text-muted)" }}>
+          <div><strong>Token URL:</strong> <code style={{ fontSize: "0.7em" }}>{tokenUrl}</code></div>
+          <div><strong>Method:</strong> PKCE (no client secret required)</div>
+          <div><strong>Scopes:</strong> <code style={{ fontSize: "0.7em" }}>openid profile email offline_access</code></div>
         </div>
-      )}
+      </div>
     </section>
   );
 }

@@ -1,14 +1,14 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
 
 function messageForAuthError(code: string | null): string | null {
   if (!code) return null;
   switch (code) {
     case "Configuration":
-      return "Sign-in is misconfigured on the server (check AUTH_SECRET and OAuth settings).";
+      return "Sign-in is misconfigured on the server (check Auth0 settings).";
     case "AccessDenied":
+    case "access_denied":
       return "Access was denied. You may not be allowed to sign in.";
     case "Verification":
       return "The sign-in link expired or was already used. Try again.";
@@ -204,7 +204,8 @@ export function GoogleLoginGate({ mcpServerUrl }: GoogleLoginGateProps) {
             onClick={() => {
               setError(null);
               setSigningIn(true);
-              void signIn("google", { callbackUrl: "/" });
+              // Redirect to Auth0 Universal Login
+              window.location.href = "/api/auth/login";
             }}
             style={{
               width: "100%",
