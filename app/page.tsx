@@ -28,43 +28,42 @@ export default async function Home() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "flex-start",
-        padding: "clamp(1.5rem, 5vw, 2.5rem)",
-        paddingBottom: "clamp(2.5rem, 8vw, 4rem)",
-        background: "var(--avcd-surface-light)",
+        padding: "var(--sp-12) var(--sp-6) var(--sp-16)",
+        background: "var(--g50)",
       }}
     >
       <div
         style={{
           width: "100%",
-          maxWidth: "min(32rem, 100%)",
+          maxWidth: "1080px",
           textAlign: "left",
           display: "flex",
           flexDirection: "column",
-          gap: "2.25rem",
+          gap: "var(--sp-8)",
         }}
       >
         <header>
           <h1
             style={{
               margin: 0,
-              fontSize: "1.25rem",
-              fontFamily: "var(--font-display)",
+              fontSize: "2rem",
+              fontFamily: "var(--sans)",
               fontWeight: 600,
-              color: "var(--avcd-text-on-light)",
-              letterSpacing: "-0.02em",
-              lineHeight: 1.3,
+              color: "var(--g900)",
+              letterSpacing: "-0.03em",
+              lineHeight: 1.2,
             }}
           >
-            MCP setup
+            MCP Setup
           </h1>
-          <p style={{ margin: "0.85rem 0 0" }}>
+          <p style={{ margin: "var(--sp-3) 0 0", fontSize: "1rem", color: "var(--g700)", lineHeight: 1.6 }}>
             <a
               href={MCP_BUNDLE_PATH}
               download="avcd-graphql.mcpb"
               style={{
-                fontFamily: "var(--font-body)",
-                fontSize: "0.9375rem",
-                fontWeight: 500,
+                fontFamily: "var(--sans)",
+                fontSize: "1rem",
+                fontWeight: 400,
               }}
             >
               Download MCP bundle
@@ -72,14 +71,14 @@ export default async function Home() {
           </p>
           <p
             style={{
-              margin: "0.65rem 0 0",
-              fontSize: "0.75rem",
-              fontFamily: "var(--font-body)",
-              color: "var(--avcd-text-muted)",
-              lineHeight: 1.45,
+              margin: "var(--sp-2) 0 0",
+              fontSize: "0.875rem",
+              fontFamily: "var(--mono)",
+              color: "var(--g500)",
+              lineHeight: 1.5,
             }}
           >
-            Bundle missing? Run <code style={{ fontSize: "0.7em" }}>make -C mcp publish</code>.
+            Bundle missing? Run <code style={{ fontSize: "0.875rem" }}>make -C mcp publish</code>.
           </p>
         </header>
 
@@ -88,17 +87,18 @@ export default async function Home() {
             style={{
               margin: 0,
               fontSize: "0.875rem",
-              fontFamily: "var(--font-body)",
-              color: "var(--avcd-text-on-light)",
-              lineHeight: 1.5,
+              fontFamily: "var(--sans)",
+              color: "var(--g700)",
+              lineHeight: 1.6,
             }}
           >
             API URL for the installer:{" "}
             <code
               style={{
-                fontSize: "0.82em",
+                fontSize: "0.875rem",
                 wordBreak: "break-all",
-                fontFamily: "ui-monospace, monospace",
+                fontFamily: "var(--mono)",
+                color: "var(--g500)",
               }}
             >
               {installerApiUrl}

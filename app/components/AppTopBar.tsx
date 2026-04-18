@@ -1,25 +1,10 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import type { UserProfile } from "@auth0/nextjs-auth0/client";
 import Link from "next/link";
 
 type Props = {
   session: { user: UserProfile };
-};
-
-const signOutButtonStyle: CSSProperties = {
-  flexShrink: 0,
-  fontSize: "0.8125rem",
-  fontFamily: "var(--font-body)",
-  padding: "0.4rem 0.85rem",
-  borderRadius: "6px",
-  border: "1px solid rgba(245, 240, 232, 0.35)",
-  background: "transparent",
-  color: "var(--avcd-text-on-dark)",
-  cursor: "pointer",
-  textDecoration: "none",
-  display: "inline-block",
 };
 
 export function AppTopBar({ session }: Props) {
@@ -32,69 +17,85 @@ export function AppTopBar({ session }: Props) {
     <header
       role="banner"
       style={{
+        height: "56px",
         display: "flex",
-        flexWrap: "wrap",
         alignItems: "center",
         justifyContent: "space-between",
-        gap: "0.75rem",
-        padding: "0.65rem clamp(1rem, 3vw, 1.5rem)",
-        borderBottom: "1px solid var(--avcd-border-light)",
-        background:
-          "linear-gradient(165deg, var(--avcd-bg-elevated) 0%, #15261c 100%)",
-        boxShadow: "0 1px 0 rgba(245, 240, 232, 0.06)",
+        gap: "var(--sp-4)",
+        padding: "0 var(--sp-6)",
+        background: "rgba(255,255,255,0.85)",
+        backdropFilter: "blur(16px)",
+        borderBottom: "1px solid var(--g200)",
+        position: "sticky",
+        top: 0,
+        zIndex: 200,
       }}
     >
-      <div style={{ minWidth: 0 }}>
-        <p
+      <div style={{ display: "flex", alignItems: "center", gap: "var(--sp-2)", minWidth: 0 }}>
+        <div
           style={{
-            margin: 0,
-            fontSize: "0.7rem",
-            fontWeight: 600,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            color: "rgba(245, 240, 232, 0.5)",
-            fontFamily: "var(--font-body)",
+            width: "7px",
+            height: "7px",
+            borderRadius: "50%",
+            background: "var(--green)",
+            flexShrink: 0,
+          }}
+          aria-hidden
+        />
+        <span
+          style={{
+            fontSize: "0.875rem",
+            fontFamily: "var(--sans)",
+            fontWeight: 500,
+            color: "var(--g900)",
+            letterSpacing: "-0.01em",
           }}
         >
-          AVCD Tech
-        </p>
-        <p
+          AVCD
+        </span>
+        <span
           style={{
-            margin: "0.15rem 0 0",
-            fontSize: "1rem",
-            fontWeight: 600,
-            fontFamily: "var(--font-display)",
-            color: "var(--avcd-text-on-dark)",
-            letterSpacing: "-0.02em",
-            lineHeight: 1.25,
+            fontSize: "0.75rem",
+            fontFamily: "var(--mono)",
+            fontWeight: 400,
+            color: "var(--g500)",
+            marginLeft: "var(--sp-2)",
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
-            maxWidth: "min(50vw, 20rem)",
           }}
           title={displayName}
         >
           {displayName}
-        </p>
-        {session.user?.email && session.user?.name ? (
-          <p
-            style={{
-              margin: "0.2rem 0 0",
-              fontSize: "0.75rem",
-              color: "rgba(245, 240, 232, 0.72)",
-              fontFamily: "var(--font-body)",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              maxWidth: "min(70vw, 24rem)",
-            }}
-            title={session.user.email}
-          >
-            {session.user.email}
-          </p>
-        ) : null}
+        </span>
       </div>
-      <Link href="/api/auth/logout" prefetch={false} style={signOutButtonStyle}>
+      <Link
+        href="/api/auth/logout"
+        prefetch={false}
+        style={{
+          flexShrink: 0,
+          fontSize: "0.75rem",
+          fontFamily: "var(--sans)",
+          fontWeight: 500,
+          padding: "var(--sp-2) var(--sp-4)",
+          borderRadius: "var(--r-md)",
+          border: "1px solid var(--g300)",
+          background: "var(--bg)",
+          color: "var(--g700)",
+          cursor: "pointer",
+          textDecoration: "none",
+          display: "inline-block",
+          transition: "border-color 0.15s, color 0.15s",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = "var(--g400)";
+          e.currentTarget.style.color = "var(--g900)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = "var(--g300)";
+          e.currentTarget.style.color = "var(--g700)";
+        }}
+      >
         Sign out
       </Link>
     </header>

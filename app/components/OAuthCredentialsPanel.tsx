@@ -6,29 +6,20 @@ export type OAuthCredentialsPanelProps = {
   mcpServerUrl: string;
 };
 
-// Auth0 MCP Client - static, shared by all users
 const AUTH0_MCP_CLIENT_ID = process.env.NEXT_PUBLIC_AUTH0_MCP_CLIENT_ID || "cc5qINMngWbIsn02ZRC7zPMEpFkqe58y";
 const AUTH0_DOMAIN = process.env.NEXT_PUBLIC_AUTH0_ISSUER_BASE_URL?.replace('https://', '') || "avcdtech.us.auth0.com";
 
-const btnPrimary: CSSProperties = {
-  fontFamily: "var(--font-body)",
-  fontSize: "0.875rem",
-  fontWeight: 600,
-  padding: "0.45rem 0.9rem",
-  borderRadius: "6px",
-  border: "none",
-  cursor: "pointer",
-  background: "var(--avcd-bg-elevated)",
-  color: "var(--avcd-text-on-dark)",
-  boxShadow: "0 1px 2px rgba(15, 24, 18, 0.12)",
-};
-
 const btnSecondary: CSSProperties = {
-  ...btnPrimary,
-  background: "var(--avcd-surface-muted)",
-  color: "var(--avcd-text-on-light)",
-  border: "1px solid var(--avcd-border-light)",
-  boxShadow: "none",
+  fontFamily: "var(--sans)",
+  fontSize: "0.75rem",
+  fontWeight: 500,
+  padding: "var(--sp-2) var(--sp-4)",
+  borderRadius: "var(--r-md)",
+  border: "1px solid var(--g300)",
+  background: "var(--bg)",
+  color: "var(--g700)",
+  cursor: "pointer",
+  transition: "border-color 0.15s, color 0.15s, background 0.15s",
 };
 
 export function OAuthCredentialsPanel({ mcpServerUrl }: OAuthCredentialsPanelProps) {
@@ -36,14 +27,12 @@ export function OAuthCredentialsPanel({ mcpServerUrl }: OAuthCredentialsPanelPro
   const [mcpUrlCopyHint, setMcpUrlCopyHint] = useState<string | null>(null);
   const [authUrlCopyHint, setAuthUrlCopyHint] = useState<string | null>(null);
   
-  // Determine environment from mcpServerUrl
   const environment = mcpServerUrl.includes('localhost') 
     ? 'Local Development' 
     : mcpServerUrl.includes('dev.avcd.ai')
     ? 'Development'
     : 'Production';
 
-  // Auth0 OAuth URLs
   const authorizationUrl = `https://${AUTH0_DOMAIN}/authorize`;
   const tokenUrl = `https://${AUTH0_DOMAIN}/oauth/token`;
 
@@ -62,21 +51,20 @@ export function OAuthCredentialsPanel({ mcpServerUrl }: OAuthCredentialsPanelPro
     <section
       style={{
         width: "100%",
-        padding: "1rem 1.05rem",
-        borderRadius: "10px",
-        background: "var(--avcd-surface-muted)",
-        border: "1px solid var(--avcd-border-light)",
-        position: "relative",
+        padding: "var(--sp-6)",
+        borderRadius: "var(--r-xl)",
+        background: "var(--bg)",
+        border: "1px solid var(--g200)",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "var(--sp-4)" }}>
         <h2
           style={{
             margin: 0,
-            fontSize: "1.1rem",
-            fontFamily: "var(--font-display)",
-            fontWeight: 600,
-            color: "var(--avcd-text-on-light)",
+            fontSize: "1.125rem",
+            fontFamily: "var(--sans)",
+            fontWeight: 500,
+            color: "var(--g900)",
             letterSpacing: "-0.02em",
           }}
         >
@@ -84,12 +72,14 @@ export function OAuthCredentialsPanel({ mcpServerUrl }: OAuthCredentialsPanelPro
         </h2>
         <span
           style={{
-            fontSize: "0.75rem",
-            fontFamily: "var(--font-body)",
-            color: "var(--avcd-text-muted)",
-            background: "var(--avcd-bg-deep)",
-            padding: "0.2rem 0.5rem",
-            borderRadius: "4px",
+            fontSize: "0.6875rem",
+            fontFamily: "var(--mono)",
+            fontWeight: 400,
+            color: "var(--g500)",
+            background: "var(--g100)",
+            padding: "var(--sp-1) var(--sp-3)",
+            borderRadius: "var(--r-sm)",
+            letterSpacing: "0.02em",
           }}
         >
           {environment}
@@ -98,41 +88,42 @@ export function OAuthCredentialsPanel({ mcpServerUrl }: OAuthCredentialsPanelPro
 
       <p
         style={{
-          margin: "0 0 1rem",
-          fontSize: "0.875rem",
-          fontFamily: "var(--font-body)",
-          color: "var(--avcd-text-muted)",
-          lineHeight: 1.5,
+          margin: "0 0 var(--sp-6)",
+          fontSize: "1rem",
+          fontFamily: "var(--sans)",
+          color: "var(--g500)",
+          lineHeight: 1.6,
         }}
       >
         Use this OAuth client ID to connect Claude with automated authentication via Auth0 (recommended).
         All users share the same client ID. Claude will handle token refresh automatically using PKCE.
       </p>
 
-      {/* MCP Server URL - always visible */}
       <div
         style={{
-          marginBottom: "1rem",
-          padding: "0.75rem",
-          borderRadius: "6px",
-          background: "var(--avcd-surface-light)",
-          border: "1px solid var(--avcd-border-light)",
+          marginBottom: "var(--sp-4)",
+          padding: "var(--sp-4)",
+          borderRadius: "var(--r-md)",
+          background: "var(--g50)",
+          border: "1px solid var(--g200)",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "var(--sp-3)" }}>
           <h3
             style={{
               margin: 0,
-              fontSize: "0.875rem",
-              fontFamily: "var(--font-display)",
-              fontWeight: 600,
-              color: "var(--avcd-text-on-light)",
+              fontSize: "0.75rem",
+              fontFamily: "var(--mono)",
+              fontWeight: 500,
+              color: "var(--g500)",
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
             }}
           >
             MCP Server URL
           </h3>
           {mcpUrlCopyHint && (
-            <span style={{ fontSize: "0.75rem", color: "var(--avcd-text-muted)", fontStyle: "italic" }}>
+            <span style={{ fontSize: "0.75rem", color: "var(--green)", fontFamily: "var(--sans)" }}>
               {mcpUrlCopyHint}
             </span>
           )}
@@ -140,47 +131,61 @@ export function OAuthCredentialsPanel({ mcpServerUrl }: OAuthCredentialsPanelPro
         <code
           style={{
             display: "block",
-            fontSize: "0.8125rem",
-            fontFamily: "ui-monospace, monospace",
-            color: "var(--avcd-text-on-light)",
+            fontSize: "0.875rem",
+            fontFamily: "var(--mono)",
+            color: "var(--g900)",
             wordBreak: "break-all",
-            marginBottom: "0.5rem",
+            marginBottom: "var(--sp-3)",
+            lineHeight: 1.5,
           }}
         >
           {mcpServerUrl}
         </code>
         <button
           onClick={() => copyToClipboard(mcpServerUrl, setMcpUrlCopyHint)}
+          onMouseDown={(e) => e.currentTarget.style.transform = "translateY(1px)"}
+          onMouseUp={(e) => e.currentTarget.style.transform = "translateY(0)"}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = "var(--g400)";
+            e.currentTarget.style.color = "var(--g900)";
+            e.currentTarget.style.background = "var(--g100)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = "var(--g300)";
+            e.currentTarget.style.color = "var(--g700)";
+            e.currentTarget.style.background = "var(--bg)";
+          }}
           style={btnSecondary}
         >
           Copy URL
         </button>
       </div>
 
-      {/* Auth0 MCP Client ID - Static, shared by all users */}
       <div
         style={{
-          padding: "0.75rem",
-          borderRadius: "6px",
-          background: "var(--avcd-surface-light)",
-          border: "1px solid var(--avcd-border-light)",
-          marginBottom: "1rem",
+          padding: "var(--sp-4)",
+          borderRadius: "var(--r-md)",
+          background: "var(--g50)",
+          border: "1px solid var(--g200)",
+          marginBottom: "var(--sp-4)",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "var(--sp-3)" }}>
           <h3
             style={{
               margin: 0,
-              fontSize: "0.875rem",
-              fontFamily: "var(--font-display)",
-              fontWeight: 600,
-              color: "var(--avcd-text-on-light)",
+              fontSize: "0.75rem",
+              fontFamily: "var(--mono)",
+              fontWeight: 500,
+              color: "var(--g500)",
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
             }}
           >
             OAuth Client ID
           </h3>
           {clientIdCopyHint && (
-            <span style={{ fontSize: "0.75rem", color: "var(--avcd-text-muted)", fontStyle: "italic" }}>
+            <span style={{ fontSize: "0.75rem", color: "var(--green)", fontFamily: "var(--sans)" }}>
               {clientIdCopyHint}
             </span>
           )}
@@ -188,11 +193,12 @@ export function OAuthCredentialsPanel({ mcpServerUrl }: OAuthCredentialsPanelPro
         <code
           style={{
             display: "block",
-            fontSize: "0.8125rem",
-            fontFamily: "ui-monospace, monospace",
-            color: "var(--avcd-text-on-light)",
+            fontSize: "0.875rem",
+            fontFamily: "var(--mono)",
+            color: "var(--g900)",
             wordBreak: "break-all",
-            marginBottom: "0.75rem",
+            marginBottom: "var(--sp-3)",
+            lineHeight: 1.5,
           }}
         >
           {AUTH0_MCP_CLIENT_ID}
@@ -200,66 +206,104 @@ export function OAuthCredentialsPanel({ mcpServerUrl }: OAuthCredentialsPanelPro
 
         <button
           onClick={() => copyToClipboard(AUTH0_MCP_CLIENT_ID, setClientIdCopyHint)}
+          onMouseDown={(e) => e.currentTarget.style.transform = "translateY(1px)"}
+          onMouseUp={(e) => e.currentTarget.style.transform = "translateY(0)"}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = "var(--g400)";
+            e.currentTarget.style.color = "var(--g900)";
+            e.currentTarget.style.background = "var(--g100)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = "var(--g300)";
+            e.currentTarget.style.color = "var(--g700)";
+            e.currentTarget.style.background = "var(--bg)";
+          }}
           style={btnSecondary}
         >
           Copy Client ID
         </button>
       </div>
 
-      {/* Auth0 OAuth URLs */}
       <div
         style={{
-          padding: "0.75rem",
-          borderRadius: "6px",
-          background: "var(--avcd-surface-light)",
-          border: "1px solid var(--avcd-border-light)",
+          padding: "var(--sp-4)",
+          borderRadius: "var(--r-md)",
+          background: "var(--g50)",
+          border: "1px solid var(--g200)",
         }}
       >
         <h3
           style={{
-            margin: "0 0 0.75rem",
-            fontSize: "0.875rem",
-            fontFamily: "var(--font-display)",
-            fontWeight: 600,
-            color: "var(--avcd-text-on-light)",
+            margin: "0 0 var(--sp-4)",
+            fontSize: "0.75rem",
+            fontFamily: "var(--mono)",
+            fontWeight: 500,
+            color: "var(--g500)",
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
           }}
         >
           OAuth Configuration
         </h3>
         
-        <div style={{ marginBottom: "0.75rem" }}>
-          <div style={{ fontSize: "0.75rem", color: "var(--avcd-text-muted)", marginBottom: "0.25rem" }}>
+        <div style={{ marginBottom: "var(--sp-4)" }}>
+          <div style={{ fontSize: "0.75rem", color: "var(--g500)", marginBottom: "var(--sp-2)", fontFamily: "var(--sans)" }}>
             <strong>Authorization URL:</strong>
           </div>
           <code
             style={{
               display: "block",
               fontSize: "0.75rem",
-              fontFamily: "ui-monospace, monospace",
-              color: "var(--avcd-text-on-light)",
+              fontFamily: "var(--mono)",
+              color: "var(--g900)",
               wordBreak: "break-all",
-              marginBottom: "0.5rem",
+              marginBottom: "var(--sp-3)",
+              lineHeight: 1.5,
             }}
           >
             {authorizationUrl}
           </code>
           <button
             onClick={() => copyToClipboard(authorizationUrl, setAuthUrlCopyHint)}
-            style={{ ...btnSecondary, fontSize: "0.8125rem", padding: "0.35rem 0.7rem" }}
+            onMouseDown={(e) => e.currentTarget.style.transform = "translateY(1px)"}
+            onMouseUp={(e) => e.currentTarget.style.transform = "translateY(0)"}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = "var(--g400)";
+              e.currentTarget.style.color = "var(--g900)";
+              e.currentTarget.style.background = "var(--g100)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "var(--g300)";
+              e.currentTarget.style.color = "var(--g700)";
+              e.currentTarget.style.background = "var(--bg)";
+            }}
+            style={btnSecondary}
           >
             Copy Auth URL
           </button>
           {authUrlCopyHint && (
-            <span style={{ marginLeft: "0.5rem", fontSize: "0.75rem", color: "var(--avcd-text-muted)", fontStyle: "italic" }}>
+            <span style={{ marginLeft: "var(--sp-2)", fontSize: "0.75rem", color: "var(--green)", fontFamily: "var(--sans)" }}>
               {authUrlCopyHint}
             </span>
           )}
         </div>
 
-        <div style={{ fontSize: "0.75rem", color: "var(--avcd-text-muted)" }}>
-          <div><strong>Token URL:</strong> <code style={{ fontSize: "0.7em" }}>{tokenUrl}</code></div>
-          <div><strong>Method:</strong> PKCE (no client secret required)</div>
-          <div><strong>Scopes:</strong> <code style={{ fontSize: "0.7em" }}>openid profile email offline_access</code></div>
+        <div style={{ fontSize: "0.75rem", color: "var(--g500)", fontFamily: "var(--sans)", lineHeight: 1.6 }}>
+          <div style={{ marginBottom: "var(--sp-2)" }}>
+            <strong>Token URL:</strong>{" "}
+            <code style={{ fontSize: "0.75rem", fontFamily: "var(--mono)", color: "var(--g700)" }}>
+              {tokenUrl}
+            </code>
+          </div>
+          <div style={{ marginBottom: "var(--sp-2)" }}>
+            <strong>Method:</strong> PKCE (no client secret required)
+          </div>
+          <div>
+            <strong>Scopes:</strong>{" "}
+            <code style={{ fontSize: "0.75rem", fontFamily: "var(--mono)", color: "var(--g700)" }}>
+              openid profile email offline_access
+            </code>
+          </div>
         </div>
       </div>
     </section>

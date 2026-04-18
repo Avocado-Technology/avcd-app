@@ -43,11 +43,14 @@ services:
       # Passed into the container; same value as Traefik Host() after interpolation (default localhost for local).
       # MCP connector URL for users is derived as https://${PUBLIC_HOST}/mcp when AVCD_MCP_URL is unset (see lib/mcp-server-url.ts).
       PUBLIC_HOST: ${PUBLIC_HOST:-localhost}
-      AUTH_URL: ${AUTH_URL:-http://localhost:3000}
-      AUTH_SECRET: ${AUTH_SECRET:-}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      AVCD_AUTH_URL: ${AVCD_AUTH_URL:-http://auth:8000}
+      # Auth0 Configuration (from .env / .env.local or CI/CD environment)
+      AUTH0_SECRET: ${AUTH0_SECRET:-}
+      AUTH0_BASE_URL: ${AUTH0_BASE_URL:-http://localhost:3000}
+      AUTH0_ISSUER_BASE_URL: ${AUTH0_ISSUER_BASE_URL:-}
+      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID:-}
+      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET:-}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE:-}
+      AUTH0_SCOPE: ${AUTH0_SCOPE:-openid profile email offline_access}
     labels:
       - traefik.enable=true
       # Required when the service joins more than one network; otherwise Traefik may pick the project bridge IP and return 404.

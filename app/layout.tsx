@@ -1,28 +1,14 @@
 import type { Metadata } from "next";
-import { Fraunces, Newsreader } from "next/font/google";
-import { auth } from "@/auth";
+import { getSession } from "@auth0/nextjs-auth0";
 
 import { AppTopBar } from "./components/AppTopBar";
 import { SessionProvider } from "./components/SessionProvider";
 import "./globals.css";
 
-const fontDisplay = Fraunces({
-  subsets: ["latin"],
-  variable: "--font-display",
-  weight: ["500", "600"],
-});
-
-const fontBody = Newsreader({
-  subsets: ["latin"],
-  variable: "--font-body",
-  weight: ["400", "500"],
-  style: ["normal", "italic"],
-});
-
 export const metadata: Metadata = {
-  title: "AVCD Tech",
+  title: "AVCD — MCP Setup",
   description:
-    "Sign in to download the MCP bundle and copy your bearer token for Claude Desktop.",
+    "Connect your AVCD GraphQL API to Claude via OAuth or bearer token.",
 };
 
 export default async function RootLayout({
@@ -30,10 +16,16 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await auth();
+  const session = await getSession();
 
   return (
-    <html lang="en" className={`${fontDisplay.variable} ${fontBody.variable}`}>
+    <html lang="en">
+      <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
         <SessionProvider>
           {session ? <AppTopBar session={session} /> : null}

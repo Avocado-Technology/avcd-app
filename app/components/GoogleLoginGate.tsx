@@ -47,7 +47,6 @@ function GoogleMark({ size = 20 }: { size?: number }) {
 }
 
 export type GoogleLoginGateProps = {
-  /** Shown so users know which MCP URL to use in Claude (full token appears after sign-in). */
   mcpServerUrl: string;
 };
 
@@ -69,196 +68,180 @@ export function GoogleLoginGate({ mcpServerUrl }: GoogleLoginGateProps) {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        padding: "clamp(1.25rem, 4vw, 2.5rem)",
-        background: `
-          linear-gradient(165deg, var(--avcd-bg-deep) 0%, #0a1210 42%, transparent 42%),
-          radial-gradient(ellipse 120% 80% at 50% 100%, #e8e2d6 0%, var(--avcd-surface-light) 45%)
-        `,
-        position: "relative",
+        padding: "var(--sp-6)",
+        background: "var(--g50)",
       }}
     >
       <div
         style={{
-          position: "absolute",
-          inset: 0,
-          opacity: 0.04,
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-          pointerEvents: "none",
-        }}
-        aria-hidden
-      />
-      <div
-        style={{
           width: "100%",
           maxWidth: "26rem",
-          borderRadius: "16px",
-          background: "var(--avcd-surface-light)",
-          border: "1px solid var(--avcd-border-light)",
-          boxShadow:
-            "0 28px 56px rgba(13, 24, 18, 0.14), 0 0 0 1px rgba(15, 26, 20, 0.05)",
+          borderRadius: "var(--r-xl)",
+          background: "var(--bg)",
+          border: "1px solid var(--g200)",
           overflow: "hidden",
-          position: "relative",
-          zIndex: 1,
         }}
       >
         <div
           style={{
-            padding: "1.35rem 1.5rem 1rem",
-            background:
-              "linear-gradient(155deg, var(--avcd-bg-elevated) 0%, #15261c 100%)",
-            borderBottom: "1px solid rgba(245, 240, 232, 0.08)",
+            padding: "var(--sp-8) var(--sp-6) var(--sp-6)",
+            borderBottom: "1px solid var(--g200)",
           }}
         >
-          <p
-            style={{
-              margin: 0,
-              fontSize: "0.7rem",
-              fontWeight: 600,
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              color: "rgba(245, 240, 232, 0.55)",
-              fontFamily: "var(--font-body)",
-            }}
-          >
-            AVCD Tech
-          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: "var(--sp-2)", marginBottom: "var(--sp-3)" }}>
+            <div
+              style={{
+                width: "7px",
+                height: "7px",
+                borderRadius: "50%",
+                background: "var(--green)",
+              }}
+              aria-hidden
+            />
+            <span
+              style={{
+                fontSize: "0.6875rem",
+                fontFamily: "var(--mono)",
+                fontWeight: 500,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: "var(--g500)",
+              }}
+            >
+              AVCD MCP
+            </span>
+          </div>
           <h1
             style={{
-              margin: "0.35rem 0 0",
-              fontSize: "1.65rem",
+              margin: 0,
+              fontSize: "1.5rem",
               fontWeight: 600,
-              fontFamily: "var(--font-display)",
-              color: "var(--avcd-text-on-dark)",
-              letterSpacing: "-0.02em",
+              fontFamily: "var(--sans)",
+              color: "var(--g900)",
+              letterSpacing: "-0.03em",
               lineHeight: 1.2,
+              marginBottom: "var(--sp-3)",
             }}
           >
             Sign in
           </h1>
           <p
             style={{
-              margin: "0.5rem 0 0",
-              fontSize: "0.9rem",
-              lineHeight: 1.5,
-              color: "rgba(245, 240, 232, 0.78)",
-              fontFamily: "var(--font-body)",
+              margin: 0,
+              fontSize: "1rem",
+              lineHeight: 1.6,
+              color: "var(--g700)",
+              fontFamily: "var(--sans)",
             }}
           >
-            Sign in with Google. You will always see Google&apos;s account chooser so you can pick
-            or add a different account after signing out.
+            Sign in with Google to access your MCP server and generate OAuth credentials for Claude.
           </p>
           <div
             style={{
-              margin: "1rem 0 0",
-              padding: "0.75rem 0.85rem",
-              borderRadius: "8px",
-              background: "rgba(245, 240, 232, 0.08)",
-              border: "1px solid rgba(245, 240, 232, 0.12)",
+              marginTop: "var(--sp-6)",
+              padding: "var(--sp-4)",
+              borderRadius: "var(--r-md)",
+              background: "var(--g50)",
+              border: "1px solid var(--g200)",
             }}
           >
             <p
               style={{
                 margin: 0,
-                fontSize: "0.7rem",
-                fontWeight: 600,
-                letterSpacing: "0.08em",
+                fontSize: "0.6875rem",
+                fontWeight: 500,
+                letterSpacing: "0.06em",
                 textTransform: "uppercase",
-                color: "rgba(245, 240, 232, 0.55)",
-                fontFamily: "var(--font-body)",
+                color: "var(--g500)",
+                fontFamily: "var(--mono)",
+                marginBottom: "var(--sp-2)",
               }}
             >
-              MCP server URL (Claude Web / Desktop)
+              MCP Server URL
             </p>
             <code
               style={{
                 display: "block",
-                marginTop: "0.45rem",
-                fontSize: "0.78rem",
-                lineHeight: 1.45,
+                fontSize: "0.75rem",
+                lineHeight: 1.5,
                 wordBreak: "break-all",
-                fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-                color: "rgba(245, 240, 232, 0.92)",
+                fontFamily: "var(--mono)",
+                color: "var(--g900)",
               }}
             >
               {mcpServerUrl}
             </code>
-            <p
-              style={{
-                margin: "0.55rem 0 0",
-                fontSize: "0.78rem",
-                lineHeight: 1.45,
-                color: "rgba(245, 240, 232, 0.72)",
-                fontFamily: "var(--font-body)",
-              }}
-            >
-              After you sign in, you&apos;ll generate an OAuth client to connect Claude Web{" "}
-              with automated authentication. Manual bearer token method also available as fallback.
-            </p>
           </div>
         </div>
 
-        <div style={{ padding: "1.5rem 1.5rem 1.35rem" }}>
+        <div style={{ padding: "var(--sp-6)" }}>
           <button
             type="button"
             disabled={signingIn}
             onClick={() => {
               setError(null);
               setSigningIn(true);
-              // Redirect to Auth0 Universal Login
               window.location.href = "/api/auth/login";
+            }}
+            onMouseDown={(e) => {
+              e.currentTarget.style.transform = "translateY(1px)";
+            }}
+            onMouseUp={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
             }}
             style={{
               width: "100%",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: "0.65rem",
-              padding: "0.65rem 1rem",
-              borderRadius: "8px",
+              gap: "var(--sp-3)",
+              padding: "var(--sp-3) var(--sp-5)",
+              borderRadius: "var(--r-md)",
               border: "1px solid #747775",
               background: "#fffefb",
               color: "#1f1f1f",
-              fontSize: "0.9375rem",
+              fontSize: "0.875rem",
               fontWeight: 500,
-              fontFamily:
-                "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+              fontFamily: "system-ui, -apple-system, sans-serif",
               cursor: signingIn ? "wait" : "pointer",
-              boxShadow: "0 1px 2px rgba(15, 26, 20, 0.06)",
-              opacity: signingIn ? 0.85 : 1,
+              opacity: signingIn ? 0.7 : 1,
+              transition: "opacity 0.15s",
             }}
           >
-            <GoogleMark size={22} />
+            <GoogleMark size={20} />
             {signingIn ? "Redirecting…" : "Continue with Google"}
           </button>
 
           {error ? (
-            <p
+            <div
               role="alert"
               style={{
-                margin: "0.85rem 0 0",
-                fontSize: "0.8125rem",
-                color: "#6b2d2d",
-                fontFamily: "var(--font-body)",
-                lineHeight: 1.45,
+                marginTop: "var(--sp-4)",
+                padding: "var(--sp-3)",
+                borderRadius: "var(--r-md)",
+                background: "var(--red-lt)",
+                border: "1px solid var(--red-bd)",
+                color: "var(--red)",
+                fontSize: "0.875rem",
+                fontFamily: "var(--sans)",
+                lineHeight: 1.5,
               }}
             >
               {error}
-            </p>
+            </div>
           ) : null}
 
           <p
             style={{
-              margin: "1.15rem 0 0",
+              marginTop: "var(--sp-5)",
               fontSize: "0.75rem",
               lineHeight: 1.5,
-              color: "var(--avcd-text-muted)",
-              fontFamily: "var(--font-body)",
+              color: "var(--g500)",
+              fontFamily: "var(--sans)",
               textAlign: "center",
             }}
           >
-            Sign out clears this app&apos;s session only. Your Google account may stay signed in in
-            this browser (that is normal). Use Google&apos;s account chooser when signing in again, or
-            sign out of Google separately from google.com if you need to.
+            Sign out clears this app&apos;s session only. Your Google account may stay signed in your browser.
           </p>
         </div>
       </div>
