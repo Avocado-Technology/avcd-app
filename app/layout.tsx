@@ -18,6 +18,16 @@ export default async function RootLayout({
 }>) {
   const session = await getSession();
 
+  // Serialize session for client components (only pass plain objects)
+  const serializedSession = session ? {
+    user: {
+      name: session.user?.name,
+      email: session.user?.email,
+      picture: session.user?.picture,
+    },
+    accessToken: session.accessToken,
+  } : null;
+
   return (
     <html lang="en">
       <head>
@@ -28,7 +38,7 @@ export default async function RootLayout({
       </head>
       <body style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
         <SessionProvider>
-          {session ? <AppTopBar session={session} /> : null}
+          {serializedSession ? <AppTopBar session={serializedSession} /> : null}
           {children}
         </SessionProvider>
       </body>

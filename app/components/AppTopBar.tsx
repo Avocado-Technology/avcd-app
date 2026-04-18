@@ -1,10 +1,15 @@
 "use client";
 
-import type { UserProfile } from "@auth0/nextjs-auth0/client";
 import Link from "next/link";
 
 type Props = {
-  session: { user: UserProfile };
+  session: {
+    user: {
+      name?: string | null;
+      email?: string | null;
+      picture?: string | null;
+    };
+  };
 };
 
 export function AppTopBar({ session }: Props) {
