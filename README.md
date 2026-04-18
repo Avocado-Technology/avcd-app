@@ -1,79 +1,209 @@
-# AVCD web
+# Avocado Web — Frontend Application
 
-Next.js app with **Google sign-in** (Auth.js). After sign-in, your name appears in the top bar with a **Sign out** control.
+Modern, minimal web application built with Next.js 15, following the Avocado Design System.
 
-## Environment
+## 🎨 Design System
 
-Create **`web/.env.local`** (or set the same variables via Docker Compose for the `web` service, or in the **Vercel** dashboard for production). Next.js only auto-loads env files under `web/`. Copy from [`.env.example`](.env.example). Optional API settings are in [`api/JWT_AUTH.md`](../api/JWT_AUTH.md) (sibling repo).
+This project uses the **Avocado Design System** — a Cursor-inspired ultra-minimal design philosophy:
 
-**Required for Google login:**
+- **White canvas, one signal color** (green for brand moments only)
+- **Weight contrast over font switching** (Geist family, 300-600 weights)
+- **Borders only, no shadows** (structural honesty)
+- **8pt spacing grid** (all spacing multiples of 4px)
+- **Purpose-driven motion** (animations guide attention, not decoration)
 
-| Variable | Purpose |
-| -------- | ------- |
-| `AUTH_SECRET` | Cookie encryption (`openssl rand -base64 32`) |
-| `AUTH_URL` | Public site origin, no path (e.g. `http://localhost:3000`). **Must match how you open the app** (`http` vs `https`) — Auth.js picks session cookie names from this; a mismatch breaks server actions that read the session JWT even when sign-in looks fine. |
-| `GOOGLE_CLIENT_ID` | Google Cloud OAuth **Web** client ID |
-| `GOOGLE_CLIENT_SECRET` | Web client secret |
+**📖 Full Documentation**: `.cursor/skills/avocado-style/SKILL.md`
 
-Optional aliases: `NEXTAUTH_SECRET` / `NEXTAUTH_URL`, `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` (see [`auth.ts`](auth.ts)).
+## 🎬 Animation System
 
-**Troubleshooting access token / “No Google sign-in token”:** set **`AUTH_DEBUG=1`** (or **`AVCD_AUTH_DEBUG=1`**) in **`.env.local`** (or **`.env`**). **Docker:** `web/docker-compose.yml` loads both files; do not expect debug if the flag is only in a file Compose does not mount. Follow logs with **`docker compose logs -f web`** (stdout/stderr from `node server.js`). You should see a line at startup when debug is on: **`instrumentation register(): debug ON`**. Never commit debug in production if logs are sensitive.
+Recently upgraded to industry-leading standards (2026 best practices). Features:
 
-**Redirect URI** in Google Cloud Console must be exactly:
+- **Physics-based easing** for natural motion
+- **GPU-accelerated** animations (transform + opacity only)
+- **WCAG 2.2 compliant** (respects prefers-reduced-motion)
+- **11 ready-to-use variants** (modals, dropdowns, cards, etc.)
+- **Accessibility-first** with `useReducedMotion` hook
 
-`{AUTH_URL}/api/auth/callback/google`  
-Example: `http://localhost:3000/api/auth/callback/google`
+### Quick Start
 
-**Auth issuer (JWT for API):** set **`AVCD_AUTH_URL`** (server-only) to the FastAPI auth service — e.g. `http://127.0.0.1:8010` locally when Compose publishes auth on 8010, or `http://auth:8000` from the `web` container. Production: `https://YOUR_HOST/auth` (Traefik). Must match **`GOOGLE_CLIENT_IDS`** on the issuer. See [`TOKEN_FLOW.md`](TOKEN_FLOW.md).
+```tsx
+import { motion } from 'framer-motion';
+import { fadeInUp, buttonTap, modalVariants } from '@/lib/motion-variants';
 
-The web app does **not** call the FastAPI backend for sign-in; only Auth.js + Google OAuth.
+// Simple fade-in card
+<motion.div {...fadeInUp} className="card">
+  Content
+</motion.div>
 
-**Access JWT (home page):** After sign-in, the app shows the AVCD **JWT** from the session or by calling **`AVCD_AUTH_URL`** (`POST .../google/token`) when needed. It does **not** call the main API. Local `.env.local` example: `AVCD_AUTH_URL=http://127.0.0.1:8010` when auth publishes **8010**. Docker **`web`** (`web/docker-compose.yml`): default **`http://host.docker.internal:8010`**; override with `http://auth:8000` on **`avcd_edge`**. Optional **`NEXT_PUBLIC_AVCD_API_URL`**: public API base for the MCP installer hint only. See [`TOKEN_FLOW.md`](TOKEN_FLOW.md).
-
-## Run
-
-```bash
-cd web && npm install && npm run dev
+// Button with tap feedback
+<motion.button whileTap={buttonTap} className="btn-primary">
+  Click me
+</motion.button>
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+**📖 Animation Guide**: `ANIMATION_SYSTEM_UPGRADE.md`  
+**📦 Component Examples**: `components/examples/AnimationExamples.tsx`
 
-## Production build
+## 🏗️ Architecture
 
-```bash
-cd web && npm run build && npm start
+```
+web/
+├── app/                      # Next.js 15 app directory
+│   ├── globals.css          # Design system CSS variables
+│   └── ...                  # Pages and layouts
+├── components/
+│   ├── examples/            # Animation pattern examples
+│   └── ui/                  # Reusable UI components (shadcn)
+├── lib/
+│   ├── motion-variants.ts   # Animation variants and easing curves
+│   ├── hooks/
+│   │   └── useReducedMotion.ts  # Accessibility hook
+│   └── utils.ts             # Helper functions
+├── .cursor/
+│   └── skills/
+│       └── avocado-style/   # Design system documentation
+└── tailwind.config.ts       # Design tokens (colors, spacing, radius)
 ```
 
-## Docker
+## 🚀 Getting Started
 
-**Full stack** (MongoDB, Redis, API, web) from the **repository root**:
-
-```bash
-docker compose up --build -d
-```
-
-The `web` image is built from [`Dockerfile`](Dockerfile) with build context **`web/`** (see root `docker-compose.yml`). The app is on [http://localhost:3000](http://localhost:3000).
-
-**Web only** (e.g. behind Traefik next to the API), from **`web/`**:
+### Installation
 
 ```bash
-docker compose up --build -d
+npm install
 ```
 
-See [`docker-compose.yml`](docker-compose.yml) in this folder for Traefik labels and `avcd_edge` (local / optional VM use).
+### Development
 
-## Production deploy
+```bash
+npm run dev
+```
 
-You can host the app in either of these ways:
+Open [http://localhost:3000](http://localhost:3000)
 
-### Vercel
+### Build
 
-Fully managed edge hosting. Connect the repo, set **Root Directory** to `web` if needed, and configure environment variables plus Google OAuth as in [`docs/deploy-vercel.md`](docs/deploy-vercel.md). Set a public **`AVCD_AUTH_URL`** (HTTPS issuer URL, not `http://auth:8000`). Optional **`NEXT_PUBLIC_AVCD_API_URL`** if you want the installer hint to show your API base. If the **browser** calls the API directly, add your Vercel origin to the API’s **`CORS_ALLOW_ORIGINS`** (see **avcd-api** `JWT_AUTH.md`).
+```bash
+npm run build
+npm start
+```
 
-**When to choose Vercel:** you want zero VM ops, preview URLs, and the API or other backends elsewhere.
+## 🎯 Key Features
 
-### DigitalOcean droplet + Traefik
+### Design System Compliance
+- ✅ WCAG 2.2 AA accessibility
+- ✅ Responsive typography with `clamp()`
+- ✅ Dark mode support via `prefers-color-scheme`
+- ✅ 8pt spacing grid (4px base unit)
+- ✅ Contrast-tested color palette
 
-Run the same **Docker** image next to **Traefik** and the API on your infra provisioned droplet (`avcd_edge`, Let’s Encrypt on the proxy). GitHub Actions deploy via [`droplet-compose-deploy`](https://github.com/Avocado-Technology/avcd-actions); see [`docs/deploy-droplet.md`](docs/deploy-droplet.md) for secrets, server `.env` (`PUBLIC_HOST`, `AUTH_URL`, `AVCD_AUTH_URL=http://auth:8000` on **`avcd_edge`**), OAuth redirects, and deploy order (Traefik → API → web).
+### Animation Standards
+- ✅ Timing constants (100ms → 700ms)
+- ✅ Physics-based easing curves
+- ✅ Interruptible animations
+- ✅ GPU-only properties (no layout thrashing)
+- ✅ Reduced motion support
 
-**When to choose the droplet:** you want the frontend colocated with the API and a single TLS edge, without a separate frontend host.
+### Performance
+- ✅ GPU-accelerated animations
+- ✅ Optimized font loading (`display=swap`)
+- ✅ No box-shadows on layout elements
+- ✅ Minimal bundle size (tree-shakeable exports)
+
+## 📚 Documentation
+
+| Document | Purpose |
+|----------|---------|
+| `.cursor/skills/avocado-style/SKILL.md` | Complete design system guide |
+| `ANIMATION_SYSTEM_UPGRADE.md` | Animation framework documentation |
+| `components/examples/AnimationExamples.tsx` | Copy-paste animation patterns |
+| `SHADCN_SETUP_COMPLETE.md` | shadcn/ui component setup |
+| `AUTH0_LOCALHOST_SETUP.md` | Authentication configuration |
+
+## 🎨 Design Tokens
+
+All design tokens are defined in:
+- **CSS Variables**: `app/globals.css`
+- **Tailwind Config**: `tailwind.config.ts`
+- **Motion Variants**: `lib/motion-variants.ts`
+
+### Color Palette
+
+```css
+/* Surfaces */
+--bg:    #ffffff   /* Pure white canvas */
+--g50:   #fafafa   /* Inset backgrounds */
+--g100:  #f4f4f4   /* Hover states */
+--g200:  #e9e9e9   /* Default borders */
+
+/* Text */
+--g500:  #737373   /* Muted text (4.6:1 contrast) */
+--g700:  #404040   /* Secondary text */
+--g900:  #0a0a0a   /* Primary text */
+
+/* Brand */
+--green: #3a6b45   /* CTA buttons, live states */
+```
+
+### Spacing Scale
+
+```css
+--sp-1: 0.25rem   /*  4px */
+--sp-2: 0.5rem    /*  8px */
+--sp-4: 1rem      /* 16px */
+--sp-6: 1.5rem    /* 24px — card padding */
+--sp-8: 2rem      /* 32px */
+--sp-12: 3rem     /* 48px */
+--sp-32: 8rem     /* 128px — section padding */
+```
+
+## 🧪 Testing
+
+### Run Tests
+```bash
+npm test
+```
+
+### Animation Testing Checklist
+- [ ] Animations use only `transform` and `opacity`
+- [ ] Test with "Reduce motion" enabled
+- [ ] Verify 60fps on mobile devices
+- [ ] Check animations are interruptible
+- [ ] Ensure max 2-3 simultaneous animations
+
+## 🤝 Contributing
+
+### Code Style
+- Follow the Avocado Design System (see SKILL.md)
+- Use semantic HTML
+- Prioritize accessibility
+- Test animations with reduced motion
+- Keep spacing values on 8pt grid (multiples of 4px)
+
+### Animation Guidelines
+- Only animate `transform` and `opacity`
+- Use variants from `motion-variants.ts`
+- Respect `prefers-reduced-motion`
+- Keep durations under 400ms for UI transitions
+- Use physics-based easing (never generic CSS `ease`)
+
+## 📦 Tech Stack
+
+- **Framework**: Next.js 15 (App Router)
+- **Styling**: Tailwind CSS + CSS Variables
+- **Animation**: Framer Motion
+- **UI Components**: shadcn/ui (customized)
+- **Typography**: Geist Sans + Geist Mono
+- **Icons**: Lucide React
+- **Auth**: Auth0
+
+## 📄 License
+
+[Your License]
+
+---
+
+**Need Help?**
+- Design questions → See `.cursor/skills/avocado-style/SKILL.md`
+- Animation patterns → See `components/examples/AnimationExamples.tsx`
+- Setup issues → Check relevant `*_SETUP.md` files
