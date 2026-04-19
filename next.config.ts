@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
 
   // External packages that should not be bundled
-  serverExternalPackages: ['elkjs'],
+  serverExternalPackages: ["elkjs"],
 
   // Turbopack configuration for external packages
   turbopack: {

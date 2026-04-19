@@ -15,7 +15,7 @@ export function OrgChartError({ error, reset }: OrgChartErrorProps) {
         </p>
         <button
           onClick={reset}
-          className="px-4 py-2 bg-[var(--g900)] text-white rounded-md 
+          className="px-4 py-2 bg-[var(--g900)] text-[var(--bg)] rounded-md 
                      hover:bg-[var(--g700)] transition-colors active:translate-y-px"
         >
           Try again

@@ -36,7 +36,7 @@ export function MobileBottomNav({ items = APP_NAV_ITEMS }: MobileBottomNavProps)
     <>
       <nav
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white/80 backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/80 lg:hidden",
+          "fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/80 backdrop-blur-md lg:hidden",
         )}
         style={{
           paddingBottom: "max(16px, env(safe-area-inset-bottom, 0px))",
@@ -53,9 +53,9 @@ export function MobileBottomNav({ items = APP_NAV_ITEMS }: MobileBottomNavProps)
                 variant="ghost"
                 size="icon"
                 className={cn(
-                  "h-12 w-12 shrink-0 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100",
+                  "h-12 w-12 shrink-0",
                   active &&
-                    "text-green hover:text-green dark:text-green-light dark:hover:text-green-light",
+                    "text-green hover:bg-transparent hover:text-green dark:text-green-light dark:hover:bg-transparent dark:hover:text-green-light",
                 )}
                 asChild
               >
@@ -75,7 +75,7 @@ export function MobileBottomNav({ items = APP_NAV_ITEMS }: MobileBottomNavProps)
             type="button"
             variant="ghost"
             size="icon"
-            className="h-12 w-12 shrink-0 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+            className="h-12 w-12 shrink-0"
             aria-label="More options"
             aria-expanded={moreOpen}
             onClick={() => setMoreOpen(true)}

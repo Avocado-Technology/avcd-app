@@ -5,22 +5,22 @@ import { resolve } from 'path'
 import { PageSkeleton } from '@/components/ui/page-skeleton'
 
 describe('Lazy Loading Fallbacks', () => {
-  it('AnimatedOrgChart file imports PageSkeleton', () => {
-    // Read the source to verify import
+  it('AnimatedOrgChart dynamically imports React Flow with ssr disabled', () => {
     const animatedPath = resolve(__dirname, '../../../components/org-chart/animated-org-chart.tsx')
     const animatedSource = readFileSync(animatedPath, 'utf-8')
-    
-    expect(animatedSource).toContain('PageSkeleton')
-    expect(animatedSource).toContain('@/components/ui/page-skeleton')
+
+    expect(animatedSource).toContain('dynamic(')
+    expect(animatedSource).toContain('reactflow')
+    expect(animatedSource).toContain('ssr: false')
   })
 
-  it('ReactFlowCanvas file imports PageSkeleton', () => {
-    // Read the source to verify import
+  it('ReactFlowCanvas dynamically imports React Flow with ssr disabled', () => {
     const canvasPath = resolve(__dirname, '../../../components/org-chart/react-flow-canvas.tsx')
     const canvasSource = readFileSync(canvasPath, 'utf-8')
-    
-    expect(canvasSource).toContain('PageSkeleton')
-    expect(canvasSource).toContain('@/components/ui/page-skeleton')
+
+    expect(canvasSource).toContain('dynamic(')
+    expect(canvasSource).toContain('reactflow')
+    expect(canvasSource).toContain('ssr: false')
   })
 
   it('PageSkeleton renders correctly for lazy loading', () => {

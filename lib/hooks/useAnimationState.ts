@@ -21,8 +21,10 @@ export function useAnimationState(): AnimationState {
   // Cleanup all timeouts on unmount
   useEffect(() => {
     return () => {
-      timeoutsRef.current.forEach(clearTimeout);
-      timeoutsRef.current.clear();
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- must read latest timeouts at unmount
+      const timeouts = timeoutsRef.current;
+      timeouts.forEach(clearTimeout);
+      timeouts.clear();
     };
   }, []);
 

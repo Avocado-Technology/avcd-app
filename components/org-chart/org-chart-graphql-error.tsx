@@ -53,16 +53,16 @@ export function OrgChartGraphQLError({
       className="flex flex-col items-center justify-center min-h-[400px] p-8"
     >
       <div className="max-w-md text-center space-y-4">
-        <div className="text-red-600 text-lg font-semibold">
+        <div className="text-[var(--red)] text-lg font-semibold">
           Error Loading Data
         </div>
         
-        <p className="text-neutral-600">{errorMessage}</p>
+        <p className="text-[var(--g500)]">{errorMessage}</p>
         
         {!isAuthError && (
           <button
             onClick={refetch}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-gray-900 text-[var(--bg)] rounded-md hover:bg-gray-700 transition-colors"
           >
             Retry
           </button>
@@ -71,7 +71,7 @@ export function OrgChartGraphQLError({
         {isAuthError && (
           <Link
             href="/api/auth/login"
-            className="inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            className="inline-block px-4 py-2 bg-gray-900 text-[var(--bg)] rounded-md hover:bg-gray-700 transition-colors"
           >
             Log In
           </Link>

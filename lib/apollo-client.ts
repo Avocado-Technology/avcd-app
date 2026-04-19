@@ -134,21 +134,21 @@ const cache = new InMemoryCache({
       fields: {
         // Cache organizations separately
         organizations: {
-          merge(_existing = [], incoming) {
+          merge(_ignored, incoming) {
             return incoming; // Replace with fresh data
           },
         },
         // Cache stores per organization
         stores: {
           keyArgs: ["organizationId"], // Cache key includes orgId
-          merge(_existing = [], incoming) {
+          merge(_ignored, incoming) {
             return incoming;
           },
         },
         // Cache employees per organization
         employees: {
           keyArgs: ["organizationId"], // Cache key includes orgId
-          merge(_existing = [], incoming) {
+          merge(_ignored, incoming) {
             return incoming;
           },
         },

@@ -11,7 +11,7 @@ describe('Button Component', () => {
   it('should apply primary variant by default', () => {
     render(<Button>Primary</Button>)
     const button = screen.getByRole('button')
-    expect(button).toHaveClass('bg-gray-900')
+    expect(button).toHaveClass('bg-primary')
   })
 
   it('should apply secondary variant', () => {
