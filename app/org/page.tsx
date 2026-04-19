@@ -1,12 +1,9 @@
+import { redirect } from "next/navigation";
+
 /**
- * Organization Page (Main)
- * 
- * Uses real GraphQL data from the API
- * For testing with mock data, see /org/test
+ * Legacy path: organization chart now lives at `/`.
+ * Keep redirect for bookmarks and external links.
  */
-
-import { OrgPageWithData } from './org-page-with-data'
-
-export default async function OrganizationPage() {
-  return <OrgPageWithData />
+export default function OrganizationLegacyPage() {
+  redirect("/");
 }

@@ -4,7 +4,7 @@ import { AppTopBar } from '@/app/components/AppTopBar'
 
 // Mock next/navigation
 jest.mock('next/navigation', () => ({
-  usePathname: () => '/org',
+  usePathname: () => '/',
 }))
 
 // Mock SidebarTrigger since we're only testing spacing

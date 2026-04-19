@@ -10,8 +10,8 @@ export type MobileNavItemConfig = {
 
 /** Single source of truth for primary app destinations (sidebar + mobile). */
 export const APP_NAV_ITEMS: MobileNavItemConfig[] = [
-  { label: "MCP Setup", href: "/", icon: Home },
-  { label: "Organization", href: "/org", icon: Users },
+  { label: "Organization", href: "/", icon: Users },
+  { label: "MCP Setup", href: "/mcp", icon: Home },
 ]
 
 /** Bottom bar favorites: first two entries (fixed “favorites”). */
