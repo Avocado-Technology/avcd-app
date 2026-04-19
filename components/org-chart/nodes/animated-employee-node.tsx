@@ -3,7 +3,6 @@
 import { memo } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { Handle, Position } from 'reactflow'
-import { getAnimationConfig } from '@/lib/animation-utils'
 import { EmployeeContent } from '../shared/node-content'
 import type { AnimatedEmployeeNodeData } from '../types'
 import { ANIMATION_SPRING, NODE_ANIMATIONS } from '@/lib/animation-constants'

@@ -15,9 +15,9 @@ import {
   HttpLink,
   from,
 } from '@apollo/client';
-import { onError } from '@apollo/client/link/error';
+import { ErrorLink } from '@apollo/client/link/error';
 import { setContext } from '@apollo/client/link/context';
-import { ServerError } from '@apollo/client/errors';
+import { CombinedGraphQLErrors, ServerError } from '@apollo/client/errors';
 
 // RetryLink is in the core package
 import { RetryLink } from '@apollo/client/link/retry';
@@ -64,9 +64,10 @@ const authLink = setContext(async (_, { headers }) => {
  * Create Error Link for handling GraphQL and network errors
  * Uses Apollo 4.x error type checking with .is() methods
  */
-const errorLink = onError(({ graphQLErrors, networkError }) => {
-  if (graphQLErrors) {
-    for (const err of graphQLErrors) {
+const errorLink = new ErrorLink(({ error }) => {
+  // Check if it's a GraphQL error
+  if (CombinedGraphQLErrors.is(error)) {
+    for (const err of error.errors) {
       const { message, locations, path, extensions } = err;
       
       console.error(
@@ -88,15 +89,14 @@ const errorLink = onError(({ graphQLErrors, networkError }) => {
         console.error('User is not authorized to access this resource');
       }
     }
-  }
-
-  if (networkError) {
-    // Use Apollo 4.x type checking
-    if (ServerError.is(networkError)) {
-      console.error(`[Network error]: Status ${networkError.statusCode}`, networkError);
-    } else {
-      console.error('[Network error]:', networkError);
-    }
+  } 
+  // Check if it's a server error
+  else if (ServerError.is(error)) {
+    console.error(`[Network error]: Status ${error.statusCode}`, error);
+  } 
+  // Handle other error types
+  else {
+    console.error('[Error]:', error);
   }
 });
 
@@ -114,7 +114,8 @@ const retryLink = new RetryLink({
     max: 3,
     retryIf: (error) => {
       // Only retry network errors, not GraphQL errors
-      return !!error && !error.result;
+      // In Apollo Client 4.x, we check if the error is NOT a CombinedGraphQLErrors
+      return !!error && !CombinedGraphQLErrors.is(error);
     },
   },
 });
@@ -174,8 +175,6 @@ export function createClientApolloClient() {
   return new ApolloClient({
     cache,
     link: from([retryLink, errorLink, authLink, httpLink]),
-    name: 'avcd-web',
-    version: '1.0.0',
     defaultOptions: {
       watchQuery: {
         fetchPolicy: 'cache-and-network',

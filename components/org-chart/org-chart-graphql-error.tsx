@@ -8,10 +8,23 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ApolloError } from '@apollo/client';
+
+interface GraphQLErrorExtension {
+  code?: string;
+  [key: string]: unknown;
+}
+
+interface GraphQLError {
+  message: string;
+  extensions?: GraphQLErrorExtension;
+}
+
+interface ErrorWithGraphQL extends Error {
+  errors?: GraphQLError[];
+}
 
 interface OrgChartGraphQLErrorProps {
-  error: ApolloError | Error;
+  error: ErrorWithGraphQL | Error;
   refetch: () => void;
 }
 
@@ -20,11 +33,11 @@ export function OrgChartGraphQLError({
   refetch,
 }: OrgChartGraphQLErrorProps) {
   // Check for specific error codes
-  // Safe check for ApolloError
-  const isApolloError = error && 'graphQLErrors' in error;
+  // Safe check for GraphQL error
+  const isGraphQLError = error && 'errors' in error;
   const isAuthError = 
-    isApolloError &&
-    (error as ApolloError).graphQLErrors.some(
+    isGraphQLError &&
+    (error as ErrorWithGraphQL).errors?.some(
       (err) =>
         err.extensions?.code === 'UNAUTHENTICATED' ||
         err.extensions?.code === 'FORBIDDEN'

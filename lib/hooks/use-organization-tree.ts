@@ -26,7 +26,9 @@ interface UseOrganizationTreeResult {
 
 interface ApiOrganization {
   id: string;
-  [key: string]: unknown;
+  name: string;
+  address: string;
+  userId: string;
 }
 
 /**
@@ -53,7 +55,7 @@ export function useOrganizationTree(): UseOrganizationTreeResult {
     error: orgsError,
     refetch: refetchOrgs,
     client,
-  } = useQuery(GET_ORGANIZATIONS, {
+  } = useQuery<{ organizations: ApiOrganization[] }>(GET_ORGANIZATIONS, {
     fetchPolicy: 'cache-and-network',
   });
 
@@ -77,18 +79,18 @@ export function useOrganizationTree(): UseOrganizationTreeResult {
           organizations.map(async (org: ApiOrganization) => {
             try {
               // Fetch stores for this org
-              const storesResult = await client.query({
+              const storesResult = await client.query<{ stores: unknown[] }>({
                 query: GET_STORES_BY_ORG,
                 variables: { organizationId: org.id },
               });
-              storesByOrg.set(org.id, storesResult.data.stores || []);
+              storesByOrg.set(org.id, storesResult.data?.stores || []);
 
               // Fetch employees for this org
-              const employeesResult = await client.query({
+              const employeesResult = await client.query<{ employees: unknown[] }>({
                 query: GET_EMPLOYEES_BY_ORG,
                 variables: { organizationId: org.id },
               });
-              employeesByOrg.set(org.id, employeesResult.data.employees || []);
+              employeesByOrg.set(org.id, employeesResult.data?.employees || []);
             } catch (error) {
               console.error(`Error fetching data for org ${org.id}:`, error);
               // Set empty arrays for this org if fetch fails
