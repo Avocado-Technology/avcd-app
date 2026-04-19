@@ -29,7 +29,7 @@ describe('StoreNode Component', () => {
   it('should have correct dimensions', () => {
     const { container } = render(<StoreNode data={mockData} />, { wrapper: ReactFlowWrapper })
     const node = container.firstChild as HTMLElement
-    expect(node.style.width).toBe('220px')
+    expect(node.style.width).toBe('240px')
   })
 
   it('should use mono font for metadata', () => {

@@ -21,10 +21,12 @@ describe('OrgChartLoading Component', () => {
   it('should have proper accessibility attributes', async () => {
     const { OrgChartLoading } = await import('@/components/org-chart/org-chart-loading');
     
-    render(<OrgChartLoading />);
+    const { container } = render(<OrgChartLoading />);
     
-    const component = screen.getByTestId('org-chart-loading');
-    expect(component).toHaveAttribute('role', 'status');
-    expect(component).toHaveAttribute('aria-live', 'polite');
+    // ARIA attributes are now on the OrgChartSkeleton wrapper
+    const statusElement = container.querySelector('[role="status"]');
+    expect(statusElement).toBeInTheDocument();
+    expect(statusElement).toHaveAttribute('aria-live', 'polite');
+    expect(statusElement).toHaveAttribute('aria-label', 'Loading organization chart');
   });
 });

@@ -26,7 +26,7 @@ describe('OrganizationNode Component', () => {
   it('should have correct dimensions', () => {
     const { container } = render(<OrganizationNode data={mockData} />, { wrapper: ReactFlowWrapper })
     const node = container.firstChild as HTMLElement
-    expect(node.style.width).toBe('280px')
+    expect(node.style.width).toBe('240px')
   })
 
   it('should use correct font weight for name', () => {

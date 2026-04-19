@@ -23,13 +23,13 @@ describe('EmployeeNode Component', () => {
   it('should have correct dimensions', () => {
     const { container } = render(<EmployeeNode data={mockData} />, { wrapper: ReactFlowWrapper })
     const node = container.firstChild as HTMLElement
-    expect(node.style.width).toBe('180px')
+    expect(node.style.width).toBe('240px')
   })
 
-  it('should use compact padding', () => {
+  it('should have consistent padding from config', () => {
     const { container } = render(<EmployeeNode data={mockData} />, { wrapper: ReactFlowWrapper })
     const node = container.firstChild as HTMLElement
-    expect(node).toHaveClass('p-4')
+    expect(node.style.padding).toBe('var(--sp-5)')
   })
 
   it('should render avatar placeholder', () => {
