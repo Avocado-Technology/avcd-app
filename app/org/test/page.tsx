@@ -1,12 +1,11 @@
 /**
  * Organization Page (Test with Mock Data)
- * 
- * This page uses mock data for testing purposes
- * The main org page uses real GraphQL data
+ *
+ * Auto-running demo: adds/removes nodes and moves employees between stores
+ * so ELK layout and animations are easy to see.
  */
 
-import { AnimatedOrgChart } from '@/components/org-chart/animated-org-chart'
-import { mockOrgData } from '@/lib/mock-org-data'
+import { OrgChartTestDemo } from '@/components/org-chart/org-chart-test-demo'
 import 'reactflow/dist/style.css'
 
 export default async function OrganizationTestPage() {
@@ -32,13 +31,7 @@ export default async function OrganizationTestPage() {
           flexDirection: 'column',
         }}
       >
-        <div style={{ 
-          flex: 1, 
-          minHeight: 0,
-          overflow: 'hidden',
-        }}>
-          <AnimatedOrgChart data={mockOrgData} />
-        </div>
+        <OrgChartTestDemo />
       </div>
     </main>
   )
