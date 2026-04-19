@@ -1,4 +1,23 @@
 import '@testing-library/jest-dom'
+import { toHaveNoViolations } from 'jest-axe'
+
+expect.extend(toHaveNoViolations)
+
+// Minimal matchMedia for hooks (tests may replace with mockMatchMedia)
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  configurable: true,
+  value: jest.fn().mockImplementation((query) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+})
 
 // Mock environment variables
 process.env.AUTH0_SECRET = 'test-secret-key-for-auth0-testing-only-32-chars-long'

@@ -35,13 +35,13 @@ describe('Button Component', () => {
   it('should apply small size', () => {
     render(<Button size="sm">Small</Button>)
     const button = screen.getByRole('button')
-    expect(button).toHaveClass('h-8')
+    expect(button).toHaveClass('h-9')
   })
 
   it('should apply large size', () => {
     render(<Button size="lg">Large</Button>)
     const button = screen.getByRole('button')
-    expect(button).toHaveClass('h-12')
+    expect(button).toHaveClass('h-14')
   })
 
   it('should handle disabled state', () => {

@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useMinWidthLg } from "@/hooks/use-min-width-lg";
 import { MobileNav } from "@/components/mobile-nav";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Button } from "@/components/ui/button";
+import { isMobileBottomNavEnabled } from "@/lib/feature-flags";
 
 type Props = {
   session: {
@@ -22,6 +25,10 @@ export function AppTopBar({ session }: Props) {
     session.user?.email?.trim() ||
     "Account";
   const pathname = usePathname();
+  const hideDrawerForBottomNav = isMobileBottomNavEnabled();
+  const isLg = useMinWidthLg();
+  /** Theme + sign out live in bottom “More” sheet below lg when bottom nav is enabled */
+  const hideHeaderChromeActions = hideDrawerForBottomNav && !isLg;
 
   return (
     <header
@@ -42,10 +49,12 @@ export function AppTopBar({ session }: Props) {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: "var(--sp-2)", minWidth: 0 }}>
-        {/* Mobile Navigation - visible on mobile/tablet only */}
-        <div className="md:hidden">
-          <MobileNav user={session.user} currentPath={pathname} />
-        </div>
+        {/* Mobile drawer — hidden when bottom tab navigation is enabled */}
+        {!hideDrawerForBottomNav && (
+          <div className="md:hidden">
+            <MobileNav user={session.user} currentPath={pathname} />
+          </div>
+        )}
         
         {/* Desktop Sidebar Trigger - visible on desktop only */}
         <div className="hidden md:block">
@@ -90,38 +99,16 @@ export function AppTopBar({ session }: Props) {
           {displayName}
         </span>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: "var(--sp-3)" }}>
-        <ThemeToggle />
-        <Link
-          href="/api/auth/logout"
-          prefetch={false}
-          style={{
-            flexShrink: 0,
-            fontSize: "0.75rem",
-            fontFamily: "var(--sans)",
-            fontWeight: 500,
-            padding: "var(--sp-2) var(--sp-4)",
-            borderRadius: "var(--r-md)",
-            border: "1px solid var(--g300)",
-            background: "var(--bg)",
-            color: "var(--g700)",
-            cursor: "pointer",
-            textDecoration: "none",
-            display: "inline-block",
-            transition: "border-color 0.15s, color 0.15s",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = "var(--g400)";
-            e.currentTarget.style.color = "var(--g900)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "var(--g300)";
-            e.currentTarget.style.color = "var(--g700)";
-          }}
-        >
-          Sign out
-        </Link>
-      </div>
+      {!hideHeaderChromeActions ? (
+        <div className="flex items-center gap-[var(--sp-3)]">
+          <ThemeToggle />
+          <Button variant="secondary" size="default" className="min-h-11 shrink-0 font-sans text-xs font-medium" asChild>
+            <Link href="/api/auth/logout" prefetch={false}>
+              Sign out
+            </Link>
+          </Button>
+        </div>
+      ) : null}
     </header>
   );
 }

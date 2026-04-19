@@ -134,6 +134,8 @@ export const AnimatedOrgChart = memo(forwardRef<AnimatedOrgChartRef, AnimatedOrg
           style={{ background: 'var(--bg)' }}
           role="application"
           aria-label="Interactive animated organization chart"
+          data-zoom-on-pinch="true"
+          data-pan-on-scroll="true"
         >
           <ReactFlow
             nodes={enhancedNodes}
