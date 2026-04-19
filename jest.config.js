@@ -22,7 +22,7 @@ const customJestConfig = {
     '!**/node_modules/**',
   ],
   transformIgnorePatterns: [
-    'node_modules/(?!(@auth0|jose)/)',
+    'node_modules/(?!(@auth0|jose|elkjs)/)',
   ],
 }
 
