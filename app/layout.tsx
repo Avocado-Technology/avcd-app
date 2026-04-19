@@ -9,6 +9,7 @@ import { SidebarWrapper } from "@/components/sidebar-wrapper";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { MobileNavigationChrome } from "@/components/mobile-navigation-chrome";
 import { ApolloProvider } from "@/lib/apollo-provider";
+import { cn } from "@/lib/utils";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -61,7 +62,10 @@ export default async function RootLayout({
           `
         }} />
       </head>
-      <body style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+      <body
+        className={cn("bg-background text-foreground")}
+        style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}
+      >
         <ThemeProvider>
           <SessionProvider>
             <ApolloProvider>

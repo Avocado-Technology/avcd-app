@@ -26,7 +26,7 @@ export function BottomToolbar({ actions, className }: BottomToolbarProps) {
       aria-label="Primary actions"
       data-toolbar-stack={stacked ? "above-nav" : undefined}
       className={cn(
-        "fixed inset-x-0 z-40 border-t border-gray-200 bg-white/90 backdrop-blur-md dark:border-gray-800 dark:bg-gray-900/90 md:hidden",
+        "fixed inset-x-0 z-40 border-t border-border bg-background/90 backdrop-blur-md md:hidden",
         stacked ? "bottom-[5.25rem]" : "bottom-0",
         className,
       )}

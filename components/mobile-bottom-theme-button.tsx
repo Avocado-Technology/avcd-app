@@ -23,7 +23,7 @@ export function MobileBottomThemeButton() {
       type="button"
       variant="ghost"
       size="icon"
-      className="relative h-12 w-12 shrink-0 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+      className="relative h-12 w-12 shrink-0"
       aria-label="Toggle color theme"
       onClick={toggleColorTheme}
     >

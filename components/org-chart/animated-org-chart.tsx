@@ -5,7 +5,6 @@ import dynamic from 'next/dynamic'
 import { useNodesState, useEdgesState } from 'reactflow'
 import type { Organization } from '@/lib/mock-org-data'
 import { useAnimationState } from '@/lib/hooks/useAnimationState'
-import { PageSkeleton } from '@/components/ui/page-skeleton'
 import { OrgChartEmpty } from './org-chart-empty'
 import { OrgChartErrorBoundary } from './org-chart-error-boundary'
 import { transformOrgToNodes, transformOrgToEdges, applyElkLayout } from './utils/layout-utils'
@@ -42,12 +41,12 @@ export interface AnimatedOrgChartRef {
   clearAll: () => void
 }
 
-// Define nodeTypes OUTSIDE component - critical for performance
-const createNodeTypes = () => ({
+/** Stable reference — React Flow warns if a new object is passed each render. */
+const NODE_TYPES = {
   organizationNode: AnimatedOrganizationNode,
   storeNode: AnimatedStoreNode,
   employeeNode: AnimatedEmployeeNode,
-})
+};
 
 export const AnimatedOrgChart = memo(forwardRef<AnimatedOrgChartRef, AnimatedOrgChartProps>(
   function AnimatedOrgChart({ data }, ref) {
@@ -65,9 +64,6 @@ export const AnimatedOrgChart = memo(forwardRef<AnimatedOrgChartRef, AnimatedOrg
       highlightNode,
       clearAll,
     }), [markAsRecent, highlightNode, clearAll])
-
-    // Memoize nodeTypes - critical for performance
-    const nodeTypes = useMemo(() => createNodeTypes(), [])
 
     // Transform org data to nodes and edges
     const initialNodes = useMemo(() => {
@@ -140,7 +136,7 @@ export const AnimatedOrgChart = memo(forwardRef<AnimatedOrgChartRef, AnimatedOrg
           <ReactFlow
             nodes={enhancedNodes}
             edges={edges}
-            nodeTypes={nodeTypes}
+            nodeTypes={NODE_TYPES}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             fitView

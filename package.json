@@ -31,8 +31,8 @@
     "lucide-react": "^1.8.0",
     "motion": "^12.38.0",
     "next": "15.5.14",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
+    "react": "^19.1.2",
+    "react-dom": "^19.1.2",
     "reactflow": "^11.11.4",
     "tailwind-merge": "^3.5.0",
     "web-worker": "^1.5.0"

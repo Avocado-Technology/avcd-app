@@ -59,6 +59,19 @@
   --popover-foreground: 0 0% 9%;
   --accent: 0 0% 96%;
   --accent-foreground: 0 0% 9%;
+
+  /* shadcn semantic tokens — aliases only; theme flips via --bg/--g* in .dark (do not duplicate below) */
+  --background: var(--bg);
+  --foreground: var(--g900);
+  --muted: var(--g100);
+  --muted-foreground: var(--g500);
+  --border: var(--g200);
+  --input: var(--g300);
+  --ring: var(--g900);
+  --primary: var(--g900);
+  --primary-foreground: var(--bg);
+  --secondary: var(--g100);
+  --secondary-foreground: var(--g900);
 }
 
 .light {
@@ -246,4 +259,23 @@ a,
     margin-left: auto;
     margin-right: auto;
   }
+}
+
+/* React Flow — dark mode overrides (vendor defaults are light-themed) */
+.dark .react-flow__controls-button {
+  background: var(--bg);
+  border-bottom: 1px solid var(--g200);
+  color: var(--g900);
+}
+
+.dark .react-flow__controls-button:hover {
+  background: var(--g100);
+}
+
+.dark .react-flow__controls-button svg {
+  fill: var(--g900);
+}
+
+.dark .react-flow__minimap {
+  background-color: var(--bg);
 }

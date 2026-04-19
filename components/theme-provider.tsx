@@ -23,23 +23,34 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  // Apply theme class to HTML and save to localStorage
+  // Apply theme class to HTML, save to localStorage, and listen for OS changes when theme is system
   useEffect(() => {
-    // Save to localStorage
     localStorage.setItem('avcd-theme', theme)
-    
-    // Apply class to HTML
-    const root = window.document.documentElement
-    root.classList.remove('light', 'dark')
 
-    if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light'
-      root.classList.add(systemTheme)
-    } else {
-      root.classList.add(theme)
+    const root = window.document.documentElement
+
+    const applyResolvedTheme = () => {
+      root.classList.remove('light', 'dark')
+      if (theme === 'system') {
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light'
+        root.classList.add(systemTheme)
+      } else {
+        root.classList.add(theme)
+      }
     }
+
+    applyResolvedTheme()
+
+    if (theme !== 'system') {
+      return
+    }
+
+    const mql = window.matchMedia('(prefers-color-scheme: dark)')
+    const onPrefersSchemeChange = () => applyResolvedTheme()
+    mql.addEventListener('change', onPrefersSchemeChange)
+    return () => mql.removeEventListener('change', onPrefersSchemeChange)
   }, [theme])
 
   return (

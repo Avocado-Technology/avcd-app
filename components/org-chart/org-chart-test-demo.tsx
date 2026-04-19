@@ -177,7 +177,9 @@ export function OrgChartTestDemo() {
 
     return () => {
       cancelled = true
-      chartRef.current?.clearAll()
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- imperative ref; read at unmount
+      const chart = chartRef.current
+      chart?.clearAll()
     }
   }, [])
 

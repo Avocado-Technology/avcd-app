@@ -13,7 +13,7 @@ export function OrgChartNoData() {
   return (
     <div role="status" aria-label="No organizations found">
       <OrgChartEmpty />
-      <div className="text-center mt-4 text-neutral-600">
+      <div className="text-center mt-4 text-[var(--g500)]">
         <p>No organizations found</p>
         <p className="text-sm mt-2">
           Create your first organization to get started

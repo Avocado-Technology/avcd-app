@@ -15,5 +15,5 @@ COPY . .
 # Expose Next.js dev server port
 EXPOSE 3000
 
-# Development command with hot reload
-CMD ["npm", "run", "dev"]
+# Sync node_modules when package-lock.json changes (volume over /app/node_modules)
+ENTRYPOINT ["sh", "./docker-entrypoint-dev.sh"]
