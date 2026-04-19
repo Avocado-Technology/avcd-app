@@ -4,7 +4,10 @@ import { AppSidebar } from '@/components/app-sidebar'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { mockMatchMedia, restoreMatchMedia } from '@/__tests__/utils/mockMatchMedia'
 
-function renderWithProvider(user: any, currentPath: string) {
+function renderWithProvider(
+  user: { name?: string | null; email?: string | null; picture?: string | null },
+  currentPath: string,
+) {
   return render(
     <SidebarProvider>
       <AppSidebar user={user} currentPath={currentPath} />
@@ -27,15 +30,15 @@ describe('Sidebar Navigation Flow', () => {
     restoreMatchMedia()
   })
 
-  it('should navigate from MCP Setup to Organization', () => {
-    renderWithProvider(mockUser, '/')
+  it('should link Organization to home', () => {
+    renderWithProvider(mockUser, '/mcp')
 
     const orgLink = screen.getByText('Organization').closest('a')
-    expect(orgLink).toHaveAttribute('href', '/org')
+    expect(orgLink).toHaveAttribute('href', '/')
   })
 
   it('should show active state on current page', () => {
-    renderWithProvider(mockUser, '/org')
+    renderWithProvider(mockUser, '/')
 
     const orgLink = screen.getByText('Organization').closest('a')
     expect(orgLink?.className).toContain('bg-gray-100')
@@ -62,7 +65,7 @@ describe('Sidebar Navigation Flow', () => {
     const mcpLink = screen.getByText('MCP Setup').closest('a')
     const orgLink = screen.getByText('Organization').closest('a')
 
-    expect(mcpLink).toHaveAttribute('href', '/')
-    expect(orgLink).toHaveAttribute('href', '/org')
+    expect(orgLink).toHaveAttribute('href', '/')
+    expect(mcpLink).toHaveAttribute('href', '/mcp')
   })
 })

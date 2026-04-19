@@ -27,7 +27,7 @@ jest.mock('@/components/org-chart/animated-org-chart', () => ({
 }))
 
 jest.mock('next/navigation', () => ({
-  usePathname: () => '/org',
+  usePathname: () => '/',
 }))
 
 jest.mock('@/components/ui/sidebar', () => ({

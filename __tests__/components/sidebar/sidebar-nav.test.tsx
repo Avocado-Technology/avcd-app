@@ -30,23 +30,23 @@ describe('SidebarNav Component', () => {
     expect(screen.getByText('Organization')).toBeInTheDocument()
   })
 
-  it('should mark MCP Setup as active on home path', () => {
+  it('should mark Organization as active on home path', () => {
     renderWithProvider("/")
-    const mcpLink = screen.getByText('MCP Setup').closest('a')
-    expect(mcpLink?.className).toContain('bg-gray-100')
-  })
-
-  it('should mark Organization as active on /org path', () => {
-    renderWithProvider("/org")
     const orgLink = screen.getByText('Organization').closest('a')
     expect(orgLink?.className).toContain('bg-gray-100')
+  })
+
+  it('should mark MCP Setup as active on /mcp path', () => {
+    renderWithProvider("/mcp")
+    const mcpLink = screen.getByText('MCP Setup').closest('a')
+    expect(mcpLink?.className).toContain('bg-gray-100')
   })
 
   it('should have correct link hrefs', () => {
     renderWithProvider("/")
     const mcpLink = screen.getByText('MCP Setup').closest('a')
     const orgLink = screen.getByText('Organization').closest('a')
-    expect(mcpLink).toHaveAttribute('href', '/')
-    expect(orgLink).toHaveAttribute('href', '/org')
+    expect(orgLink).toHaveAttribute('href', '/')
+    expect(mcpLink).toHaveAttribute('href', '/mcp')
   })
 })
