@@ -21,6 +21,10 @@
 # when only the web container runs and auth listens on the host (port 8010).
 # (`extra_hosts` enables host.docker.internal on Linux Docker Engine.)
 #
+# Explicit project name: must differ from avcd-api (also deploy/production/) on the same droplet or
+# `docker compose down` from one stack removes the other's containers (default project name "production").
+name: avcd-web
+
 services:
   web:
     build:
