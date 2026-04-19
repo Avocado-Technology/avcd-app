@@ -29,6 +29,7 @@ export function OrgPageWithData() {
           flexDirection: 'column',
           background: 'var(--g50)',
           minHeight: 0,
+          padding: 'var(--sp-6)',
         }}
       >
         <OrgChartLoading />
@@ -48,6 +49,7 @@ export function OrgPageWithData() {
           flexDirection: 'column',
           background: 'var(--g50)',
           minHeight: 0,
+          padding: 'var(--sp-6)',
         }}
       >
         <OrgChartGraphQLError error={error} refetch={refetch} />
@@ -67,6 +69,7 @@ export function OrgPageWithData() {
           flexDirection: 'column',
           background: 'var(--g50)',
           minHeight: 0,
+          padding: 'var(--sp-6)',
         }}
       >
         <OrgChartNoData />
@@ -88,6 +91,7 @@ export function OrgPageWithData() {
         flexDirection: 'column',
         background: 'var(--g50)',
         minHeight: 0,
+        padding: 'var(--sp-6)',
       }}
     >
       <div 
