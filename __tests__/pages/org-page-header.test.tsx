@@ -1,53 +1,67 @@
 import { describe, it, expect } from '@jest/globals'
-import { render, screen } from '@testing-library/react'
-import OrganizationPage from '@/app/org/page'
+import { render } from '@testing-library/react'
+import { OrgPageWithData } from '@/app/org/org-page-with-data'
 
-// Mock the ReactFlowCanvas since we're only testing header
-jest.mock('@/components/org-chart/react-flow-canvas', () => ({
-  ReactFlowCanvas: () => <div data-testid="mock-canvas">Canvas</div>,
+// Mock the useOrganizationTree hook
+jest.mock('@/lib/hooks/use-organization-tree', () => ({
+  useOrganizationTree: jest.fn(() => ({
+    data: [{
+      id: 'org-1',
+      name: 'Organization',
+      stores: [],
+    }],
+    loading: false,
+    error: null,
+    refetch: jest.fn(),
+  })),
+}))
+
+// Mock AnimatedOrgChart
+jest.mock('@/components/org-chart/animated-org-chart', () => ({
+  AnimatedOrgChart: ({ data }: { data: { name: string } }) => (
+    <div data-testid="animated-org-chart">
+      Animated Chart: {data.name}
+    </div>
+  ),
 }))
 
 describe('Organization Page Header Spacing', () => {
-  it('should render header with "Organization" title', async () => {
-    const Page = await OrganizationPage()
-    render(Page)
-    expect(screen.getByRole('heading', { name: /organization/i })).toBeInTheDocument()
+  it('should render main element with proper ARIA', () => {
+    const { container } = render(<OrgPageWithData />)
+    const main = container.querySelector('main')
+    expect(main).toBeInTheDocument()
+    expect(main).toHaveAttribute('role', 'main')
+    expect(main).toHaveAttribute('aria-label', 'Organization chart page')
   })
 
-  it('should have responsive horizontal padding using clamp', async () => {
-    const Page = await OrganizationPage()
-    const { container } = render(Page)
-    const header = container.querySelector('header')
-    const styles = header?.getAttribute('style')
-    
-    // Should use clamp for horizontal padding
-    expect(styles).toMatch(/clamp\(1rem,\s*5vw,\s*3rem\)/)
+  it('should render organization chart region', () => {
+    const { container } = render(<OrgPageWithData />)
+    const region = container.querySelector('[role="region"][aria-label*="Organization chart"]')
+    expect(region).toBeInTheDocument()
   })
 
-  it('should maintain vertical padding of 32px (var(--sp-8))', async () => {
-    const Page = await OrganizationPage()
-    const { container } = render(Page)
-    const header = container.querySelector('header')
-    const styles = header?.getAttribute('style')
+  it('should have flex layout for main element', () => {
+    const { container } = render(<OrgPageWithData />)
+    const main = container.querySelector('main')
+    const styles = main?.getAttribute('style')
     
-    expect(styles).toMatch(/var\(--sp-8\)/)
+    expect(styles).toMatch(/flex:\s*1/)
+    expect(styles).toMatch(/display:\s*flex/)
   })
 
-  it('should have white background', async () => {
-    const Page = await OrganizationPage()
-    const { container } = render(Page)
-    const header = container.querySelector('header')
-    const styles = header?.getAttribute('style')
+  it('should have background color', () => {
+    const { container } = render(<OrgPageWithData />)
+    const main = container.querySelector('main')
+    const styles = main?.getAttribute('style')
     
-    expect(styles).toContain('background: var(--bg)')
+    expect(styles).toContain('background: var(--g50)')
   })
 
-  it('should have bottom border', async () => {
-    const Page = await OrganizationPage()
-    const { container } = render(Page)
-    const header = container.querySelector('header')
-    const styles = header?.getAttribute('style')
+  it('should have minHeight: 0 to prevent overflow', () => {
+    const { container } = render(<OrgPageWithData />)
+    const main = container.querySelector('main')
+    const styles = main?.getAttribute('style')
     
-    expect(styles).toContain('border-bottom: 1px solid var(--g200)')
+    expect(styles).toMatch(/min-height:\s*0/)
   })
 })

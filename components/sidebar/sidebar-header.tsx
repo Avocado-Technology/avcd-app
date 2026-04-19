@@ -10,6 +10,7 @@ export function SidebarHeader() {
             className="h-[7px] w-[7px] rounded-full"
             style={{ background: 'var(--green)' }}
           />
+          <span className="font-sans font-medium text-base">AVCD</span>
         </div>
       </SidebarMenuItem>
     </SidebarMenu>

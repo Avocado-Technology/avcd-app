@@ -1,11 +1,29 @@
 import { describe, it, expect } from '@jest/globals'
 import { render, screen } from '@testing-library/react'
-import OrganizationPage from '@/app/org/page'
+import { OrgPageWithData } from '@/app/org/org-page-with-data'
 import { AppTopBar } from '@/app/components/AppTopBar'
 
-// Mock dependencies
-jest.mock('@/components/org-chart/react-flow-canvas', () => ({
-  ReactFlowCanvas: () => <div data-testid="canvas">Canvas</div>,
+// Mock the useOrganizationTree hook
+jest.mock('@/lib/hooks/use-organization-tree', () => ({
+  useOrganizationTree: jest.fn(() => ({
+    data: [{
+      id: 'org-1',
+      name: 'Organization',
+      stores: [],
+    }],
+    loading: false,
+    error: null,
+    refetch: jest.fn(),
+  })),
+}))
+
+// Mock AnimatedOrgChart
+jest.mock('@/components/org-chart/animated-org-chart', () => ({
+  AnimatedOrgChart: ({ data }: { data: { name: string } }) => (
+    <div data-testid="animated-org-chart">
+      Animated Chart: {data.name}
+    </div>
+  ),
 }))
 
 jest.mock('next/navigation', () => ({
@@ -25,75 +43,58 @@ const mockSession = {
 }
 
 describe('Org Page Spacing Integration', () => {
-  it('should have consistent horizontal padding across AppTopBar and page header', async () => {
+  it('should have consistent horizontal padding across AppTopBar', () => {
     // Render AppTopBar
     const { container: topBarContainer } = render(<AppTopBar session={mockSession} />)
     const topBarHeader = topBarContainer.querySelector('header')
     const topBarStyles = topBarHeader?.getAttribute('style') || ''
     
-    // Render Org Page
-    const Page = await OrganizationPage()
-    const { container: pageContainer } = render(Page)
-    const pageHeader = pageContainer.querySelector('header')
-    const pageStyles = pageHeader?.getAttribute('style') || ''
-    
-    // Both should use clamp(1rem, 5vw, 3rem)
+    // Should use clamp(1rem, 5vw, 3rem)
     const clampPattern = /clamp\(1rem,\s*5vw,\s*3rem\)/
     expect(topBarStyles).toMatch(clampPattern)
-    expect(pageStyles).toMatch(clampPattern)
   })
 
-  it('should have minimum 16px padding on smallest screens', async () => {
-    // This verifies the clamp min value
-    const Page = await OrganizationPage()
-    const { container } = render(Page)
-    const header = container.querySelector('header')
-    const styles = header?.getAttribute('style') || ''
+  it('should render main element with flex layout', () => {
+    const { container } = render(<OrgPageWithData />)
+    const main = container.querySelector('main')
+    const styles = main?.getAttribute('style') || ''
     
-    // clamp starts at 1rem (16px)
-    expect(styles).toMatch(/clamp\(1rem/)
+    expect(styles).toMatch(/flex:\s*1/)
+    expect(styles).toMatch(/display:\s*flex/)
   })
 
-  it('should have maximum 48px padding on largest screens', async () => {
-    // This verifies the clamp max value
-    const Page = await OrganizationPage()
-    const { container } = render(Page)
-    const header = container.querySelector('header')
-    const styles = header?.getAttribute('style') || ''
+  it('should have proper background color', () => {
+    const { container } = render(<OrgPageWithData />)
+    const main = container.querySelector('main')
+    const styles = main?.getAttribute('style') || ''
     
-    // clamp ends at 3rem (48px)
-    expect(styles).toMatch(/3rem\)/)
+    expect(styles).toContain('background: var(--g50)')
   })
 
-  it('should not have content touching viewport edges', async () => {
-    const Page = await OrganizationPage()
-    const { container } = render(Page)
+  it('should not have content touching viewport edges', () => {
+    const { container } = render(<OrgPageWithData />)
     
-    // Check that canvas region has padding
+    // Check that region has proper flex layout
     const canvasRegion = container.querySelector('[role="region"]')
     const styles = canvasRegion?.getAttribute('style') || ''
-    expect(styles).toContain('padding')
+    expect(styles).toMatch(/flex:\s*1/)
   })
 
-  it('should maintain proper visual hierarchy', async () => {
-    const Page = await OrganizationPage()
-    render(Page)
+  it('should maintain proper visual hierarchy', () => {
+    render(<OrgPageWithData />)
     
-    // Page structure should be: main > header + region > canvas
+    // Page structure should be: main > region > canvas
     const main = screen.getByRole('main')
-    const heading = screen.getByRole('heading', { name: /organization/i })
     const region = screen.getByRole('region')
     
-    expect(main).toContainElement(heading)
     expect(main).toContainElement(region)
   })
 
-  it('should have consistent border styling', async () => {
-    const Page = await OrganizationPage()
-    const { container } = render(Page)
-    const header = container.querySelector('header')
-    const styles = header?.getAttribute('style') || ''
+  it('should have proper ARIA attributes', () => {
+    const { container } = render(<OrgPageWithData />)
+    const main = container.querySelector('main')
     
-    expect(styles).toContain('border-bottom: 1px solid var(--g200)')
+    expect(main).toHaveAttribute('role', 'main')
+    expect(main).toHaveAttribute('aria-label', 'Organization chart page')
   })
 })

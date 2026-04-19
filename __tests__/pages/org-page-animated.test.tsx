@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from '@jest/globals'
 import { render, screen } from '@testing-library/react'
-import OrganizationPage from '@/app/org/page'
+import { OrgPageWithData } from '@/app/org/org-page-with-data'
 
 // Mock ResizeObserver
 beforeAll(() => {
@@ -11,9 +11,23 @@ beforeAll(() => {
   }))
 })
 
+// Mock the useOrganizationTree hook
+jest.mock('@/lib/hooks/use-organization-tree', () => ({
+  useOrganizationTree: jest.fn(() => ({
+    data: [{
+      id: 'org-1',
+      name: 'AVCD Corporation',
+      stores: [],
+    }],
+    loading: false,
+    error: null,
+    refetch: jest.fn(),
+  })),
+}))
+
 // Mock the AnimatedOrgChart component
 jest.mock('@/components/org-chart/animated-org-chart', () => ({
-  AnimatedOrgChart: ({ data }: any) => (
+  AnimatedOrgChart: ({ data }: { data: { name: string } }) => (
     <div data-testid="animated-org-chart">
       Animated Chart: {data.name}
     </div>
@@ -21,32 +35,28 @@ jest.mock('@/components/org-chart/animated-org-chart', () => ({
 }))
 
 describe('Organization Page (Animated)', () => {
-  it('should render AnimatedOrgChart component', async () => {
-    const page = await OrganizationPage()
-    const { container } = render(page)
+  it('should render AnimatedOrgChart component', () => {
+    const { container } = render(<OrgPageWithData />)
 
     expect(screen.getByTestId('animated-org-chart')).toBeInTheDocument()
   })
 
-  it('should maintain proper ARIA roles', async () => {
-    const page = await OrganizationPage()
-    const { container } = render(page)
+  it('should maintain proper ARIA roles', () => {
+    render(<OrgPageWithData />)
 
-    const main = container.querySelector('main')
+    const main = document.querySelector('main')
     expect(main).toHaveAttribute('role', 'main')
     expect(main).toHaveAttribute('aria-label', 'Organization chart page')
   })
 
-  it('should pass mockOrgData to AnimatedOrgChart', async () => {
-    const page = await OrganizationPage()
-    render(page)
+  it('should pass mockOrgData to AnimatedOrgChart', () => {
+    render(<OrgPageWithData />)
 
     expect(screen.getByText(/AVCD Corporation/i)).toBeInTheDocument()
   })
 
-  it('should maintain responsive layout', async () => {
-    const page = await OrganizationPage()
-    const { container } = render(page)
+  it('should maintain responsive layout', () => {
+    const { container } = render(<OrgPageWithData />)
 
     const main = container.querySelector('main')
     expect(main?.style.flex).toBeTruthy()
