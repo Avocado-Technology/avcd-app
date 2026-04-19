@@ -26,6 +26,8 @@ services:
     build:
       context: ../..  # Build from web/ directory
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_GRAPHQL_ENDPOINT: https://${PUBLIC_HOST:-localhost}/api/graphql
     restart: unless-stopped
     ports:
       - "3000:3000"

@@ -19,6 +19,11 @@ ENV AUTH0_CLIENT_ID=build-placeholder
 ENV AUTH0_CLIENT_SECRET=build-placeholder
 # So server bundles keep runtime lookup for AVCD_AUTH_URL (same default as compose / runner image).
 ENV AVCD_AUTH_URL=http://auth:8000
+
+# GraphQL endpoint (build arg with default for local dev, override in CI/CD)
+ARG NEXT_PUBLIC_GRAPHQL_ENDPOINT=http://localhost:8000/graphql
+ENV NEXT_PUBLIC_GRAPHQL_ENDPOINT=$NEXT_PUBLIC_GRAPHQL_ENDPOINT
+
 RUN npx next build
 
 FROM node:22-bookworm-slim AS runner
