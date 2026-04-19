@@ -1,40 +1,43 @@
 /**
  * Auth0 Token API Route
- * 
- * Extracts and returns the access token from Auth0 session
- * Used by Apollo Client's auth link to inject JWT tokens
+ *
+ * Returns an access token for GraphQL using getAccessToken(), which refreshes
+ * the OAuth access token via refresh_token when the stored JWT is expired.
  */
 
-import { getSession } from '@auth0/nextjs-auth0';
-import { NextRequest, NextResponse } from 'next/server';
+import {
+  AccessTokenError,
+  getAccessToken,
+} from "@auth0/nextjs-auth0";
+import { NextRequest, NextResponse } from "next/server";
+
+/** Never statically cache; session and token responses must be fresh */
+export const dynamic = "force-dynamic";
 
 /**
  * GET /api/auth/token
- * 
- * Returns the access token from the current Auth0 session
- * 
- * @returns {accessToken: string} - JWT access token
- * @returns 401 if not authenticated or token missing
+ *
+ * @returns {accessToken: string}
+ * @returns 401 if not authenticated or token unavailable
  */
-export async function GET(_request: NextRequest) {
-  try {
-    const session = await getSession();
+export async function GET(req: NextRequest) {
+  const res = new NextResponse();
 
-    if (!session || !session.accessToken) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+  try {
+    const { accessToken } = await getAccessToken(req, res);
+
+    if (!accessToken) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    return NextResponse.json({
-      accessToken: session.accessToken,
-    });
+    const json = NextResponse.json({ accessToken }, res);
+    json.headers.set("Cache-Control", "private, no-store, max-age=0");
+    return json;
   } catch (error) {
-    console.error('Error fetching session:', error);
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    );
+    if (error instanceof AccessTokenError) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    console.error("Error fetching access token:", error);
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 }

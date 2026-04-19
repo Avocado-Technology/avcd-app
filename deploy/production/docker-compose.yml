@@ -21,6 +21,11 @@
 # when only the web container runs and auth listens on the host (port 8010).
 # (`extra_hosts` enables host.docker.internal on Linux Docker Engine.)
 #
+# Auth0 (@auth0/nextjs-auth0): On TLS hosts, set AUTH0_BASE_URL to the public HTTPS origin users use in the browser
+# (for example https://dev.avcd.ai — same scheme/host as PUBLIC_HOST). The default localhost:3000 is for local compose only;
+# leaving it on a droplet breaks callback URLs, state validation, and Secure session cookies.
+# In Auth0 Dashboard → Application URIs: Allowed Callback URLs must include ${AUTH0_BASE_URL}/api/auth/callback.
+#
 # Explicit project name: must differ from avcd-api (also deploy/production/) on the same droplet or
 # `docker compose down` from one stack removes the other's containers (default project name "production").
 name: avcd-web

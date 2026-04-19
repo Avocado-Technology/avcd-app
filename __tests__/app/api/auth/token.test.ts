@@ -1,95 +1,125 @@
 /**
- * Test: Auth0 Token API Route
- * 
- * Following TDD - this test is written first and will fail until implementation
+ * Tests for GET /api/auth/token — Auth0 access token + refresh behavior
  */
 
-// Mock @auth0/nextjs-auth0 before any imports
-jest.mock('@auth0/nextjs-auth0', () => ({
-  getSession: jest.fn(),
-}));
+import { NextRequest } from "next/server";
+import { getAccessToken, AccessTokenError } from "@auth0/nextjs-auth0";
+import { GET } from "@/app/api/auth/token/route";
 
-// Mock next/server to avoid Request/Response issues in test environment
-jest.mock('next/server', () => ({
-  NextRequest: jest.fn(),
-  NextResponse: {
-    json: jest.fn((data, init) => ({
-      status: init?.status || 200,
-      json: async () => data,
-    })),
-  },
-}));
+jest.mock("@auth0/nextjs-auth0", () => {
+  class MockAccessTokenError extends Error {
+    readonly code: string;
+    constructor(code: string, message: string) {
+      super(message);
+      this.name = "AccessTokenError";
+      this.code = code;
+    }
+  }
+  return {
+    getAccessToken: jest.fn(),
+    AccessTokenError: MockAccessTokenError,
+  };
+});
 
-import { getSession } from '@auth0/nextjs-auth0';
+const mockedGetAccessToken = getAccessToken as jest.MockedFunction<
+  typeof getAccessToken
+>;
 
-// Type for the GET handler
-type GetHandler = (request: Request) => Promise<Response>;
-
-describe('Token API Route', () => {
-  let GET: GetHandler;
-
-  beforeEach(async () => {
+describe("Token API Route", () => {
+  beforeEach(() => {
     jest.clearAllMocks();
-    // Dynamically import the route after mocks are set up
-    const routeModule = await import('@/app/api/auth/token/route');
-    GET = routeModule.GET;
   });
 
-  describe('GET /api/auth/token', () => {
-    it('should return access token when user is authenticated', async () => {
-      const mockAccessToken = 'test-access-token-123';
-      
-      (getSession as jest.Mock).mockResolvedValue({
-        user: { sub: 'auth0|123' },
-        accessToken: mockAccessToken,
+  function makeRequest(): NextRequest {
+    return new NextRequest(new URL("http://localhost:3000/api/auth/token"));
+  }
+
+  describe("GET /api/auth/token", () => {
+    it("returns access token when getAccessToken resolves", async () => {
+      mockedGetAccessToken.mockResolvedValue({
+        accessToken: "fresh-jwt-from-sdk",
       });
 
-      const request = {} as Request; // Mock request object
-      const response = await GET(request);
+      const response = await GET(makeRequest());
 
       expect(response.status).toBe(200);
-      
-      const data = await response.json();
-      expect(data).toEqual({ accessToken: mockAccessToken });
+      await expect(response.json()).resolves.toEqual({
+        accessToken: "fresh-jwt-from-sdk",
+      });
+      expect(mockedGetAccessToken).toHaveBeenCalledTimes(1);
     });
 
-    it('should return 401 when user is not authenticated', async () => {
-      (getSession as jest.Mock).mockResolvedValue(null);
-
-      const request = {} as Request; // Mock request object
-      const response = await GET(request);
-
-      expect(response.status).toBe(401);
-      
-      const data = await response.json();
-      expect(data).toEqual({ error: 'Unauthorized' });
-    });
-
-    it('should return 401 when access token is missing', async () => {
-      (getSession as jest.Mock).mockResolvedValue({
-        user: { sub: 'auth0|123' },
-        // No accessToken
+    it("merges headers from NextResponse when SDK sets cookies on res", async () => {
+      mockedGetAccessToken.mockImplementation(async (_req, res) => {
+        res.headers.append(
+          "Set-Cookie",
+          "appSession=test-chunk; Path=/; HttpOnly",
+        );
+        return { accessToken: "jwt-with-cookie-merge" };
       });
 
-      const request = {} as Request; // Mock request object
-      const response = await GET(request);
+      const response = await GET(makeRequest());
 
-      expect(response.status).toBe(401);
-      
-      const data = await response.json();
-      expect(data).toEqual({ error: 'Unauthorized' });
+      expect(response.status).toBe(200);
+      const setCookie = response.headers.getSetCookie?.() ?? [];
+      const joined =
+        setCookie.length > 0
+          ? setCookie.join("; ")
+          : response.headers.get("set-cookie") ?? "";
+      expect(joined).toContain("appSession=test-chunk");
+      await expect(response.json()).resolves.toEqual({
+        accessToken: "jwt-with-cookie-merge",
+      });
     });
 
-    it('should handle errors gracefully', async () => {
-      (getSession as jest.Mock).mockRejectedValue(new Error('Session error'));
+    it("returns 401 when access token is missing", async () => {
+      mockedGetAccessToken.mockResolvedValue({
+        accessToken: undefined,
+      });
 
-      const request = {} as Request; // Mock request object
-      const response = await GET(request);
+      const response = await GET(makeRequest());
 
       expect(response.status).toBe(401);
-      
-      const data = await response.json();
-      expect(data).toEqual({ error: 'Unauthorized' });
+      await expect(response.json()).resolves.toEqual({
+        error: "Unauthorized",
+      });
+    });
+
+    it("returns 401 when getAccessToken throws AccessTokenError", async () => {
+      mockedGetAccessToken.mockRejectedValue(
+        new AccessTokenError("ERR_MISSING_SESSION", "no session"),
+      );
+
+      const response = await GET(makeRequest());
+
+      expect(response.status).toBe(401);
+      await expect(response.json()).resolves.toEqual({
+        error: "Unauthorized",
+      });
+    });
+
+    it("returns 401 on unexpected errors without leaking details", async () => {
+      const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+      mockedGetAccessToken.mockRejectedValue(new Error("network boom"));
+
+      const response = await GET(makeRequest());
+
+      expect(response.status).toBe(401);
+      await expect(response.json()).resolves.toEqual({
+        error: "Unauthorized",
+      });
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    it("sets Cache-Control to disable caching", async () => {
+      mockedGetAccessToken.mockResolvedValue({ accessToken: "jwt" });
+
+      const response = await GET(makeRequest());
+
+      expect(response.headers.get("cache-control")).toBe(
+        "private, no-store, max-age=0",
+      );
     });
   });
 });
