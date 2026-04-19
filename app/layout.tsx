@@ -15,12 +15,35 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "AVCD — Organization",
   description: "Company org chart and team management",
+  metadataBase: new URL(
+    process.env.AUTH0_BASE_URL ?? "http://localhost:3000",
+  ),
+  icons: {
+    icon: [
+      {
+        url: "/icons/icon-192x192.png",
+        sizes: "192x192",
+        type: "image/png",
+      },
+    ],
+    apple: [
+      {
+        url: "/icons/apple-touch-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
+  },
 };
 
 export const viewport: Viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
   maximumScale: 5, // Allow zoom for accessibility
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
 };
 
 export default async function RootLayout({
