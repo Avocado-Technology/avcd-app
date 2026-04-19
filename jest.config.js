@@ -6,6 +6,7 @@ const createJestConfig = nextJest({
 })
 
 const customJestConfig = {
+  setupFiles: ['<rootDir>/jest.polyfills.cjs'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {
@@ -24,6 +25,7 @@ const customJestConfig = {
   transformIgnorePatterns: [
     'node_modules/(?!(@auth0|jose|elkjs)/)',
   ],
+  modulePathIgnorePatterns: ['<rootDir>/.next/'],
 }
 
 module.exports = createJestConfig(customJestConfig)
