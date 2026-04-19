@@ -54,30 +54,36 @@ describe('Org Page Spacing Integration', () => {
     expect(topBarStyles).toMatch(clampPattern)
   })
 
-  it('should render main element with flex layout', () => {
+  it("should render main element with flex layout", () => {
     const { container } = render(<OrgPageWithData />)
-    const main = container.querySelector('main')
-    const styles = main?.getAttribute('style') || ''
-    
-    expect(styles).toMatch(/flex:\s*1/)
-    expect(styles).toMatch(/display:\s*flex/)
+    const main = container.querySelector("main")
+    const cls = main?.getAttribute("class") || ""
+    expect(cls).toMatch(/flex/)
+    expect(cls).toMatch(/flex-1/)
+    expect(cls).toMatch(/flex-col/)
   })
 
-  it('should have proper background color', () => {
+  it("should have proper background color on main", () => {
     const { container } = render(<OrgPageWithData />)
-    const main = container.querySelector('main')
-    const styles = main?.getAttribute('style') || ''
-    
-    expect(styles).toContain('background: var(--g50)')
+    const main = container.querySelector("main")
+    const cls = main?.getAttribute("class") || ""
+    expect(cls).toContain("bg-[var(--g50)]")
   })
 
-  it('should not have content touching viewport edges', () => {
+  it("should use zero padding on small viewports and sp-6 at lg+ (className)", () => {
     const { container } = render(<OrgPageWithData />)
-    
-    // Check that region has proper flex layout
+    const main = container.querySelector("main")
+    const cls = main?.getAttribute("class") || ""
+    expect(cls).toMatch(/p-0/)
+    expect(cls).toMatch(/lg:p-\[var\(--sp-6\)\]/)
+  })
+
+  it("should have region with flex layout for the chart", () => {
+    const { container } = render(<OrgPageWithData />)
     const canvasRegion = container.querySelector('[role="region"]')
-    const styles = canvasRegion?.getAttribute('style') || ''
-    expect(styles).toMatch(/flex:\s*1/)
+    const cls = canvasRegion?.getAttribute("class") || ""
+    expect(cls).toMatch(/flex-1/)
+    expect(cls).toMatch(/flex-col/)
   })
 
   it('should maintain proper visual hierarchy', () => {

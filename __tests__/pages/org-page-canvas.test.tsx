@@ -33,41 +33,41 @@ jest.mock('@/components/org-chart/animated-org-chart', () => ({
 }))
 
 describe('Organization Page Canvas Container', () => {
-  it('should wrap canvas in a padded container', () => {
+  it("should wrap canvas in chart region container", () => {
     const { container } = render(<OrgPageWithData />)
     
     const canvasRegion = container.querySelector('[role="region"][aria-label*="Organization chart"]')
     expect(canvasRegion).toBeInTheDocument()
   })
 
-  it('should have responsive padding around canvas using clamp', () => {
+  it("should have responsive padding around canvas using clamp", () => {
     const { container } = render(<OrgPageWithData />)
-    
+
     const canvasRegion = container.querySelector('[role="region"]')
-    
+
     // The current implementation doesn't use clamp, so we just check for presence
     expect(canvasRegion).toBeInTheDocument()
   })
 
-  it('should maintain flex: 1 for canvas region', () => {
+  it("should maintain flex-1 for canvas region (Tailwind classes)", () => {
     const { container } = render(<OrgPageWithData />)
-    
+
     const canvasRegion = container.querySelector('[role="region"]')
-    const styles = canvasRegion?.getAttribute('style')
-    
-    expect(styles).toMatch(/flex:\s*1/)
+    const cls = canvasRegion?.getAttribute("class") || ""
+
+    expect(cls).toMatch(/flex-1/)
   })
 
-  it('should have minHeight: 0 to prevent overflow', () => {
+  it("should have min-h-0 on canvas region to prevent overflow", () => {
     const { container } = render(<OrgPageWithData />)
-    
+
     const canvasRegion = container.querySelector('[role="region"]')
-    const styles = canvasRegion?.getAttribute('style')
-    
-    expect(styles).toMatch(/min-height:\s*0/)
+    const cls = canvasRegion?.getAttribute("class") || ""
+
+    expect(cls).toMatch(/min-h-0/)
   })
 
-  it('should render AnimatedOrgChart inside padded region', () => {
+  it("should render AnimatedOrgChart inside chart region", () => {
     render(<OrgPageWithData />)
     
     expect(screen.getByTestId('animated-org-chart')).toBeInTheDocument()
