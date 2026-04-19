@@ -61,8 +61,10 @@ jobs:
           verify_url: ${{ vars.DO_WEB_HEALTH_URL || secrets.DO_WEB_HEALTH_URL }}
           verify_body_substring: '"status":"ok"'
           verify_http_insecure_first: "false"
-          web_auth_secret: ${{ secrets.WEB_AUTH_SECRET }}
-          web_google_client_id: ${{ secrets.WEB_GOOGLE_CLIENT_ID }}
-          web_google_client_secret: ${{ secrets.WEB_GOOGLE_CLIENT_SECRET }}
-          web_avcd_auth_url: ${{ vars.WEB_AVCD_AUTH_URL }}
-          web_auth_url: ${{ vars.WEB_AUTH_URL }}
+          web_auth0_secret: ${{ secrets.WEB_AUTH0_SECRET }}
+          web_auth0_issuer: ${{ vars.WEB_AUTH0_ISSUER || secrets.WEB_AUTH0_ISSUER }}
+          web_auth0_client_id: ${{ secrets.WEB_AUTH0_CLIENT_ID }}
+          web_auth0_client_secret: ${{ secrets.WEB_AUTH0_CLIENT_SECRET }}
+          web_auth0_audience: ${{ vars.WEB_AUTH0_AUDIENCE || secrets.WEB_AUTH0_AUDIENCE }}
+          web_auth0_scope: "openid profile email offline_access"
+          web_base_url: ${{ vars.WEB_BASE_URL }}

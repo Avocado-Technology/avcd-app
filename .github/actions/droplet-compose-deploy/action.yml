@@ -61,24 +61,32 @@ inputs:
     description: When verify_mode is http, first retries use curl -k (ignore TLS) then strict TLS if substring matches
     required: false
     default: "false"
-  web_auth_secret:
-    description: When set with web Google inputs, writes server .env (AUTH_SECRET). Use secrets.WEB_AUTH_SECRET.
+  web_auth0_secret:
+    description: AUTH0_SECRET for session encryption (required for Auth0 auth)
     required: false
     default: ""
-  web_google_client_id:
-    description: GOOGLE_CLIENT_ID for GitHub-managed web .env (required if web_auth_secret is set)
+  web_auth0_issuer:
+    description: AUTH0_ISSUER_BASE_URL (e.g., https://yourorg.us.auth0.com)
     required: false
     default: ""
-  web_google_client_secret:
-    description: GOOGLE_CLIENT_SECRET for GitHub-managed web .env (required if web_auth_secret is set)
+  web_auth0_client_id:
+    description: AUTH0_CLIENT_ID for web application
     required: false
     default: ""
-  web_avcd_auth_url:
-    description: Optional AVCD_AUTH_URL override. When empty, CI .env uses http://auth:8000 (same as docker-compose default).
+  web_auth0_client_secret:
+    description: AUTH0_CLIENT_SECRET for web application
     required: false
     default: ""
-  web_auth_url:
-    description: Optional AUTH_URL (public Next.js origin). When empty, remote uses https://PUBLIC_HOST (no trailing slash).
+  web_auth0_audience:
+    description: AUTH0_AUDIENCE (API identifier)
+    required: false
+    default: ""
+  web_auth0_scope:
+    description: AUTH0_SCOPE (space-separated scopes)
+    required: false
+    default: "openid profile email offline_access"
+  web_base_url:
+    description: Optional AUTH0_BASE_URL override. When empty, uses https://PUBLIC_HOST
     required: false
     default: ""
 
@@ -97,9 +105,10 @@ runs:
         PASS_TLS: ${{ inputs.pass_compose_tls_env }}
         VERIFY_MODE: ${{ inputs.verify_mode }}
         VERIFY_URL: ${{ inputs.verify_url }}
-        WEB_AUTH_SECRET_IN: ${{ inputs.web_auth_secret }}
-        WEB_GCID_IN: ${{ inputs.web_google_client_id }}
-        WEB_GCS_IN: ${{ inputs.web_google_client_secret }}
+        WEB_AUTH0_SECRET_IN: ${{ inputs.web_auth0_secret }}
+        WEB_AUTH0_ISSUER_IN: ${{ inputs.web_auth0_issuer }}
+        WEB_AUTH0_CLIENT_ID_IN: ${{ inputs.web_auth0_client_id }}
+        WEB_AUTH0_CLIENT_SECRET_IN: ${{ inputs.web_auth0_client_secret }}
       run: |
         set -euo pipefail
         err() { echo "::error title=Deploy configuration::$1"; exit 1; }
@@ -118,9 +127,10 @@ runs:
         if [ "$VERIFY_MODE" = "http" ]; then
           [ -n "${VERIFY_URL:-}" ] || err "verify_mode=http requires verify_url (full URL)."
         fi
-        if [ -n "${WEB_AUTH_SECRET_IN:-}" ]; then
-          [ -n "${WEB_GCID_IN:-}" ] || err "web_google_client_id is required when web_auth_secret is set (GitHub-managed web .env)."
-          [ -n "${WEB_GCS_IN:-}" ] || err "web_google_client_secret is required when web_auth_secret is set (GitHub-managed web .env)."
+        if [ -n "${WEB_AUTH0_SECRET_IN:-}" ]; then
+          [ -n "${WEB_AUTH0_ISSUER_IN:-}" ] || err "web_auth0_issuer is required when web_auth0_secret is set (Auth0 configuration)."
+          [ -n "${WEB_AUTH0_CLIENT_ID_IN:-}" ] || err "web_auth0_client_id is required when web_auth0_secret is set (Auth0 configuration)."
+          [ -n "${WEB_AUTH0_CLIENT_SECRET_IN:-}" ] || err "web_auth0_client_secret is required when web_auth0_secret is set (Auth0 configuration)."
         fi
 
     - name: Resolve effective public host (Compose / Traefik)
@@ -211,11 +221,13 @@ runs:
         ACME_EMAIL_IN: ${{ inputs.acme_email }}
         PASS_TLS_IN: ${{ inputs.pass_compose_tls_env }}
         PORTS_IN: ${{ inputs.clear_published_ports }}
-        WEB_AUTH_SECRET_IN: ${{ inputs.web_auth_secret }}
-        WEB_GCID_IN: ${{ inputs.web_google_client_id }}
-        WEB_GCS_IN: ${{ inputs.web_google_client_secret }}
-        WEB_AVCD_IN: ${{ inputs.web_avcd_auth_url }}
-        WEB_AURL_IN: ${{ inputs.web_auth_url }}
+        WEB_AUTH0_SECRET_IN: ${{ inputs.web_auth0_secret }}
+        WEB_AUTH0_ISSUER_IN: ${{ inputs.web_auth0_issuer }}
+        WEB_AUTH0_CLIENT_ID_IN: ${{ inputs.web_auth0_client_id }}
+        WEB_AUTH0_CLIENT_SECRET_IN: ${{ inputs.web_auth0_client_secret }}
+        WEB_AUTH0_AUDIENCE_IN: ${{ inputs.web_auth0_audience }}
+        WEB_AUTH0_SCOPE_IN: ${{ inputs.web_auth0_scope }}
+        WEB_BASE_URL_IN: ${{ inputs.web_base_url }}
       run: |
         set -euo pipefail
         if [ -n "${WEB_AUTH_SECRET_IN:-}" ]; then
@@ -229,7 +241,7 @@ runs:
         PASS_TLS_B64=$(printf '%s' "$PASS_TLS_IN" | base64 -w0)
         PORTS_B64=$(printf '%s' "$PORTS_IN" | base64 -w0)
         WEB_ENV_B64=""
-        if [ -n "${WEB_AUTH_SECRET_IN:-}" ]; then
+        if [ -n "${WEB_AUTH0_SECRET_IN:-}" ]; then
           if [ -n "${GITHUB_ACTION_PATH:-}" ] && [ -f "${GITHUB_ACTION_PATH}/render-web-env.py" ]; then
             RENDER_PY="${GITHUB_ACTION_PATH}/render-web-env.py"
           else
@@ -240,11 +252,13 @@ runs:
             exit 1
           fi
           WEB_PLAIN=$(
-            export E_AS="$WEB_AUTH_SECRET_IN"
-            export E_GID="$WEB_GCID_IN"
-            export E_GSEC="$WEB_GCS_IN"
-            export E_AVCD="$WEB_AVCD_IN"
-            export E_AURL="$WEB_AURL_IN"
+            export E_AUTH0_SECRET="$WEB_AUTH0_SECRET_IN"
+            export E_AUTH0_ISSUER="$WEB_AUTH0_ISSUER_IN"
+            export E_AUTH0_CLIENT_ID="$WEB_AUTH0_CLIENT_ID_IN"
+            export E_AUTH0_CLIENT_SECRET="$WEB_AUTH0_CLIENT_SECRET_IN"
+            export E_AUTH0_AUDIENCE="$WEB_AUTH0_AUDIENCE_IN"
+            export E_AUTH0_SCOPE="$WEB_AUTH0_SCOPE_IN"
+            export E_BASE_URL="$WEB_BASE_URL_IN"
             export E_PH="$PUBLIC_HOST_IN"
             python3 "$RENDER_PY"
           )

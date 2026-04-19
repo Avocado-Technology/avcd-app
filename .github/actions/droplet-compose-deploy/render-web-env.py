@@ -22,15 +22,20 @@ def esc(s: str) -> str:
 
 def main() -> None:
     ph = os.environ["E_PH"]
-    auth_url = (os.environ.get("E_AURL") or "").strip() or f"https://{ph}"
-    avcd = (os.environ.get("E_AVCD") or "").strip() or "http://auth:8000"
+    base_url = (os.environ.get("E_BASE_URL") or "").strip() or f"https://{ph}"
+    
     lines = [
-        "AUTH_SECRET=" + esc(os.environ["E_AS"]),
-        "GOOGLE_CLIENT_ID=" + esc(os.environ["E_GID"]),
-        "GOOGLE_CLIENT_SECRET=" + esc(os.environ["E_GSEC"]),
-        "AUTH_URL=" + esc(auth_url),
-        "AVCD_AUTH_URL=" + esc(avcd),
-        "AUTH_DEBUG=1",
+        "# Auth0 Configuration",
+        "AUTH0_SECRET=" + esc(os.environ["E_AUTH0_SECRET"]),
+        "AUTH0_BASE_URL=" + esc(base_url),
+        "AUTH0_ISSUER_BASE_URL=" + esc(os.environ["E_AUTH0_ISSUER"]),
+        "AUTH0_CLIENT_ID=" + esc(os.environ["E_AUTH0_CLIENT_ID"]),
+        "AUTH0_CLIENT_SECRET=" + esc(os.environ["E_AUTH0_CLIENT_SECRET"]),
+        "AUTH0_AUDIENCE=" + esc(os.environ.get("E_AUTH0_AUDIENCE", "")),
+        "AUTH0_SCOPE=" + esc(os.environ.get("E_AUTH0_SCOPE", "openid profile email offline_access")),
+        "",
+        "# Public Host",
+        "PUBLIC_HOST=" + esc(ph),
     ]
     print("\n".join(lines) + "\n", end="")
 
