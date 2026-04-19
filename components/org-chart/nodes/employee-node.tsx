@@ -10,11 +10,18 @@ interface EmployeeNodeProps {
 export const EmployeeNode = memo(function EmployeeNode({ data }: EmployeeNodeProps) {
   return (
     <div
-      className="border border-gray-200 rounded-xl hover:border-gray-400 transition-colors p-4"
+      className="rounded-xl transition-colors p-4"
       style={{
         width: '180px',
         minHeight: '60px',
         background: 'var(--bg)',
+        border: '1px solid var(--g200)',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = 'var(--g400)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'var(--g200)'
       }}
     >
       <Handle type="target" position={Position.Left} />

@@ -17,7 +17,6 @@ export const AnimatedEmployeeNode = memo(function AnimatedEmployeeNode({
 }: AnimatedEmployeeNodeProps) {
   const { isRecent = false, isHighlighted = false, name, role } = data
   const shouldReduceMotion = useReducedMotion()
-  const animationConfig = getAnimationConfig(shouldReduceMotion ?? false)
 
   return (
     <motion.div
@@ -37,11 +36,18 @@ export const AnimatedEmployeeNode = memo(function AnimatedEmployeeNode({
       }}
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
-      className="border border-gray-200 rounded-xl hover:border-gray-400 transition-colors p-4 relative"
+      className="rounded-xl transition-colors p-4 relative"
       style={{
         width: '180px',
         minHeight: '60px',
         background: 'var(--bg)',
+        border: '1px solid var(--g200)',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = 'var(--g400)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'var(--g200)'
       }}
     >
       <Handle type="target" position={Position.Left} />

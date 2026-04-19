@@ -51,7 +51,7 @@ const createNodeTypes = () => ({
 })
 
 export const AnimatedOrgChart = memo(forwardRef<AnimatedOrgChartRef, AnimatedOrgChartProps>(
-  function AnimatedOrgChart({ data, onNodeAdded, onNodeMoved }, ref) {
+  function AnimatedOrgChart({ data, onNodeAdded: _onNodeAdded, onNodeMoved: _onNodeMoved }, ref) {
     const {
       recentChanges,
       highlightedNodes,
@@ -132,7 +132,7 @@ export const AnimatedOrgChart = memo(forwardRef<AnimatedOrgChartRef, AnimatedOrg
               animated: false,
               style: { 
                 strokeWidth: 1.5,
-                stroke: '#94a3b8',
+                stroke: 'var(--g300)',
               },
             }}
           >

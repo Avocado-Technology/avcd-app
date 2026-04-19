@@ -8,9 +8,14 @@
     "start": "next start",
     "lint": "eslint",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "codegen": "graphql-codegen --config codegen.ts",
+    "codegen:watch": "graphql-codegen --config codegen.ts --watch",
+    "test:graphql": "jest __tests__/lib/graphql/ __tests__/lib/apollo-client.test.ts __tests__/lib/apollo-provider.test.tsx __tests__/app/api/auth/token.test.ts",
+    "prepare": "husky"
   },
   "dependencies": {
+    "@apollo/client": "^4.1.7",
     "@auth0/nextjs-auth0": "^3.5.0",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -23,6 +28,7 @@
     "clsx": "^2.1.1",
     "d3-timer": "^3.0.1",
     "dagre": "^0.8.5",
+    "graphql": "^16.13.2",
     "lucide-react": "^1.8.0",
     "motion": "^12.38.0",
     "next": "15.5.14",
@@ -33,6 +39,9 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@graphql-codegen/cli": "^6.3.1",
+    "@graphql-codegen/client-preset": "^5.3.0",
+    "@graphql-codegen/typescript": "^5.0.10",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
@@ -44,12 +53,19 @@
     "autoprefixer": "^10.5.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.14",
+    "husky": "^9.1.7",
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^30.3.0",
+    "lint-staged": "^15.5.2",
     "postcss": "^8.5.10",
     "tailwindcss": "^3.4.19",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5",
     "yaml": "^2.8.3"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix"
+    ]
   }
 }

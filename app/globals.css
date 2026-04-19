@@ -53,6 +53,12 @@
   --sidebar-accent: 0 0% 96%;
   --sidebar-accent-foreground: 0 0% 9%;
   --sidebar-ring: 0 0% 63%;
+
+  /* Popover colors for dropdowns */
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 9%;
+  --accent: 0 0% 96%;
+  --accent-foreground: 0 0% 9%;
 }
 
 .light {
@@ -78,6 +84,11 @@
   --sidebar-accent: 0 0% 96%;
   --sidebar-accent-foreground: 0 0% 9%;
   --sidebar-ring: 0 0% 63%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 9%;
+  --accent: 0 0% 96%;
+  --accent-foreground: 0 0% 9%;
 }
 
 .dark {
@@ -102,6 +113,11 @@
   --sidebar-accent: 0 0% 15%;
   --sidebar-accent-foreground: 0 0% 98%;
   --sidebar-ring: 0 0% 46%;
+
+  --popover: 0 0% 15%;
+  --popover-foreground: 0 0% 98%;
+  --accent: 0 0% 15%;
+  --accent-foreground: 0 0% 98%;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -127,6 +143,11 @@
     --sidebar-accent: 0 0% 15%;
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-ring: 0 0% 46%;
+
+    --popover: 0 0% 15%;
+    --popover-foreground: 0 0% 98%;
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 98%;
   }
 }
 

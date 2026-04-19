@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { SidebarWrapper } from "@/components/sidebar-wrapper";
 import { SidebarInset } from "@/components/ui/sidebar";
+import { ApolloProvider } from "@/lib/apollo-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -40,6 +41,7 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
           href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"
           rel="stylesheet"
@@ -61,17 +63,19 @@ export default async function RootLayout({
       <body style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
         <ThemeProvider>
           <SessionProvider>
-            {serializedSession ? (
-              <SidebarProvider>
-                <SidebarWrapper user={serializedSession.user} />
-                <SidebarInset>
-                  <AppTopBar session={serializedSession} />
-                  {children}
-                </SidebarInset>
-              </SidebarProvider>
-            ) : (
-              children
-            )}
+            <ApolloProvider>
+              {serializedSession ? (
+                <SidebarProvider>
+                  <SidebarWrapper user={serializedSession.user} />
+                  <SidebarInset>
+                    <AppTopBar session={serializedSession} />
+                    {children}
+                  </SidebarInset>
+                </SidebarProvider>
+              ) : (
+                children
+              )}
+            </ApolloProvider>
           </SessionProvider>
         </ThemeProvider>
       </body>

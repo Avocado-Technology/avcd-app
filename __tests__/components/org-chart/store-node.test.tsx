@@ -41,7 +41,9 @@ describe('StoreNode Component', () => {
   it('should have card styling', () => {
     const { container } = render(<StoreNode data={mockData} />, { wrapper: ReactFlowWrapper })
     const node = container.firstChild as HTMLElement
-    expect(node).toHaveClass('border-gray-200')
     expect(node).toHaveClass('rounded-xl')
+    expect(node).toHaveClass('transition-colors')
+    // Verify border is set via inline styles for theme compatibility
+    expect(node.style.border).toBe('1px solid var(--g200)')
   })
 })

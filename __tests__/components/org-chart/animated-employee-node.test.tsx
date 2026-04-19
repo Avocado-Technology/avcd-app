@@ -11,23 +11,26 @@ describe('AnimatedEmployeeNode Component', () => {
   }
 
   it('should render with Motion wrapper', () => {
-    render(<AnimatedEmployeeNode data={mockData} isRecent={false} isHighlighted={false} />, { wrapper: ReactFlowWrapper })
+    render(<AnimatedEmployeeNode data={mockData} />, { wrapper: ReactFlowWrapper })
     expect(screen.getByText('John Doe')).toBeInTheDocument()
   })
 
   it('should show NEW badge when isRecent is true', () => {
-    render(<AnimatedEmployeeNode data={mockData} isRecent={true} isHighlighted={false} />, { wrapper: ReactFlowWrapper })
+    const dataWithRecent = { ...mockData, isRecent: true }
+    render(<AnimatedEmployeeNode data={dataWithRecent} />, { wrapper: ReactFlowWrapper })
     expect(screen.getByText('NEW')).toBeInTheDocument()
   })
 
   it('should not show NEW badge when isRecent is false', () => {
-    render(<AnimatedEmployeeNode data={mockData} isRecent={false} isHighlighted={false} />, { wrapper: ReactFlowWrapper })
+    const dataWithRecent = { ...mockData, isRecent: false }
+    render(<AnimatedEmployeeNode data={dataWithRecent} />, { wrapper: ReactFlowWrapper })
     expect(screen.queryByText('NEW')).not.toBeInTheDocument()
   })
 
   it('should apply highlight styles when isHighlighted is true', () => {
+    const dataWithHighlight = { ...mockData, isHighlighted: true }
     const { container } = render(
-      <AnimatedEmployeeNode data={mockData} isRecent={false} isHighlighted={true} />,
+      <AnimatedEmployeeNode data={dataWithHighlight} />,
       { wrapper: ReactFlowWrapper }
     )
     const pulseElement = container.querySelector('.absolute.inset-0')
@@ -35,8 +38,9 @@ describe('AnimatedEmployeeNode Component', () => {
   })
 
   it('should have motion wrapper with initial/animate props', () => {
+    const dataWithRecent = { ...mockData, isRecent: true }
     const { container } = render(
-      <AnimatedEmployeeNode data={mockData} isRecent={true} isHighlighted={false} />,
+      <AnimatedEmployeeNode data={dataWithRecent} />,
       { wrapper: ReactFlowWrapper }
     )
     // Motion wraps content in a div
@@ -46,7 +50,7 @@ describe('AnimatedEmployeeNode Component', () => {
 
   it('should preserve handles for React Flow connections', () => {
     const { container } = render(
-      <AnimatedEmployeeNode data={mockData} isRecent={false} isHighlighted={false} />,
+      <AnimatedEmployeeNode data={mockData} />,
       { wrapper: ReactFlowWrapper }
     )
     // Check for Handle components (they have specific classes)
@@ -55,7 +59,7 @@ describe('AnimatedEmployeeNode Component', () => {
   })
 
   it('should still display initials correctly', () => {
-    render(<AnimatedEmployeeNode data={mockData} isRecent={false} isHighlighted={false} />, { wrapper: ReactFlowWrapper })
+    render(<AnimatedEmployeeNode data={mockData} />, { wrapper: ReactFlowWrapper })
     expect(screen.getByText('JD')).toBeInTheDocument()
   })
 })

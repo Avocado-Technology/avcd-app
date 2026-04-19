@@ -12,22 +12,23 @@ describe('AnimatedStoreNode Component', () => {
   }
 
   it('should render with Motion wrapper', () => {
-    render(<AnimatedStoreNode data={mockData} isRecent={false} isHighlighted={false} />, { wrapper: ReactFlowWrapper })
+    render(<AnimatedStoreNode data={mockData} />, { wrapper: ReactFlowWrapper })
     expect(screen.getByText('Downtown Store')).toBeInTheDocument()
   })
 
   it('should show NEW badge when isRecent is true', () => {
-    render(<AnimatedStoreNode data={mockData} isRecent={true} isHighlighted={false} />, { wrapper: ReactFlowWrapper })
+    const dataWithRecent = { ...mockData, isRecent: true }
+    render(<AnimatedStoreNode data={dataWithRecent} />, { wrapper: ReactFlowWrapper })
     expect(screen.getByText('NEW')).toBeInTheDocument()
   })
 
   it('should display employee count', () => {
-    render(<AnimatedStoreNode data={mockData} isRecent={false} isHighlighted={false} />, { wrapper: ReactFlowWrapper })
+    render(<AnimatedStoreNode data={mockData} />, { wrapper: ReactFlowWrapper })
     expect(screen.getByText('5 employees')).toBeInTheDocument()
   })
 
   it('should preserve store icon', () => {
-    const { container } = render(<AnimatedStoreNode data={mockData} isRecent={false} isHighlighted={false} />, { wrapper: ReactFlowWrapper })
+    const { container } = render(<AnimatedStoreNode data={mockData} />, { wrapper: ReactFlowWrapper })
     const icon = container.querySelector('[data-testid="store-icon"]')
     expect(icon).toBeInTheDocument()
   })

@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import { OrganizationNode } from '@/components/org-chart/nodes/organization-node'
 import { StoreNode } from '@/components/org-chart/nodes/store-node'
 import { applyDagreLayout, transformOrgToNodes, transformOrgToEdges } from '@/components/org-chart/utils/layout-utils'
+import { ReactFlowWrapper } from '@/__tests__/utils/reactFlowWrapper'
 
 describe('Organization Chart Layout and Icons', () => {
   describe('Left-to-Right Layout', () => {
@@ -41,7 +42,7 @@ describe('Organization Chart Layout and Icons', () => {
         name: 'Test Organization'
       }
       
-      render(<OrganizationNode data={mockData} />)
+      render(<OrganizationNode data={mockData} />, { wrapper: ReactFlowWrapper })
       
       // Check for building icon (lucide-react Building2)
       const icon = screen.getByTestId('organization-icon')
@@ -54,7 +55,7 @@ describe('Organization Chart Layout and Icons', () => {
         name: 'Acme Corporation'
       }
       
-      render(<OrganizationNode data={mockData} />)
+      render(<OrganizationNode data={mockData} />, { wrapper: ReactFlowWrapper })
       expect(screen.getByText('Acme Corporation')).toBeInTheDocument()
     })
   })
@@ -68,7 +69,7 @@ describe('Organization Chart Layout and Icons', () => {
         employeeCount: 5
       }
       
-      render(<StoreNode data={mockData} />)
+      render(<StoreNode data={mockData} />, { wrapper: ReactFlowWrapper })
       
       // Check for store icon (lucide-react Store)
       const icon = screen.getByTestId('store-icon')
@@ -83,7 +84,7 @@ describe('Organization Chart Layout and Icons', () => {
         employeeCount: 3
       }
       
-      render(<StoreNode data={mockData} />)
+      render(<StoreNode data={mockData} />, { wrapper: ReactFlowWrapper })
       expect(screen.getByText('Downtown Store')).toBeInTheDocument()
       expect(screen.getByText('Manhattan')).toBeInTheDocument()
       expect(screen.getByText('3 employees')).toBeInTheDocument()

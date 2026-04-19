@@ -10,12 +10,19 @@ interface OrganizationNodeProps {
 export const OrganizationNode = memo(function OrganizationNode({ data }: OrganizationNodeProps) {
   return (
     <div
-      className="border border-gray-200 rounded-xl hover:border-gray-400 transition-colors"
+      className="rounded-xl transition-colors"
       style={{
         width: '280px',
         minHeight: '80px',
         padding: 'var(--sp-6)',
         background: 'var(--bg)',
+        border: '1px solid var(--g200)',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = 'var(--g400)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'var(--g200)'
       }}
     >
       <Handle type="source" position={Position.Right} />
