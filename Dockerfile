@@ -24,6 +24,10 @@ ENV AVCD_AUTH_URL=http://auth:8000
 ARG NEXT_PUBLIC_GRAPHQL_ENDPOINT=http://localhost:8000/graphql
 ENV NEXT_PUBLIC_GRAPHQL_ENDPOINT=$NEXT_PUBLIC_GRAPHQL_ENDPOINT
 
+# Client feature flags — must exist at `next build` (inlined into browser bundles).
+ARG NEXT_PUBLIC_ENABLE_MOBILE_BOTTOM_NAV=true
+ENV NEXT_PUBLIC_ENABLE_MOBILE_BOTTOM_NAV=$NEXT_PUBLIC_ENABLE_MOBILE_BOTTOM_NAV
+
 RUN npx next build
 
 FROM node:22-bookworm-slim AS runner

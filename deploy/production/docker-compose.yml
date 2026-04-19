@@ -28,6 +28,7 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_GRAPHQL_ENDPOINT: https://${PUBLIC_HOST:-localhost}/api/graphql
+        NEXT_PUBLIC_ENABLE_MOBILE_BOTTOM_NAV: ${NEXT_PUBLIC_ENABLE_MOBILE_BOTTOM_NAV:-true}
     restart: unless-stopped
     ports:
       - "3000:3000"

@@ -40,6 +40,9 @@ def main() -> None:
         "# GraphQL API Endpoint",
         "NEXT_PUBLIC_GRAPHQL_ENDPOINT=" + esc(graphql_endpoint),
         "",
+        "# Client UI (build-time in Next; passed as compose build arg — keep true for mobile shell)",
+        "NEXT_PUBLIC_ENABLE_MOBILE_BOTTOM_NAV=" + esc(os.environ.get("E_ENABLE_MOBILE_BOTTOM_NAV", "true")),
+        "",
         "# Public Host",
         "PUBLIC_HOST=" + esc(ph),
     ]
