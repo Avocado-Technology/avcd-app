@@ -24,6 +24,9 @@ def main() -> None:
     ph = os.environ["E_PH"]
     base_url = (os.environ.get("E_BASE_URL") or "").strip() or f"https://{ph}"
     
+    # GraphQL API endpoint - use deployed API endpoint
+    graphql_endpoint = f"https://{ph}/api/graphql"
+    
     lines = [
         "# Auth0 Configuration",
         "AUTH0_SECRET=" + esc(os.environ["E_AUTH0_SECRET"]),
@@ -33,6 +36,9 @@ def main() -> None:
         "AUTH0_CLIENT_SECRET=" + esc(os.environ["E_AUTH0_CLIENT_SECRET"]),
         "AUTH0_AUDIENCE=" + esc(os.environ.get("E_AUTH0_AUDIENCE", "")),
         "AUTH0_SCOPE=" + esc(os.environ.get("E_AUTH0_SCOPE", "openid profile email offline_access")),
+        "",
+        "# GraphQL API Endpoint",
+        "NEXT_PUBLIC_GRAPHQL_ENDPOINT=" + esc(graphql_endpoint),
         "",
         "# Public Host",
         "PUBLIC_HOST=" + esc(ph),
