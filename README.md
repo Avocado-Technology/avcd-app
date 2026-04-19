@@ -75,11 +75,21 @@ npm install
 
 ### Development
 
+#### Local (without Docker)
+
 ```bash
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
+
+#### Local (with Docker + hot reload)
+
+```bash
+docker compose up --build
+```
+
+Docker provides a consistent environment and hot reload. See [`docs/DOCKER_DEVELOPMENT.md`](docs/DOCKER_DEVELOPMENT.md) for full guide.
 
 ### Build
 
@@ -87,6 +97,10 @@ Open [http://localhost:3000](http://localhost:3000)
 npm run build
 npm start
 ```
+
+### Production Deployment
+
+See [`deploy/production/README.md`](deploy/production/README.md) for deployment instructions.
 
 ## 🎯 Key Features
 

@@ -1,0 +1,249 @@
+# Web Development Skills
+
+Comprehensive framework documentation skills for the AVCD web project.
+
+## Overview
+
+This directory contains specialized AI skills that provide in-depth knowledge about the core frameworks and libraries used in this project. These skills help maintain consistency, best practices, and efficient development workflows.
+
+## Available Skills
+
+### 1. **shadcn/ui** (`shadcn-ui/SKILL.md`)
+**Component system for building accessible UI**
+
+- **Size**: 464 lines, 11KB
+- **Triggers**: "add component", "shadcn", "form", "dialog", "button"
+- **Covers**:
+  - Installation & CLI usage (`npx shadcn@latest add`)
+  - 60+ components (forms, overlays, navigation, data display)
+  - Composition patterns
+  - Accessibility best practices
+  - Radix UI integration
+  - Tailwind CSS theming
+  - TypeScript support
+
+**Key Highlights**:
+- Components are copied into your codebase (you own the code)
+- Built on Radix UI primitives (WCAG compliant)
+- Never manually fetch from GitHub - always use CLI
+- Compose, don't reinvent
+
+### 2. **Motion** (`motion/SKILL.md`)
+**Production-grade React animation library (formerly Framer Motion)**
+
+- **Size**: 746 lines, 15KB
+- **Triggers**: "animate", "motion", "transition", "gesture", "scroll animation"
+- **Covers**:
+  - Core animation API (`animate`, `initial`, `exit`)
+  - Gesture support (hover, tap, drag)
+  - Scroll animations (triggered & linked)
+  - Layout animations & shared elements
+  - SVG path animations
+  - Variants system for orchestration
+  - Hooks API (`useScroll`, `useTransform`, `useSpring`)
+  - Performance optimization
+
+**Key Highlights**:
+- Hybrid engine: 120fps native animations + JavaScript fallbacks
+- Import from `motion/react` (not `framer-motion`)
+- Spring physics for physical properties, tweens for visual
+- Supports `whileHover`, `whileTap`, `whileInView`
+
+### 3. **React Flow** (`react-flow/SKILL.md`)
+**Node-based UIs, flowcharts, and diagrams**
+
+- **Size**: 961 lines, 20KB
+- **Triggers**: "react flow", "nodes", "edges", "flowchart", "diagram"
+- **Covers**:
+  - Nodes & custom node components
+  - **Handles (REQUIRED for connections)**
+  - Edges & custom edges
+  - Automatic layout (Dagre integration)
+  - Hooks & API (`useReactFlow`, `useNodesState`)
+  - Event handling
+  - Components (Controls, MiniMap, Background)
+  - TypeScript support
+
+**Key Highlights**:
+- Custom nodes **MUST** include `<Handle>` components
+- Package: `@xyflow/react` or `reactflow` v11
+- Always import styles: `import '@xyflow/react/dist/style.css'`
+- Use controlled flow with `useNodesState` + `useEdgesState`
+
+## How AI Uses These Skills
+
+When you work on features involving these frameworks, Cursor's AI will:
+
+1. **Automatically detect** relevant context from your query
+2. **Load the appropriate skill** to access framework-specific knowledge
+3. **Follow best practices** documented in the skill
+4. **Provide accurate code** based on current framework versions (2026)
+5. **Avoid common pitfalls** documented in troubleshooting sections
+
+## Skill Triggers
+
+Skills are automatically activated when you mention certain keywords:
+
+| Skill | Trigger Keywords |
+|-------|------------------|
+| shadcn/ui | "component", "shadcn", "button", "dialog", "form", "card" |
+| Motion | "animate", "motion", "transition", "gesture", "scroll", "spring" |
+| React Flow | "flow", "node", "edge", "diagram", "flowchart", "graph" |
+
+## Using Skills Manually
+
+To explicitly invoke a skill in your prompt:
+
+```
+@/Users/genarionogueira/Documents/avcd/web/.cursor/skills/shadcn-ui/SKILL.md
+
+Help me add a dialog component using shadcn/ui best practices
+```
+
+Or reference in code comments:
+```tsx
+// Following shadcn-ui skill: compose components, don't create custom markup
+import { Card, CardHeader, CardTitle } from "@/components/ui/card"
+```
+
+## Maintenance & Updates
+
+### When to Update Skills
+
+- Framework releases major version updates
+- Breaking API changes occur
+- New best practices emerge
+- Common issues are discovered
+
+### How to Update
+
+1. Research latest framework documentation
+2. Update relevant sections in `SKILL.md`
+3. Add version notes at bottom of file
+4. Test with sample queries to AI
+
+### Version Tracking
+
+Each skill file includes version information:
+- **Last Updated**: Date of last modification
+- **Framework Version**: Current version covered
+- **Package Name**: Correct import path
+
+## Best Practices
+
+### For Developers
+
+1. **Read the skill first** when starting work with a new framework
+2. **Reference patterns** from the skill in your code
+3. **Update skills** when you discover better patterns
+4. **Share knowledge** by adding troubleshooting tips
+
+### For AI Prompts
+
+1. **Be specific** about what you're building
+2. **Mention framework names** to trigger skills
+3. **Ask for examples** from the skill documentation
+4. **Request explanations** of patterns you don't understand
+
+## Examples
+
+### Good Prompts
+
+```
+Using shadcn/ui, create a form with Field composition pattern
+```
+
+```
+Add Motion scroll-triggered animations to our hero section
+```
+
+```
+Build a React Flow org chart with custom nodes that have multiple handles
+```
+
+### Better Prompts
+
+```
+Using shadcn/ui Field composition (from skill), create an accessible 
+contact form with validation feedback
+```
+
+```
+Implement Motion parallax effect on our landing page hero following 
+the useScroll + useTransform pattern from the skill
+```
+
+```
+Create React Flow organization chart with Dagre layout. Each node 
+needs left target handle and right source handle for proper connections.
+```
+
+## Skill Statistics
+
+| Skill | Lines | Size | Components Covered |
+|-------|-------|------|-------------------|
+| shadcn/ui | 464 | 11KB | 60+ components |
+| Motion | 746 | 15KB | 30+ APIs/hooks |
+| React Flow | 961 | 20KB | Complete API |
+| **Total** | **2,171** | **46KB** | **90+ concepts** |
+
+## Directory Structure
+
+```
+.cursor/skills/
+├── README.md                    # This file
+├── avocado-style/
+│   └── SKILL.md                # Design system (608 lines, 20KB)
+├── shadcn-ui/
+│   └── SKILL.md                # Component library (464 lines)
+├── motion/
+│   └── SKILL.md                # Animation library (746 lines)
+└── react-flow/
+    └── SKILL.md                # Node-based UIs (961 lines)
+```
+
+## Quick Reference
+
+### Installation Commands
+
+```bash
+# shadcn/ui
+npx shadcn@latest add button
+npx shadcn@latest docs button
+npx shadcn@latest info --json
+
+# Motion
+npm install motion
+# Import from: motion/react
+
+# React Flow
+npm install @xyflow/react
+# Import styles: @xyflow/react/dist/style.css
+```
+
+### Common Imports
+
+```tsx
+// shadcn/ui
+import { Button } from "@/components/ui/button"
+import { Card, CardHeader, CardContent } from "@/components/ui/card"
+
+// Motion
+import { motion, AnimatePresence } from "motion/react"
+
+// React Flow
+import { ReactFlow, Handle, Position } from "@xyflow/react"
+import "@xyflow/react/dist/style.css"
+```
+
+## Resources
+
+- **shadcn/ui**: https://ui.shadcn.com/docs
+- **Motion**: https://motion.dev/docs
+- **React Flow**: https://reactflow.dev/
+
+---
+
+**Created**: April 2026  
+**Project**: AVCD Web Application  
+**Maintainer**: Development Team

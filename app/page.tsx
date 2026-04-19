@@ -1,12 +1,6 @@
 import { getSession } from "@auth0/nextjs-auth0";
 import { getMcpServerUrl } from "@/lib/mcp-server-url";
-
-import { AvcdAccessTokenPanel } from "./components/AvcdAccessTokenPanel";
-import { ClaudeConnectionSteps } from "./components/ClaudeConnectionSteps";
 import { GoogleLoginGate } from "./components/GoogleLoginGate";
-import { OAuthCredentialsPanel } from "./components/OAuthCredentialsPanel";
-
-const MCP_BUNDLE_PATH = "/mcp/avcd-graphql.mcpb";
 
 export default async function Home() {
   const session = await getSession();
@@ -16,9 +10,6 @@ export default async function Home() {
     return <GoogleLoginGate mcpServerUrl={mcpServerUrl} />;
   }
 
-  const publicApiBase = process.env.NEXT_PUBLIC_AVCD_API_URL?.trim();
-  const installerApiUrl = publicApiBase?.replace(/\/$/, "");
-
   return (
     <main
       style={{
@@ -27,26 +18,26 @@ export default async function Home() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "flex-start",
-        padding: "var(--sp-12) var(--sp-6) var(--sp-16)",
+        justifyContent: "center",
+        padding: "var(--sp-6)",
         background: "var(--g50)",
       }}
     >
       <div
         style={{
           width: "100%",
-          maxWidth: "1080px",
-          textAlign: "left",
+          maxWidth: "640px",
+          textAlign: "center",
           display: "flex",
           flexDirection: "column",
-          gap: "var(--sp-8)",
+          gap: "var(--sp-6)",
         }}
       >
         <header>
           <h1
             style={{
               margin: 0,
-              fontSize: "2rem",
+              fontSize: "1.5rem",
               fontFamily: "var(--sans)",
               fontWeight: 600,
               color: "var(--g900)",
@@ -56,64 +47,97 @@ export default async function Home() {
           >
             MCP Setup
           </h1>
-          <p style={{ margin: "var(--sp-3) 0 0", fontSize: "1rem", color: "var(--g700)", lineHeight: 1.6 }}>
-            <a
-              href={MCP_BUNDLE_PATH}
-              download="avcd-graphql.mcpb"
-              style={{
-                fontFamily: "var(--sans)",
-                fontSize: "1rem",
-                fontWeight: 400,
-              }}
-            >
-              Download MCP bundle
-            </a>
-          </p>
           <p
             style={{
-              margin: "var(--sp-2) 0 0",
+              margin: "var(--sp-3) 0 0",
               fontSize: "0.875rem",
-              fontFamily: "var(--mono)",
               color: "var(--g500)",
-              lineHeight: 1.5,
+              lineHeight: 1.6,
             }}
           >
-            Bundle missing? Run <code style={{ fontSize: "0.875rem" }}>make -C mcp publish</code>.
+            Connect Claude to your AVCD API with OAuth authentication
           </p>
         </header>
 
-        {installerApiUrl ? (
-          <p
+        <div
+          style={{
+            padding: "var(--sp-6)",
+            borderRadius: "var(--r-xl)",
+            background: "var(--bg)",
+            border: "1px solid var(--g200)",
+            textAlign: "left",
+          }}
+        >
+          <div
+            style={{
+              marginBottom: "var(--sp-4)",
+              padding: "var(--sp-4)",
+              borderRadius: "var(--r-md)",
+              background: "var(--g50)",
+              border: "1px solid var(--g200)",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "0.75rem",
+                fontFamily: "var(--mono)",
+                fontWeight: 500,
+                color: "var(--g500)",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                marginBottom: "var(--sp-3)",
+              }}
+            >
+              MCP Server URL
+            </div>
+            <code
+              style={{
+                display: "block",
+                fontSize: "0.875rem",
+                fontFamily: "var(--mono)",
+                color: "var(--g900)",
+                wordBreak: "break-all",
+                lineHeight: 1.5,
+              }}
+            >
+              {mcpServerUrl}
+            </code>
+          </div>
+
+          <ol
             style={{
               margin: 0,
+              paddingLeft: "var(--sp-6)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "var(--sp-3)",
               fontSize: "0.875rem",
               fontFamily: "var(--sans)",
               color: "var(--g700)",
               lineHeight: 1.6,
             }}
           >
-            API URL for the installer:{" "}
-            <code
-              style={{
-                fontSize: "0.875rem",
-                wordBreak: "break-all",
-                fontFamily: "var(--mono)",
-                color: "var(--g500)",
-              }}
-            >
-              {installerApiUrl}
-            </code>
-          </p>
-        ) : null}
+            <li>Open Claude Settings → Connectors → Add MCP Server</li>
+            <li>Paste the MCP Server URL above</li>
+            <li>Select OAuth authentication</li>
+            <li>Sign in with your Google account</li>
+          </ol>
 
-        {/* OAuth client credentials - primary method */}
-        <OAuthCredentialsPanel mcpServerUrl={mcpServerUrl} />
-
-        {/* Connection instructions for both OAuth and manual bearer */}
-        <ClaudeConnectionSteps mcpServerUrl={mcpServerUrl} />
-
-        {/* Access token for manual/fallback/API use */}
-        <AvcdAccessTokenPanel mcpServerUrl={mcpServerUrl} />
+          <div
+            style={{
+              marginTop: "var(--sp-5)",
+              padding: "var(--sp-4)",
+              borderRadius: "var(--r-md)",
+              background: "var(--green-lt)",
+              border: "1px solid var(--green-bd)",
+              fontSize: "0.75rem",
+              color: "var(--g700)",
+              lineHeight: 1.6,
+            }}
+          >
+            Authentication is handled automatically via OAuth. No API keys required.
+          </div>
+        </div>
       </div>
     </main>
   );
