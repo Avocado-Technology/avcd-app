@@ -1,0 +1,76 @@
+# Next.js — run from this directory: docker compose up --build
+#
+# Attaches to the shared Docker network `avcd_edge` (external — create it first: Traefik stack or
+# `docker network create avcd_edge`). Same pattern as avcd-api on the dev/prod droplet.
+#
+# `environment` below uses Compose interpolation (${VAR:-default}): values come from the deploy shell
+# and/or `web/.env` next to this file. That matches CI/CD (export / write .env on the host, then compose up).
+# `env_file` still loads `.env` / `.env.local` into the container first; `environment` then overrides per key.
+# Caveat: if `AUTH_SECRET: ${AUTH_SECRET:-}` interpolates empty, it overrides the same key from env_file —
+# put secrets in `web/.env` (for interpolation) or export them before `docker compose up`, or duplicate into
+# `.env` when you only use `.env.local` for local secrets.
+#
+# Traefik label Host() uses `${PUBLIC_HOST:-localhost}` at compose parse time (same sources as above).
+#
+# Debug: set AUTH_DEBUG=1 in `.env` / `.env.local` only — do not add `AUTH_DEBUG: ${AUTH_DEBUG:-}` here
+# (empty would override). Tail logs: docker compose logs -f web
+#
+# For local all-in-one (Mongo + API + web without Traefik labels), use the repo-root docker-compose.yml instead.
+#
+# AVCD_AUTH_URL: default is the auth service on avcd_edge (same as Dockerfile). Override to http://host.docker.internal:8010
+# when only the web container runs and auth listens on the host (port 8010).
+# (`extra_hosts` enables host.docker.internal on Linux Docker Engine.)
+#
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    networks:
+      - default
+      - avcd_edge
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    env_file:
+      - path: .env
+        required: false
+      - path: .env.local
+        required: false
+    environment:
+      # Passed into the container; same value as Traefik Host() after interpolation (default localhost for local).
+      # MCP connector URL for users is derived as https://${PUBLIC_HOST}/mcp when AVCD_MCP_URL is unset (see lib/mcp-server-url.ts).
+      PUBLIC_HOST: ${PUBLIC_HOST:-localhost}
+      # Auth0 Configuration (from .env / .env.local or CI/CD environment)
+      AUTH0_SECRET: ${AUTH0_SECRET:-}
+      AUTH0_BASE_URL: ${AUTH0_BASE_URL:-http://localhost:3000}
+      AUTH0_ISSUER_BASE_URL: ${AUTH0_ISSUER_BASE_URL:-}
+      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID:-}
+      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET:-}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE:-}
+      AUTH0_SCOPE: ${AUTH0_SCOPE:-openid profile email offline_access}
+    labels:
+      - traefik.enable=true
+      # Required when the service joins more than one network; otherwise Traefik may pick the project bridge IP and return 404.
+      - traefik.docker.network=avcd_edge
+      # High priority rule for NextAuth routes (must be higher than API's /api priority)
+      - traefik.http.routers.avcd-web-auth.rule=Host(`${PUBLIC_HOST:-localhost}`) && PathPrefix(`/api/auth`)
+      - traefik.http.routers.avcd-web-auth.entrypoints=websecure
+      - traefik.http.routers.avcd-web-auth.tls=true
+      - traefik.http.routers.avcd-web-auth.tls.certresolver=le
+      - traefik.http.routers.avcd-web-auth.priority=150
+      - traefik.http.routers.avcd-web-auth.service=avcd-web
+      # Default web route (lower priority than /api/auth)
+      - traefik.http.routers.avcd-web.rule=Host(`${PUBLIC_HOST:-localhost}`)
+      - traefik.http.routers.avcd-web.entrypoints=websecure
+      - traefik.http.routers.avcd-web.tls=true
+      - traefik.http.routers.avcd-web.tls.certresolver=le
+      - traefik.http.routers.avcd-web.priority=50
+      - traefik.http.routers.avcd-web.service=avcd-web
+      - traefik.http.services.avcd-web.loadbalancer.server.port=3000
+
+networks:
+  avcd_edge:
+    external: true

@@ -10,9 +10,11 @@ on:
       - "app/**"
       - "lib/**"
       - "types/**"
+      - "components/**"
       - "public/**"
-      - "docker-compose.yml"
+      - "deploy/production/**"
       - "Dockerfile"
+      - "Dockerfile.dev"
       - "next.config.ts"
       - "package.json"
       - "package-lock.json"
@@ -64,7 +66,7 @@ jobs:
           deploy_user: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER }}
           deploy_path: ${{ vars.DO_DEPLOY_PATH || secrets.DO_DEPLOY_PATH }}
           ssh_key: ${{ secrets.DO_DEPLOY_SSH_KEY }}
-          compose_subdirectory: "."
+          compose_subdirectory: "deploy/production"
           public_host: ${{ steps.traefik_host.outputs.host }}
           acme_email: ""
           pass_compose_tls_env: "false"
