@@ -11,7 +11,8 @@ export type MobileNavItemConfig = {
 /** Single source of truth for primary app destinations (sidebar + mobile). */
 export const APP_NAV_ITEMS: MobileNavItemConfig[] = [
   { label: "Organization", href: "/", icon: Users },
-  { label: "MCP Setup", href: "/mcp", icon: Home },
+  /** Web UI only; Traefik serves the real MCP endpoint at `/mcp` separately. */
+  { label: "MCP Setup", href: "/settings/mcp", icon: Home },
 ]
 
 /** Bottom bar favorites: first two entries (fixed “favorites”). */

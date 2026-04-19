@@ -2,7 +2,8 @@
  * Canonical MCP HTTP(S) URL for this deployment (JWT audience / Claude connector URL).
  *
  * Order: explicit AVCD_MCP_URL → NEXT_PUBLIC_AVCD_MCP_URL → derive from PUBLIC_HOST
- * when not localhost (same host as the web app, Traefik path `/mcp`) → local default.
+ * when not localhost (same host; Traefik routes **`/mcp`** to the Apollo MCP server, not Next.js).
+ * The web app’s MCP setup **page** lives at **`/settings/mcp`** to avoid conflicting with that route.
  */
 export function getMcpServerUrl(): string {
   const explicit =

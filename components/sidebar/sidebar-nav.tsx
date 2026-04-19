@@ -15,7 +15,9 @@ export function SidebarNav({ currentPath }: SidebarNavProps) {
     <nav aria-label="Main navigation" className="px-3">
       <SidebarMenu>
         {APP_NAV_ITEMS.map((item) => {
-          const isActive = currentPath === item.href
+          const isActive =
+            currentPath === item.href ||
+            (item.href !== "/" && currentPath.startsWith(`${item.href}/`))
           return (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton asChild isActive={isActive}>

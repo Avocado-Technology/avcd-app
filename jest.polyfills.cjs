@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- setupFiles run as CommonJS before Jest transforms */
 /**
  * Jest (jsdom) omits Web Fetch API globals; next/server expects Request/Response.
  */

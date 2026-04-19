@@ -36,8 +36,8 @@ describe('SidebarNav Component', () => {
     expect(orgLink?.className).toContain('bg-gray-100')
   })
 
-  it('should mark MCP Setup as active on /mcp path', () => {
-    renderWithProvider("/mcp")
+  it("should mark MCP Setup as active on /settings/mcp path", () => {
+    renderWithProvider("/settings/mcp")
     const mcpLink = screen.getByText('MCP Setup').closest('a')
     expect(mcpLink?.className).toContain('bg-gray-100')
   })
@@ -47,6 +47,6 @@ describe('SidebarNav Component', () => {
     const mcpLink = screen.getByText('MCP Setup').closest('a')
     const orgLink = screen.getByText('Organization').closest('a')
     expect(orgLink).toHaveAttribute('href', '/')
-    expect(mcpLink).toHaveAttribute('href', '/mcp')
+    expect(mcpLink).toHaveAttribute("href", "/settings/mcp")
   })
 })

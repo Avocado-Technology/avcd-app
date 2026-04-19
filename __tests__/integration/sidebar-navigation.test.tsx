@@ -31,7 +31,7 @@ describe('Sidebar Navigation Flow', () => {
   })
 
   it('should link Organization to home', () => {
-    renderWithProvider(mockUser, '/mcp')
+    renderWithProvider(mockUser, "/settings/mcp")
 
     const orgLink = screen.getByText('Organization').closest('a')
     expect(orgLink).toHaveAttribute('href', '/')
@@ -66,6 +66,6 @@ describe('Sidebar Navigation Flow', () => {
     const orgLink = screen.getByText('Organization').closest('a')
 
     expect(orgLink).toHaveAttribute('href', '/')
-    expect(mcpLink).toHaveAttribute('href', '/mcp')
+    expect(mcpLink).toHaveAttribute("href", "/settings/mcp")
   })
 })

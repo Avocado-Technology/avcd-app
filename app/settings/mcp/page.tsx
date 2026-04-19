@@ -2,8 +2,12 @@ import { getSession } from "@auth0/nextjs-auth0";
 import { redirect } from "next/navigation";
 import { getMcpServerUrl } from "@/lib/mcp-server-url";
 
-/** MCP connector setup instructions (OAuth + server URL). */
-export default async function McpSetupPage() {
+/**
+ * MCP connector setup UI (OAuth + Claude URL).
+ *
+ * Routed under `/settings/mcp` so `/mcp` stays reserved for the Traefik → Apollo MCP HTTP endpoint.
+ */
+export default async function McpSetupSettingsPage() {
   const session = await getSession();
 
   if (!session || !session.user) {
