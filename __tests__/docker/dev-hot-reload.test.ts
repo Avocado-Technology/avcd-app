@@ -12,10 +12,16 @@ describe('Development Docker Setup - Hot Reload', () => {
       expect(fs.existsSync(dockerfilePath)).toBe(true);
     });
 
-    it('should use npm run dev command', () => {
+    it('should start the dev server via docker-entrypoint-dev.sh', () => {
       const dockerfilePath = path.join(webRoot, 'Dockerfile.dev');
       const content = fs.readFileSync(dockerfilePath, 'utf8');
-      expect(content).toMatch(/CMD\s+\[\s*"npm"\s*,\s*"run"\s*,\s*"dev"\s*\]/);
+      expect(content).toMatch(
+        /ENTRYPOINT\s+\[\s*"sh"\s*,\s*".\/docker-entrypoint-dev.sh"\s*\]/,
+      );
+      const scriptPath = path.join(webRoot, 'docker-entrypoint-dev.sh');
+      expect(fs.existsSync(scriptPath)).toBe(true);
+      const script = fs.readFileSync(scriptPath, 'utf8');
+      expect(script).toContain('exec npm run dev');
     });
 
     it('should be single-stage build (no multi-stage FROM)', () => {
@@ -33,12 +39,25 @@ describe('Development Docker Setup - Hot Reload', () => {
   });
 
   describe('docker-compose.yml (development)', () => {
-    let composeConfig: any;
+    type DevComposeFile = {
+      services: {
+        web: {
+          build: { dockerfile: string };
+          volumes: string[];
+          environment: Record<string, string>;
+          ports: string[];
+          labels?: Record<string, string>;
+        };
+      };
+      volumes?: Record<string, unknown>;
+    };
+
+    let composeConfig: DevComposeFile;
 
     beforeAll(() => {
       const composePath = path.join(webRoot, 'docker-compose.yml');
       const content = fs.readFileSync(composePath, 'utf8');
-      composeConfig = yaml.parse(content);
+      composeConfig = yaml.parse(content) as DevComposeFile;
     });
 
     it('should exist', () => {
@@ -56,9 +75,12 @@ describe('Development Docker Setup - Hot Reload', () => {
       expect(volumes.some((v: string) => v.includes('.:/app'))).toBe(true);
     });
 
-    it('should exclude node_modules from volume sync', () => {
+    it('should isolate node_modules from the bind mount with a dedicated volume', () => {
       const volumes = composeConfig.services.web.volumes;
-      expect(volumes.some((v: string) => v === '/app/node_modules')).toBe(true);
+      expect(
+        volumes.some((v: string) => v === 'web_node_modules:/app/node_modules'),
+      ).toBe(true);
+      expect(composeConfig.volumes?.web_node_modules).toBeDefined();
     });
 
     it('should exclude .next from volume sync', () => {
