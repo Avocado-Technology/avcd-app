@@ -5,14 +5,17 @@
  * and displays it using the AnimatedOrgChart component
  */
 
-'use client';
+"use client"
 
-import { AnimatedOrgChart } from '@/components/org-chart/animated-org-chart';
-import { OrgChartLoading } from '@/components/org-chart/org-chart-loading';
-import { OrgChartGraphQLError } from '@/components/org-chart/org-chart-graphql-error';
-import { OrgChartNoData } from '@/components/org-chart/org-chart-no-data';
-import { useOrganizationTree } from '@/lib/hooks/use-organization-tree';
-import 'reactflow/dist/style.css';
+import { AnimatedOrgChart } from "@/components/org-chart/animated-org-chart"
+import { OrgChartLoading } from "@/components/org-chart/org-chart-loading"
+import { OrgChartGraphQLError } from "@/components/org-chart/org-chart-graphql-error"
+import { OrgChartNoData } from "@/components/org-chart/org-chart-no-data"
+import { useOrganizationTree } from "@/lib/hooks/use-organization-tree"
+import "reactflow/dist/style.css"
+
+const mainOrgClassName =
+  "flex min-h-0 flex-1 flex-col bg-[var(--g50)] p-0 lg:p-[var(--sp-6)]"
 
 export function OrgPageWithData() {
   const { data, loading, error, refetch } = useOrganizationTree();
@@ -20,58 +23,28 @@ export function OrgPageWithData() {
   // Loading state
   if (loading) {
     return (
-      <main 
-        role="main"
-        aria-label="Organization chart page"
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          background: 'var(--g50)',
-          minHeight: 0,
-        }}
-      >
+      <main role="main" aria-label="Organization chart page" className={mainOrgClassName}>
         <OrgChartLoading />
       </main>
-    );
+    )
   }
 
   // Error state
   if (error) {
     return (
-      <main 
-        role="main"
-        aria-label="Organization chart page"
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          background: 'var(--g50)',
-          minHeight: 0,
-        }}
-      >
+      <main role="main" aria-label="Organization chart page" className={mainOrgClassName}>
         <OrgChartGraphQLError error={error} refetch={refetch} />
       </main>
-    );
+    )
   }
 
   // Empty state
   if (!data || data.length === 0) {
     return (
-      <main 
-        role="main"
-        aria-label="Organization chart page"
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          background: 'var(--g50)',
-          minHeight: 0,
-        }}
-      >
+      <main role="main" aria-label="Organization chart page" className={mainOrgClassName}>
         <OrgChartNoData />
       </main>
-    );
+    )
   }
 
   // Success state - render chart with data
@@ -79,35 +52,16 @@ export function OrgPageWithData() {
   const orgData = data[0];
 
   return (
-    <main 
-      role="main"
-      aria-label="Organization chart page"
-      style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        background: 'var(--g50)',
-        minHeight: 0,
-      }}
-    >
-      <div 
+    <main role="main" aria-label="Organization chart page" className={mainOrgClassName}>
+      <div
         role="region"
         aria-label="Organization chart visualization"
-        style={{ 
-          flex: 1, 
-          minHeight: 0,
-          display: 'flex',
-          flexDirection: 'column',
-        }}
+        className="flex min-h-0 flex-1 flex-col"
       >
-        <div style={{ 
-          flex: 1, 
-          minHeight: 0,
-          overflow: 'hidden',
-        }}>
+        <div className="min-h-0 flex-1 overflow-hidden">
           <AnimatedOrgChart data={orgData} />
         </div>
       </div>
     </main>
-  );
+  )
 }

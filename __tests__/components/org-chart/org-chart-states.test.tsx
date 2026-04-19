@@ -6,15 +6,47 @@ import { OrgChartError } from '@/components/org-chart/org-chart-error'
 import { OrgChartEmpty } from '@/components/org-chart/org-chart-empty'
 
 describe('OrgChartSkeleton', () => {
-  it('should render loading skeleton', () => {
-    render(<OrgChartSkeleton />)
-    expect(screen.getByText(/loading organization chart/i)).toBeInTheDocument()
+  it('should render loading skeleton with hierarchical structure', () => {
+    const { container } = render(<OrgChartSkeleton />)
+    const skeleton = container.querySelector('.animate-pulse')
+    expect(skeleton).toBeInTheDocument()
   })
 
-  it('should show skeleton shimmer elements', () => {
+  it('should render 7 skeleton nodes (1 org + 2 stores + 4 employees)', () => {
     const { container } = render(<OrgChartSkeleton />)
-    const skeletons = container.querySelectorAll('.animate-pulse')
-    expect(skeletons.length).toBeGreaterThan(0)
+    
+    // Count nodes by their dimensions
+    const orgNode = container.querySelector('[style*="width: 280px"]')
+    const storeNodes = container.querySelectorAll('[style*="width: 220px"]')
+    const employeeNodes = container.querySelectorAll('[style*="width: 180px"]')
+    
+    expect(orgNode).toBeInTheDocument()
+    expect(storeNodes.length).toBe(2)
+    expect(employeeNodes.length).toBe(4)
+  })
+
+  it('should have proper ARIA attributes for accessibility', () => {
+    const { container } = render(<OrgChartSkeleton />)
+    const wrapper = container.firstChild as HTMLElement
+    
+    expect(wrapper).toHaveAttribute('role', 'status')
+    expect(wrapper).toHaveAttribute('aria-live', 'polite')
+    expect(wrapper).toHaveAttribute('aria-label', 'Loading organization chart')
+  })
+
+  it('should have screen reader text', () => {
+    render(<OrgChartSkeleton />)
+    const srText = screen.getByText('Loading organization chart')
+    
+    expect(srText).toBeInTheDocument()
+    expect(srText).toHaveClass('sr-only')
+  })
+
+  it('should hide visual skeleton from screen readers', () => {
+    const { container } = render(<OrgChartSkeleton />)
+    const visualSkeleton = container.querySelector('[aria-hidden="true"]')
+    
+    expect(visualSkeleton).toBeInTheDocument()
   })
 })
 
@@ -44,5 +76,32 @@ describe('OrgChartEmpty', () => {
   it('should render helpful instruction', () => {
     render(<OrgChartEmpty />)
     expect(screen.getByText(/add your first store/i)).toBeInTheDocument()
+  })
+})
+
+describe('OrgChartSkeleton Layout', () => {
+  it('should have full width and height', () => {
+    const { container } = render(<OrgChartSkeleton />)
+    const skeleton = container.firstChild as HTMLElement
+
+    expect(skeleton).toBeInTheDocument()
+    expect(skeleton).toHaveClass('h-full')
+    expect(skeleton).toHaveClass('w-full')
+  })
+
+  it('should use CSS Grid layout for hierarchy', () => {
+    const { container } = render(<OrgChartSkeleton />)
+    const gridContainer = container.querySelector('.grid')
+    
+    expect(gridContainer).toBeInTheDocument()
+    expect(gridContainer).toHaveClass('gap-12')
+  })
+
+  it('should center nodes horizontally', () => {
+    const { container } = render(<OrgChartSkeleton />)
+    const centeredContainers = container.querySelectorAll('.justify-center')
+    
+    // Should have containers for: org level, store level, employee level
+    expect(centeredContainers.length).toBeGreaterThanOrEqual(3)
   })
 })

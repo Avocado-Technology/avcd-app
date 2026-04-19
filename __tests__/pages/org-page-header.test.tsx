@@ -40,28 +40,29 @@ describe('Organization Page Header Spacing', () => {
     expect(region).toBeInTheDocument()
   })
 
-  it('should have flex layout for main element', () => {
+  it("should have flex layout for main element", () => {
     const { container } = render(<OrgPageWithData />)
-    const main = container.querySelector('main')
-    const styles = main?.getAttribute('style')
-    
-    expect(styles).toMatch(/flex:\s*1/)
-    expect(styles).toMatch(/display:\s*flex/)
+    const main = container.querySelector("main")
+    const cls = main?.getAttribute("class") || ""
+
+    expect(cls).toMatch(/flex/)
+    expect(cls).toMatch(/flex-1/)
+    expect(cls).toMatch(/flex-col/)
   })
 
-  it('should have background color', () => {
+  it("should have background color utility on main", () => {
     const { container } = render(<OrgPageWithData />)
-    const main = container.querySelector('main')
-    const styles = main?.getAttribute('style')
-    
-    expect(styles).toContain('background: var(--g50)')
+    const main = container.querySelector("main")
+    const cls = main?.getAttribute("class") || ""
+
+    expect(cls).toContain("bg-[var(--g50)]")
   })
 
-  it('should have minHeight: 0 to prevent overflow', () => {
+  it("should have min-h-0 to prevent overflow", () => {
     const { container } = render(<OrgPageWithData />)
-    const main = container.querySelector('main')
-    const styles = main?.getAttribute('style')
-    
-    expect(styles).toMatch(/min-height:\s*0/)
+    const main = container.querySelector("main")
+    const cls = main?.getAttribute("class") || ""
+
+    expect(cls).toMatch(/min-h-0/)
   })
 })

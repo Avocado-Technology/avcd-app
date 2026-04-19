@@ -122,27 +122,34 @@ describe('Node Dimensions Configuration', () => {
       expect(typeof empDimensions.height).toBe('number')
     })
 
-    it('should have expected dimensions matching actual node sizes', () => {
-      // Organization node
-      expect(NODE_DIMENSIONS[NODE_TYPES.ORGANIZATION].width).toBe(280)
+    it('should have uniform dimensions for consistent visual hierarchy', () => {
+      // All nodes use the same dimensions for better visualization
+      expect(NODE_DIMENSIONS[NODE_TYPES.ORGANIZATION].width).toBe(240)
       expect(NODE_DIMENSIONS[NODE_TYPES.ORGANIZATION].height).toBe(80)
       
-      // Store node
-      expect(NODE_DIMENSIONS[NODE_TYPES.STORE].width).toBe(220)
-      expect(NODE_DIMENSIONS[NODE_TYPES.STORE].height).toBe(70)
+      expect(NODE_DIMENSIONS[NODE_TYPES.STORE].width).toBe(240)
+      expect(NODE_DIMENSIONS[NODE_TYPES.STORE].height).toBe(80)
       
-      // Employee node
-      expect(NODE_DIMENSIONS[NODE_TYPES.EMPLOYEE].width).toBe(180)
-      expect(NODE_DIMENSIONS[NODE_TYPES.EMPLOYEE].height).toBe(60)
+      expect(NODE_DIMENSIONS[NODE_TYPES.EMPLOYEE].width).toBe(240)
+      expect(NODE_DIMENSIONS[NODE_TYPES.EMPLOYEE].height).toBe(80)
     })
 
-    it('should have dimensions that decrease from org to store to employee', () => {
+    it('should have consistent dimensions across all node types', () => {
       const orgWidth = NODE_DIMENSIONS[NODE_TYPES.ORGANIZATION].width
       const storeWidth = NODE_DIMENSIONS[NODE_TYPES.STORE].width
       const empWidth = NODE_DIMENSIONS[NODE_TYPES.EMPLOYEE].width
       
-      expect(orgWidth).toBeGreaterThan(storeWidth)
-      expect(storeWidth).toBeGreaterThan(empWidth)
+      const orgHeight = NODE_DIMENSIONS[NODE_TYPES.ORGANIZATION].height
+      const storeHeight = NODE_DIMENSIONS[NODE_TYPES.STORE].height
+      const empHeight = NODE_DIMENSIONS[NODE_TYPES.EMPLOYEE].height
+      
+      // All widths should be equal
+      expect(orgWidth).toBe(storeWidth)
+      expect(storeWidth).toBe(empWidth)
+      
+      // All heights should be equal
+      expect(orgHeight).toBe(storeHeight)
+      expect(storeHeight).toBe(empHeight)
     })
 
     it('should be readonly (const assertion)', () => {

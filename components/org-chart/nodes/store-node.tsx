@@ -1,37 +1,29 @@
 import { memo } from 'react'
-import { Handle, Position } from 'reactflow'
 import { StoreContent } from '../shared/node-content'
 import type { StoreNodeData } from '../types'
+import { BaseNode } from './base-node'
+import { NODE_DIMENSIONS } from '../config'
+import { NODE_TYPES } from '../types'
 
 interface StoreNodeProps {
   data: StoreNodeData
 }
 
 export const StoreNode = memo(function StoreNode({ data }: StoreNodeProps) {
+  const { width, height } = NODE_DIMENSIONS[NODE_TYPES.STORE]
+
   return (
-    <div
-      className="rounded-xl transition-colors"
-      style={{
-        width: '220px',
-        minHeight: '70px',
-        padding: 'var(--sp-5)',
-        background: 'var(--bg)',
-        border: '1px solid var(--g200)',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = 'var(--g400)'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = 'var(--g200)'
-      }}
+    <BaseNode
+      width={width}
+      height={height}
+      hasSourceHandle={true}
+      hasTargetHandle={true}
     >
-      <Handle type="target" position={Position.Left} />
-      <Handle type="source" position={Position.Right} />
       <StoreContent 
         name={data.name}
         location={data.location}
         employeeCount={data.employeeCount}
       />
-    </div>
+    </BaseNode>
   )
 })

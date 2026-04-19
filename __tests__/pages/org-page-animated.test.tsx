@@ -55,11 +55,13 @@ describe('Organization Page (Animated)', () => {
     expect(screen.getByText(/AVCD Corporation/i)).toBeInTheDocument()
   })
 
-  it('should maintain responsive layout', () => {
+  it("should maintain responsive layout on main", () => {
     const { container } = render(<OrgPageWithData />)
 
-    const main = container.querySelector('main')
-    expect(main?.style.flex).toBeTruthy()
-    expect(main?.style.display).toBe('flex')
+    const main = container.querySelector("main")
+    const cls = main?.getAttribute("class") || ""
+    expect(cls).toMatch(/flex/)
+    expect(cls).toMatch(/flex-col/)
+    expect(cls).toMatch(/flex-1/)
   })
 })

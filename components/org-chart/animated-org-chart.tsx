@@ -5,10 +5,10 @@ import dynamic from 'next/dynamic'
 import { useNodesState, useEdgesState } from 'reactflow'
 import type { Organization } from '@/lib/mock-org-data'
 import { useAnimationState } from '@/lib/hooks/useAnimationState'
-import { OrgChartSkeleton } from './org-chart-skeleton'
+import { PageSkeleton } from '@/components/ui/page-skeleton'
 import { OrgChartEmpty } from './org-chart-empty'
 import { OrgChartErrorBoundary } from './org-chart-error-boundary'
-import { transformOrgToNodes, transformOrgToEdges, applyDagreLayout } from './utils/layout-utils'
+import { transformOrgToNodes, transformOrgToEdges, applyElkLayout } from './utils/layout-utils'
 import { AnimatedOrganizationNode } from './nodes/animated-organization-node'
 import { AnimatedStoreNode } from './nodes/animated-store-node'
 import { AnimatedEmployeeNode } from './nodes/animated-employee-node'
@@ -17,7 +17,6 @@ const ReactFlow = dynamic(
   () => import('reactflow').then((mod) => mod.ReactFlow),
   {
     ssr: false,
-    loading: () => <OrgChartSkeleton />
   }
 )
 
@@ -73,8 +72,7 @@ export const AnimatedOrgChart = memo(forwardRef<AnimatedOrgChartRef, AnimatedOrg
     // Transform org data to nodes and edges
     const initialNodes = useMemo(() => {
       const rawNodes = transformOrgToNodes(data)
-      const rawEdges = transformOrgToEdges(data)
-      return applyDagreLayout(rawNodes, rawEdges, 'LR')
+      return rawNodes
     }, [data])
 
     const initialEdges = useMemo(() => transformOrgToEdges(data), [data])
@@ -82,14 +80,34 @@ export const AnimatedOrgChart = memo(forwardRef<AnimatedOrgChartRef, AnimatedOrg
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
 
-    // CRITICAL FIX: Sync nodes state when data changes
+    // Apply ELK layout when data changes
     useEffect(() => {
-      const rawNodes = transformOrgToNodes(data)
-      const rawEdges = transformOrgToEdges(data)
-      const layoutedNodes = applyDagreLayout(rawNodes, rawEdges, 'LR')
+      const layoutData = async () => {
+        const rawNodes = transformOrgToNodes(data)
+        const rawEdges = transformOrgToEdges(data)
+        
+        try {
+          const layoutedNodes = await applyElkLayout(rawNodes, rawEdges, { 
+            direction: 'DOWN',
+            nodeSpacing: 100,
+            layerSpacing: 120,
+            nodePlacement: 'BRANDES_KOEPF',
+            favorStraightEdges: true,
+            considerModelOrder: 'NODES_AND_EDGES',
+            fixedAlignment: 'BALANCED'
+          })
+          
+          setNodes(layoutedNodes)
+          setEdges(rawEdges)
+        } catch (error) {
+          console.error('Failed to layout org chart:', error)
+          // Set raw nodes as fallback
+          setNodes(rawNodes)
+          setEdges(rawEdges)
+        }
+      }
       
-      setNodes(layoutedNodes)
-      setEdges(rawEdges)
+      layoutData()
     }, [data, setNodes, setEdges])
 
     // Enhance nodes with animation state
@@ -116,6 +134,8 @@ export const AnimatedOrgChart = memo(forwardRef<AnimatedOrgChartRef, AnimatedOrg
           style={{ background: 'var(--bg)' }}
           role="application"
           aria-label="Interactive animated organization chart"
+          data-zoom-on-pinch="true"
+          data-pan-on-scroll="true"
         >
           <ReactFlow
             nodes={enhancedNodes}

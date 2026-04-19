@@ -1,32 +1,25 @@
 import { memo } from 'react'
-import { Handle, Position } from 'reactflow'
 import { OrganizationContent } from '../shared/node-content'
 import type { OrganizationNodeData } from '../types'
+import { BaseNode } from './base-node'
+import { NODE_DIMENSIONS } from '../config'
+import { NODE_TYPES } from '../types'
 
 interface OrganizationNodeProps {
   data: OrganizationNodeData
 }
 
 export const OrganizationNode = memo(function OrganizationNode({ data }: OrganizationNodeProps) {
+  const { width, height } = NODE_DIMENSIONS[NODE_TYPES.ORGANIZATION]
+
   return (
-    <div
-      className="rounded-xl transition-colors"
-      style={{
-        width: '280px',
-        minHeight: '80px',
-        padding: 'var(--sp-6)',
-        background: 'var(--bg)',
-        border: '1px solid var(--g200)',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = 'var(--g400)'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = 'var(--g200)'
-      }}
+    <BaseNode
+      width={width}
+      height={height}
+      hasSourceHandle={true}
+      hasTargetHandle={false}
     >
-      <Handle type="source" position={Position.Right} />
       <OrganizationContent name={data.name} />
-    </div>
+    </BaseNode>
   )
 })

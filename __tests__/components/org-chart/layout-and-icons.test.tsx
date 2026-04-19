@@ -2,12 +2,12 @@ import { describe, it, expect } from '@jest/globals'
 import { render, screen } from '@testing-library/react'
 import { OrganizationNode } from '@/components/org-chart/nodes/organization-node'
 import { StoreNode } from '@/components/org-chart/nodes/store-node'
-import { applyDagreLayout, transformOrgToNodes, transformOrgToEdges } from '@/components/org-chart/utils/layout-utils'
+import { applyElkLayout, transformOrgToNodes, transformOrgToEdges } from '@/components/org-chart/utils/layout-utils'
 import { ReactFlowWrapper } from '@/__tests__/utils/reactFlowWrapper'
 
 describe('Organization Chart Layout and Icons', () => {
   describe('Left-to-Right Layout', () => {
-    it('should apply LR direction when specified', () => {
+    it('should apply RIGHT direction when specified', async () => {
       const mockOrg = {
         id: 'org-1',
         name: 'Test Org',
@@ -23,9 +23,9 @@ describe('Organization Chart Layout and Icons', () => {
       
       const nodes = transformOrgToNodes(mockOrg)
       const edges = transformOrgToEdges(mockOrg)
-      const layoutedNodes = applyDagreLayout(nodes, edges, 'LR')
+      const layoutedNodes = await applyElkLayout(nodes, edges, { direction: 'RIGHT' })
       
-      // In LR layout, org node should be leftmost (smallest x)
+      // In RIGHT layout, org node should be leftmost (smallest x)
       const orgNode = layoutedNodes.find(n => n.id === 'org-1')
       const storeNode = layoutedNodes.find(n => n.id === 'store-1')
       

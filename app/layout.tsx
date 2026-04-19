@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { SidebarWrapper } from "@/components/sidebar-wrapper";
 import { SidebarInset } from "@/components/ui/sidebar";
+import { MobileNavigationChrome } from "@/components/mobile-navigation-chrome";
 import { ApolloProvider } from "@/lib/apollo-provider";
 import "./globals.css";
 
@@ -69,7 +70,7 @@ export default async function RootLayout({
                   <SidebarWrapper user={serializedSession.user} />
                   <SidebarInset>
                     <AppTopBar session={serializedSession} />
-                    {children}
+                    <MobileNavigationChrome>{children}</MobileNavigationChrome>
                   </SidebarInset>
                 </SidebarProvider>
               ) : (
