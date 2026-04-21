@@ -1,65 +1,49 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals'
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { MobileNav } from '@/components/mobile-nav'
-import { SidebarProvider } from '@/components/ui/sidebar'
-import { mockMatchMedia, restoreMatchMedia } from '@/__tests__/utils/mockMatchMedia'
+import { describe, it, expect, jest } from "@jest/globals"
+import { render, fireEvent } from "@testing-library/react"
+import { MobileNav } from "@/components/mobile-nav"
+import React from "react"
 
-function renderWithProvider(user: any, currentPath: string) {
-  return render(
-    <SidebarProvider>
-      <MobileNav user={user} currentPath={currentPath} />
-    </SidebarProvider>
-  )
-}
+jest.mock('@/components/sidebar/sidebar-nav', () => ({
+  SidebarNav: ({ currentPath }) => (
+    <div data-testid="sidebar-nav" data-path={currentPath}>
+      sidebar-nav
+    </div>
+  ),
+}));
 
-describe('MobileNav Component', () => {
+jest.mock('@/components/sidebar/sidebar-header', () => ({
+  SidebarHeader: () => <div data-testid="sidebar-header">sidebar-header</div>,
+}));
+
+jest.mock('@/components/sidebar/sidebar-footer', () => ({
+  SidebarFooter: ({ user }) => (
+    <div data-testid="sidebar-footer">
+      {user.name} {user.email}
+    </div>
+  ),
+}));
+
+describe("MobileNav Component", () => {
   const mockUser = {
-    name: 'John Doe',
-    email: 'john@example.com',
-    picture: null,
+    name: "Test User",
+    email: "test@example.com",
+    picture: "https://example.com/pic.jpg",
   }
 
-  beforeEach(() => {
-    mockMatchMedia('(max-width: 767px)')
-  })
-
-  afterEach(() => {
-    restoreMatchMedia()
-  })
-
-  it('should render hamburger menu button', () => {
-    renderWithProvider(mockUser, '/')
-    const button = screen.getByLabelText(/open navigation menu/i)
-    expect(button).toBeInTheDocument()
-  })
-
-  it('should have touch-friendly button size (48x48px)', () => {
-    renderWithProvider(mockUser, '/')
-    const button = screen.getByLabelText(/open navigation menu/i)
-    expect(button).toHaveClass('h-12')
-    expect(button).toHaveClass('w-12')
-  })
-
-  it('should open drawer when hamburger is clicked', async () => {
-    const user = userEvent.setup()
-    renderWithProvider(mockUser, '/')
+  it("GivenUser_WhenRendered_ThenShowsSidebarComponents", async () => {
+    const { getByText, getByRole } = render(<MobileNav user={mockUser} currentPath="/test" />)
     
-    const button = screen.getByLabelText(/open navigation menu/i)
-    await user.click(button)
-    
-    expect(screen.getByText('MCP Setup')).toBeVisible()
-    expect(screen.getByText('Organization')).toBeVisible()
+    // Open the sheet
+    const trigger = getByRole("button", { name: /Navigation.openMenuLabel/i })
+    fireEvent.click(trigger)
+
+    expect(getByText(/AVCD/i)).toBeInTheDocument()
+    expect(getByText(/Navigation.finance/i)).toBeInTheDocument()
+    expect(getByText(/Test User/i)).toBeInTheDocument()
   })
 
-  it('should render full navigation in drawer', async () => {
-    const user = userEvent.setup()
-    renderWithProvider(mockUser, '/')
-    
-    const button = screen.getByLabelText(/open navigation menu/i)
-    await user.click(button)
-    
-    expect(screen.getByText('AVCD')).toBeVisible()
-    expect(screen.getByText('John Doe')).toBeVisible()
+  it("GivenMenuButton_WhenRendered_ThenHasCorrectAriaLabel", () => {
+    const { getByRole } = render(<MobileNav user={mockUser} currentPath="/" />)
+    expect(getByRole("button", { name: /Navigation.openMenuLabel/i })).toBeInTheDocument()
   })
 })

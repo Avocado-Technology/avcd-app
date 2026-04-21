@@ -1,11 +1,12 @@
 "use client"
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { Link, usePathname } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
 import { MobileBottomSheet } from "@/components/ui/mobile-bottom-sheet"
 import { Button } from "@/components/ui/button"
 import type { MobileNavItemConfig } from "@/lib/mobile-nav-config"
+import { useTranslations } from 'next-intl'
+import NextLink from "next/link"
 
 export type MobileMoreSheetProps = {
   open: boolean
@@ -19,13 +20,14 @@ export function MobileMoreSheet({
   onOpenChange,
   overflowItems,
 }: MobileMoreSheetProps) {
+  const t = useTranslations("Navigation")
   const pathname = usePathname()
 
   return (
     <MobileBottomSheet
       open={open}
       onOpenChange={onOpenChange}
-      title="More options"
+      title={t("moreOptions")}
       description="Additional destinations and account actions"
     >
       {overflowItems.length > 0 ? (
@@ -33,7 +35,7 @@ export function MobileMoreSheet({
           aria-label="Additional destinations"
           className="flex flex-col gap-1 border-b border-gray-200 pb-4 dark:border-gray-800"
         >
-          {overflowItems.map(({ href, icon: Icon, label }) => {
+          {overflowItems.map(({ href, icon: Icon, labelKey }) => {
             const active = pathname === href
             return (
               <Link
@@ -49,7 +51,7 @@ export function MobileMoreSheet({
                 onClick={() => onOpenChange(false)}
               >
                 <Icon className="h-5 w-5 shrink-0" aria-hidden />
-                {label}
+                {t(labelKey as Parameters<typeof t>[0])}
               </Link>
             )
           })}
@@ -62,13 +64,13 @@ export function MobileMoreSheet({
           className="min-h-11 w-full font-sans text-sm"
           asChild
         >
-          <Link
+          <NextLink
             href="/api/auth/logout"
             prefetch={false}
             onClick={() => onOpenChange(false)}
           >
             Sign out
-          </Link>
+          </NextLink>
         </Button>
       </div>
     </MobileBottomSheet>

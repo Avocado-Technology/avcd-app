@@ -152,6 +152,18 @@ const cache = new InMemoryCache({
             return incoming;
           },
         },
+        financeAccounts: {
+          keyArgs: ["organizationId"],
+          merge(_ignored, incoming) {
+            return incoming;
+          },
+        },
+        financeTransactions: {
+          keyArgs: ["organizationId"],
+          merge(_ignored, incoming) {
+            return incoming;
+          },
+        },
       },
     },
     // Entity type policies - normalize by ID
@@ -162,6 +174,12 @@ const cache = new InMemoryCache({
       keyFields: ["id"],
     },
     Employee: {
+      keyFields: ["id"],
+    },
+    FinanceAccount: {
+      keyFields: ["id"],
+    },
+    FinanceTransaction: {
       keyFields: ["id"],
     },
   },

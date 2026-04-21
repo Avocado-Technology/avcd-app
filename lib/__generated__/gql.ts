@@ -15,16 +15,24 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  */
 type Documents = {
     "\n  fragment EmployeeFields on Employee {\n    id\n    name\n    address\n    salary\n    organizationId\n  }\n": typeof types.EmployeeFieldsFragmentDoc,
+    "\n  fragment FinanceAccountFields on FinanceAccount {\n    id\n    organizationId\n    name\n    kind\n    currency\n    openingBalanceCents\n    description\n    isActive\n  }\n": typeof types.FinanceAccountFieldsFragmentDoc,
+    "\n  fragment FinanceTransactionFields on FinanceTransaction {\n    id\n    organizationId\n    date\n    type\n    amountCents\n    currency\n    accountId\n    categoryId\n    description\n    reference\n    status\n  }\n": typeof types.FinanceTransactionFieldsFragmentDoc,
     "\n  fragment OrganizationFields on Organization {\n    id\n    name\n    address\n    userId\n  }\n": typeof types.OrganizationFieldsFragmentDoc,
     "\n  fragment StoreFields on Store {\n    id\n    name\n    address\n    organizationId\n  }\n": typeof types.StoreFieldsFragmentDoc,
+    "\n  query GetFinanceAccounts($organizationId: String!) {\n    financeAccounts(organizationId: $organizationId) {\n      ...FinanceAccountFields\n    }\n  }\n  \n": typeof types.GetFinanceAccountsDocument,
+    "\n  query GetFinanceTransactions($organizationId: String!) {\n    financeTransactions(organizationId: $organizationId) {\n      ...FinanceTransactionFields\n    }\n  }\n  \n": typeof types.GetFinanceTransactionsDocument,
     "\n  query GetOrganizations {\n    organizations {\n      ...OrganizationFields\n    }\n  }\n  \n": typeof types.GetOrganizationsDocument,
     "\n  query GetStoresByOrganization($organizationId: String!) {\n    stores(organizationId: $organizationId) {\n      ...StoreFields\n    }\n  }\n  \n": typeof types.GetStoresByOrganizationDocument,
     "\n  query GetEmployeesByOrganization($organizationId: String!) {\n    employees(organizationId: $organizationId) {\n      ...EmployeeFields\n    }\n  }\n  \n": typeof types.GetEmployeesByOrganizationDocument,
 };
 const documents: Documents = {
     "\n  fragment EmployeeFields on Employee {\n    id\n    name\n    address\n    salary\n    organizationId\n  }\n": types.EmployeeFieldsFragmentDoc,
+    "\n  fragment FinanceAccountFields on FinanceAccount {\n    id\n    organizationId\n    name\n    kind\n    currency\n    openingBalanceCents\n    description\n    isActive\n  }\n": types.FinanceAccountFieldsFragmentDoc,
+    "\n  fragment FinanceTransactionFields on FinanceTransaction {\n    id\n    organizationId\n    date\n    type\n    amountCents\n    currency\n    accountId\n    categoryId\n    description\n    reference\n    status\n  }\n": types.FinanceTransactionFieldsFragmentDoc,
     "\n  fragment OrganizationFields on Organization {\n    id\n    name\n    address\n    userId\n  }\n": types.OrganizationFieldsFragmentDoc,
     "\n  fragment StoreFields on Store {\n    id\n    name\n    address\n    organizationId\n  }\n": types.StoreFieldsFragmentDoc,
+    "\n  query GetFinanceAccounts($organizationId: String!) {\n    financeAccounts(organizationId: $organizationId) {\n      ...FinanceAccountFields\n    }\n  }\n  \n": types.GetFinanceAccountsDocument,
+    "\n  query GetFinanceTransactions($organizationId: String!) {\n    financeTransactions(organizationId: $organizationId) {\n      ...FinanceTransactionFields\n    }\n  }\n  \n": types.GetFinanceTransactionsDocument,
     "\n  query GetOrganizations {\n    organizations {\n      ...OrganizationFields\n    }\n  }\n  \n": types.GetOrganizationsDocument,
     "\n  query GetStoresByOrganization($organizationId: String!) {\n    stores(organizationId: $organizationId) {\n      ...StoreFields\n    }\n  }\n  \n": types.GetStoresByOrganizationDocument,
     "\n  query GetEmployeesByOrganization($organizationId: String!) {\n    employees(organizationId: $organizationId) {\n      ...EmployeeFields\n    }\n  }\n  \n": types.GetEmployeesByOrganizationDocument,
@@ -51,11 +59,27 @@ export function graphql(source: "\n  fragment EmployeeFields on Employee {\n    
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  fragment FinanceAccountFields on FinanceAccount {\n    id\n    organizationId\n    name\n    kind\n    currency\n    openingBalanceCents\n    description\n    isActive\n  }\n"): (typeof documents)["\n  fragment FinanceAccountFields on FinanceAccount {\n    id\n    organizationId\n    name\n    kind\n    currency\n    openingBalanceCents\n    description\n    isActive\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment FinanceTransactionFields on FinanceTransaction {\n    id\n    organizationId\n    date\n    type\n    amountCents\n    currency\n    accountId\n    categoryId\n    description\n    reference\n    status\n  }\n"): (typeof documents)["\n  fragment FinanceTransactionFields on FinanceTransaction {\n    id\n    organizationId\n    date\n    type\n    amountCents\n    currency\n    accountId\n    categoryId\n    description\n    reference\n    status\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  fragment OrganizationFields on Organization {\n    id\n    name\n    address\n    userId\n  }\n"): (typeof documents)["\n  fragment OrganizationFields on Organization {\n    id\n    name\n    address\n    userId\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment StoreFields on Store {\n    id\n    name\n    address\n    organizationId\n  }\n"): (typeof documents)["\n  fragment StoreFields on Store {\n    id\n    name\n    address\n    organizationId\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query GetFinanceAccounts($organizationId: String!) {\n    financeAccounts(organizationId: $organizationId) {\n      ...FinanceAccountFields\n    }\n  }\n  \n"): (typeof documents)["\n  query GetFinanceAccounts($organizationId: String!) {\n    financeAccounts(organizationId: $organizationId) {\n      ...FinanceAccountFields\n    }\n  }\n  \n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query GetFinanceTransactions($organizationId: String!) {\n    financeTransactions(organizationId: $organizationId) {\n      ...FinanceTransactionFields\n    }\n  }\n  \n"): (typeof documents)["\n  query GetFinanceTransactions($organizationId: String!) {\n    financeTransactions(organizationId: $organizationId) {\n      ...FinanceTransactionFields\n    }\n  }\n  \n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

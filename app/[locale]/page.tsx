@@ -1,6 +1,6 @@
 import { getSession } from "@auth0/nextjs-auth0";
 import { getMcpServerUrl } from "@/lib/mcp-server-url";
-import { GoogleLoginGate } from "./components/GoogleLoginGate";
+import { GoogleLoginGate } from "../components/GoogleLoginGate";
 import { OrgPageWithData } from "./org/org-page-with-data";
 
 export default async function Home() {

@@ -1,8 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { Link, usePathname } from "@/i18n/navigation"
 import { Menu } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -15,12 +14,14 @@ import {
 } from "@/lib/mobile-nav-config"
 import { MobileMoreSheet } from "@/components/mobile-more-sheet"
 import { MobileBottomThemeButton } from "@/components/mobile-bottom-theme-button"
+import { useTranslations } from 'next-intl'
 
 type MobileBottomNavProps = {
   items?: MobileNavItemConfig[]
 }
 
 export function MobileBottomNav({ items = APP_NAV_ITEMS }: MobileBottomNavProps) {
+  const t = useTranslations("Navigation")
   const currentPath = usePathname()
   const enabled = isMobileBottomNavEnabled()
   const [moreOpen, setMoreOpen] = useState(false)
@@ -42,11 +43,12 @@ export function MobileBottomNav({ items = APP_NAV_ITEMS }: MobileBottomNavProps)
           paddingBottom: "max(16px, env(safe-area-inset-bottom, 0px))",
         }}
         role="navigation"
-        aria-label="Primary navigation"
+        aria-label={t("primaryNavLabel")}
       >
         <div className="mx-auto flex h-14 max-w-lg items-center justify-evenly px-3">
-          {favorites.map(({ href, icon: Icon, label }) => {
+          {favorites.map(({ href, icon: Icon, labelKey }) => {
             const active = currentPath === href
+            const label = t(labelKey as Parameters<typeof t>[0])
             return (
               <Button
                 key={href}
@@ -76,7 +78,7 @@ export function MobileBottomNav({ items = APP_NAV_ITEMS }: MobileBottomNavProps)
             variant="ghost"
             size="icon"
             className="h-12 w-12 shrink-0"
-            aria-label="More options"
+            aria-label={t("moreOptions")}
             aria-expanded={moreOpen}
             onClick={() => setMoreOpen(true)}
           >

@@ -1,13 +1,13 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname } from "@/i18n/navigation";
 import { useMinWidthLg } from "@/hooks/use-min-width-lg";
 import { MobileNav } from "@/components/mobile-nav";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { isMobileBottomNavEnabled } from "@/lib/feature-flags";
+import NextLink from "next/link";
 
 type Props = {
   session: {
@@ -103,9 +103,9 @@ export function AppTopBar({ session }: Props) {
         <div className="flex items-center gap-[var(--sp-3)]">
           <ThemeToggle />
           <Button variant="secondary" size="default" className="min-h-11 shrink-0 font-sans text-xs font-medium" asChild>
-            <Link href="/api/auth/logout" prefetch={false}>
+            <NextLink href="/api/auth/logout" prefetch={false}>
               Sign out
-            </Link>
+            </NextLink>
           </Button>
         </div>
       ) : null}

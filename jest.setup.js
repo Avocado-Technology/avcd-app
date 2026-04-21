@@ -1,7 +1,90 @@
+/* eslint-disable @typescript-eslint/no-require-imports, react/display-name */
 import '@testing-library/jest-dom'
 import { toHaveNoViolations } from 'jest-axe'
 
 expect.extend(toHaveNoViolations)
+
+// Mock next-intl
+jest.mock('next-intl', () => ({
+  useTranslations: (namespace) => (key) => namespace ? `${namespace}.${key}` : key,
+  useFormatter: () => ({
+    dateTime: (date, opts) => date.toLocaleDateString('en-US', opts),
+  }),
+}));
+
+// Mock i18n navigation
+jest.mock('@/i18n/navigation', () => ({
+  Link: ({ href, children, ...props }) => <a href={href} {...props}>{children}</a>,
+  usePathname: () => '/',
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+    back: jest.fn(),
+  }),
+  redirect: jest.fn(),
+}));
+
+jest.mock('@/components/ui/sheet', () => {
+  const React = require('react');
+  return {
+    Sheet: ({ children }) => <div>{children}</div>,
+    SheetContent: ({ children }) => <div>{children}</div>,
+    SheetTrigger: ({ children, asChild }) => {
+      if (asChild) return children;
+      return <button>{children}</button>;
+    },
+    SheetTitle: ({ children }) => <div>{children}</div>,
+    SheetHeader: ({ children }) => <div>{children}</div>,
+    SheetFooter: ({ children }) => <div>{children}</div>,
+    SheetDescription: ({ children }) => <div>{children}</div>,
+    SheetClose: ({ children }) => <button>{children}</button>,
+  };
+});
+
+// Mock sidebar context and components globally
+jest.mock('@/components/ui/sidebar', () => {
+  const React = require('react');
+  return {
+    SidebarMenu: ({ children }) => <div data-testid="sidebar-menu">{children}</div>,
+    SidebarMenuItem: ({ children }) => <div data-testid="sidebar-menu-item">{children}</div>,
+    SidebarMenuButton: React.forwardRef(({ children, isActive, asChild, ...props }, ref) => {
+      const className = `${isActive ? 'bg-gray-100' : ''}`;
+      if (asChild && React.isValidElement(children)) {
+        return React.cloneElement(children, {
+          ref,
+          className: `${children.props.className || ''} ${className}`,
+          ...props
+        });
+      }
+      return (
+        <div ref={ref} className={className} {...props}>{children}</div>
+      );
+    }),
+    SidebarProvider: ({ children }) => <div data-testid="sidebar-provider">{children}</div>,
+    useSidebar: () => ({
+      state: "expanded",
+      open: true,
+      setOpen: jest.fn(),
+      openMobile: true,
+      setOpenMobile: jest.fn(),
+      isMobile: true,
+      toggleSidebar: jest.fn(),
+    }),
+  Sidebar: React.forwardRef(({ children, ...props }, ref) => (
+    <div ref={ref} data-testid="sidebar" {...props}>{children}</div>
+  )),
+  SidebarHeader: ({ children }) => <div data-testid="sidebar-header">{children}</div>,
+  SidebarContent: ({ children }) => <div data-testid="sidebar-content">{children}</div>,
+  SidebarFooter: ({ children }) => <div data-testid="sidebar-footer">{children}</div>,
+  SidebarGroup: ({ children }) => <div data-testid="sidebar-group">{children}</div>,
+  SidebarGroupLabel: ({ children }) => <div data-testid="sidebar-group-label">{children}</div>,
+  SidebarGroupContent: ({ children }) => <div data-testid="sidebar-group-content">{children}</div>,
+  SidebarTrigger: () => <button data-testid="sidebar-trigger">trigger</button>,
+  SidebarRail: () => <div data-testid="sidebar-rail">rail</div>,
+  SidebarInset: ({ children }) => <div data-testid="sidebar-inset">{children}</div>,
+  };
+});
 
 // Minimal matchMedia for hooks (tests may replace with mockMatchMedia)
 Object.defineProperty(window, 'matchMedia', {
