@@ -1,52 +1,26 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals'
-import { render, screen } from '@testing-library/react'
-import { SidebarNav } from '@/components/sidebar/sidebar-nav'
-import { SidebarProvider } from '@/components/ui/sidebar'
-import { mockMatchMedia, restoreMatchMedia } from '@/__tests__/utils/mockMatchMedia'
+import { describe, it, expect } from "@jest/globals"
+import { render } from "@testing-library/react"
+import { SidebarNav } from "@/components/sidebar/sidebar-nav"
+import React from "react"
 
-function renderWithProvider(currentPath: string) {
-  return render(
-    <SidebarProvider>
-      <SidebarNav currentPath={currentPath} />
-    </SidebarProvider>
-  )
-}
-
-describe('SidebarNav Component', () => {
-  beforeEach(() => {
-    mockMatchMedia('(min-width: 1024px)') // Desktop mode for tests
+describe("SidebarNav Component", () => {
+  it("should render navigation items", () => {
+    const { getByText } = render(<SidebarNav currentPath="/" />)
+    expect(getByText(/Navigation.finance/i)).toBeInTheDocument()
+    expect(getByText(/Navigation.organization/i)).toBeInTheDocument()
+    expect(getByText(/Navigation.settings/i)).toBeInTheDocument()
   })
 
-  afterEach(() => {
-    restoreMatchMedia()
-  })
-  it('should render MCP Setup link', () => {
-    renderWithProvider("/")
-    expect(screen.getByText('MCP Setup')).toBeInTheDocument()
-  })
-
-  it('should render Organization link', () => {
-    renderWithProvider("/")
-    expect(screen.getByText('Organization')).toBeInTheDocument()
+  it("should have correct link hrefs", () => {
+    const { getByRole } = render(<SidebarNav currentPath="/" />)
+    expect(getByRole("link", { name: /Navigation.finance/i }).getAttribute("href")).toBe("/finance")
+    expect(getByRole("link", { name: /Navigation.organization/i }).getAttribute("href")).toBe("/org")
+    expect(getByRole("link", { name: /Navigation.settings/i }).getAttribute("href")).toBe("/settings/mcp")
   })
 
-  it('should mark Organization as active on home path', () => {
-    renderWithProvider("/")
-    const orgLink = screen.getByText('Organization').closest('a')
-    expect(orgLink?.className).toContain('bg-gray-100')
-  })
-
-  it("should mark MCP Setup as active on /settings/mcp path", () => {
-    renderWithProvider("/settings/mcp")
-    const mcpLink = screen.getByText('MCP Setup').closest('a')
-    expect(mcpLink?.className).toContain('bg-gray-100')
-  })
-
-  it('should have correct link hrefs', () => {
-    renderWithProvider("/")
-    const mcpLink = screen.getByText('MCP Setup').closest('a')
-    const orgLink = screen.getByText('Organization').closest('a')
-    expect(orgLink).toHaveAttribute('href', '/')
-    expect(mcpLink).toHaveAttribute("href", "/settings/mcp")
+  it("should highlight active link", () => {
+    const { getByText } = render(<SidebarNav currentPath="/finance" />)
+    const financeLink = getByText(/Navigation.finance/i).closest('a')
+    expect(financeLink).toHaveClass('bg-gray-100')
   })
 })

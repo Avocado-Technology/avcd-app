@@ -1,6 +1,9 @@
 import { getSession } from "@auth0/nextjs-auth0";
-import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
+import { redirect } from "@/i18n/navigation";
+import { routing } from "@/i18n/routing";
 import { getMcpServerUrl } from "@/lib/mcp-server-url";
+import { SettingsLocalePreference } from "@/components/settings-locale-preference";
 
 /**
  * MCP connector setup UI (OAuth + Claude URL).
@@ -11,9 +14,10 @@ export default async function McpSetupSettingsPage() {
   const session = await getSession();
 
   if (!session || !session.user) {
-    redirect("/");
+    redirect({ href: "/", locale: routing.defaultLocale });
   }
 
+  const t = await getTranslations("Settings");
   const mcpServerUrl = getMcpServerUrl();
 
   return (
@@ -51,7 +55,7 @@ export default async function McpSetupSettingsPage() {
               lineHeight: 1.2,
             }}
           >
-            MCP Setup
+            {t("title")}
           </h1>
           <p
             style={{
@@ -61,9 +65,11 @@ export default async function McpSetupSettingsPage() {
               lineHeight: 1.6,
             }}
           >
-            Connect Claude to your AVCD API with OAuth authentication
+            {t("subtitle")}
           </p>
         </header>
+
+        <SettingsLocalePreference />
 
         <div
           style={{
@@ -94,7 +100,7 @@ export default async function McpSetupSettingsPage() {
                 marginBottom: "var(--sp-3)",
               }}
             >
-              MCP Server URL
+              {t("mcpServerUrl")}
             </div>
             <code
               style={{
@@ -123,10 +129,10 @@ export default async function McpSetupSettingsPage() {
               lineHeight: 1.6,
             }}
           >
-            <li>Open Claude Settings → Connectors → Add MCP Server</li>
-            <li>Paste the MCP Server URL above</li>
-            <li>Select OAuth authentication</li>
-            <li>Sign in with your Google account</li>
+            <li>{t("step1")}</li>
+            <li>{t("step2")}</li>
+            <li>{t("step3")}</li>
+            <li>{t("step4")}</li>
           </ol>
 
           <div
@@ -141,7 +147,7 @@ export default async function McpSetupSettingsPage() {
               lineHeight: 1.6,
             }}
           >
-            Authentication is handled automatically via OAuth. No API keys required.
+            {t("noApiKeys")}
           </div>
         </div>
       </div>

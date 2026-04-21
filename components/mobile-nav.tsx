@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Menu } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import {
   Sheet,
   SheetContent,
@@ -24,6 +25,7 @@ interface MobileNavProps {
 
 export function MobileNav({ user, currentPath }: MobileNavProps) {
   const [open, setOpen] = useState(false)
+  const t = useTranslations('Navigation')
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -32,7 +34,7 @@ export function MobileNav({ user, currentPath }: MobileNavProps) {
           variant="ghost"
           size="icon"
           className="h-12 w-12 md:hidden"
-          aria-label="Open navigation menu"
+          aria-label={t('openMenuLabel')}
         >
           <Menu className="h-5 w-5" />
         </Button>

@@ -4,7 +4,10 @@ import { AppSidebar } from '@/components/app-sidebar'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { mockMatchMedia, restoreMatchMedia } from '@/__tests__/utils/mockMatchMedia'
 
-function renderWithProvider(user: any, currentPath: string) {
+function renderWithProvider(
+  user: { name?: string | null; email?: string | null; picture?: string | null },
+  currentPath: string,
+) {
   return render(
     <SidebarProvider>
       <AppSidebar user={user} currentPath={currentPath} />
@@ -34,8 +37,9 @@ describe('AppSidebar Component', () => {
 
   it('should render navigation items', () => {
     renderWithProvider(mockUser, '/')
-    expect(screen.getByText('MCP Setup')).toBeInTheDocument()
+    expect(screen.getByText('Settings')).toBeInTheDocument()
     expect(screen.getByText('Organization')).toBeInTheDocument()
+    expect(screen.getByText('Finance')).toBeInTheDocument()
   })
 
   it('should render footer with user info', () => {
