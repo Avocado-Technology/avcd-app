@@ -86,3 +86,8 @@ jobs:
           web_auth0_audience: ${{ vars.WEB_AUTH0_AUDIENCE || secrets.WEB_AUTH0_AUDIENCE }}
           web_auth0_scope: "openid profile email offline_access"
           web_base_url: ${{ vars.WEB_BASE_URL }}
+          web_openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          web_chat_model: ${{ vars.CHAT_MODEL || 'gpt-4o' }}
+          web_avcd_mcp_url: ${{ vars.AVCD_MCP_URL || secrets.AVCD_MCP_URL }}
+          web_mcp_client_id: ${{ vars.NEXT_PUBLIC_AUTH0_MCP_CLIENT_ID }}
+          web_mcp_server_url: ${{ vars.NEXT_PUBLIC_MCP_SERVER_URL }}

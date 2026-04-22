@@ -89,6 +89,26 @@ inputs:
     description: Optional AUTH0_BASE_URL override. When empty, uses https://PUBLIC_HOST
     required: false
     default: ""
+  web_openai_api_key:
+    description: OPENAI_API_KEY for the in-app AI chat feature
+    required: false
+    default: ""
+  web_chat_model:
+    description: OpenAI model ID for chat (default gpt-4o)
+    required: false
+    default: "gpt-4o"
+  web_avcd_mcp_url:
+    description: Server-side URL the Next.js container uses to reach the MCP server (e.g. http://mcp-server:8000/mcp). Leave empty to disable MCP tools in chat.
+    required: false
+    default: ""
+  web_mcp_client_id:
+    description: NEXT_PUBLIC_AUTH0_MCP_CLIENT_ID shown on the /settings/mcp setup page
+    required: false
+    default: ""
+  web_mcp_server_url:
+    description: NEXT_PUBLIC_MCP_SERVER_URL shown on the /settings/mcp setup page. Defaults to https://PUBLIC_HOST/mcp when empty.
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -228,6 +248,11 @@ runs:
         WEB_AUTH0_AUDIENCE_IN: ${{ inputs.web_auth0_audience }}
         WEB_AUTH0_SCOPE_IN: ${{ inputs.web_auth0_scope }}
         WEB_BASE_URL_IN: ${{ inputs.web_base_url }}
+        WEB_OPENAI_API_KEY_IN: ${{ inputs.web_openai_api_key }}
+        WEB_CHAT_MODEL_IN: ${{ inputs.web_chat_model }}
+        WEB_AVCD_MCP_URL_IN: ${{ inputs.web_avcd_mcp_url }}
+        WEB_MCP_CLIENT_ID_IN: ${{ inputs.web_mcp_client_id }}
+        WEB_MCP_SERVER_URL_IN: ${{ inputs.web_mcp_server_url }}
       run: |
         set -euo pipefail
         if [ -n "${WEB_AUTH_SECRET_IN:-}" ]; then
@@ -259,6 +284,11 @@ runs:
             export E_AUTH0_AUDIENCE="$WEB_AUTH0_AUDIENCE_IN"
             export E_AUTH0_SCOPE="$WEB_AUTH0_SCOPE_IN"
             export E_BASE_URL="$WEB_BASE_URL_IN"
+            export E_OPENAI_API_KEY="$WEB_OPENAI_API_KEY_IN"
+            export E_CHAT_MODEL="$WEB_CHAT_MODEL_IN"
+            export E_AVCD_MCP_URL="$WEB_AVCD_MCP_URL_IN"
+            export E_MCP_CLIENT_ID="$WEB_MCP_CLIENT_ID_IN"
+            export E_MCP_SERVER_URL="$WEB_MCP_SERVER_URL_IN"
             export E_PH="$PUBLIC_HOST_IN"
             python3 "$RENDER_PY"
           )

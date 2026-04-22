@@ -23,10 +23,13 @@ def esc(s: str) -> str:
 def main() -> None:
     ph = os.environ["E_PH"]
     base_url = (os.environ.get("E_BASE_URL") or "").strip() or f"https://{ph}"
-    
+
     # GraphQL API endpoint - use deployed API endpoint
     graphql_endpoint = f"https://{ph}/api/graphql"
-    
+
+    # MCP server public URL defaults to https://<host>/mcp if not overridden
+    mcp_server_url = (os.environ.get("E_MCP_SERVER_URL") or "").strip() or f"https://{ph}/mcp"
+
     lines = [
         "# Auth0 Configuration",
         "AUTH0_SECRET=" + esc(os.environ["E_AUTH0_SECRET"]),
@@ -39,6 +42,17 @@ def main() -> None:
         "",
         "# GraphQL API Endpoint",
         "NEXT_PUBLIC_GRAPHQL_ENDPOINT=" + esc(graphql_endpoint),
+        "",
+        "# AI Chat",
+        "OPENAI_API_KEY=" + esc(os.environ.get("E_OPENAI_API_KEY", "")),
+        "CHAT_MODEL=" + esc(os.environ.get("E_CHAT_MODEL", "gpt-4o")),
+        # Server-side URL the Next.js container uses to reach the MCP server.
+        # Defaults empty so the chat handler skips MCP tools gracefully when unset.
+        "AVCD_MCP_URL=" + esc(os.environ.get("E_AVCD_MCP_URL", "")),
+        "",
+        "# MCP public config (used by the /settings/mcp setup page)",
+        "NEXT_PUBLIC_AUTH0_MCP_CLIENT_ID=" + esc(os.environ.get("E_MCP_CLIENT_ID", "")),
+        "NEXT_PUBLIC_MCP_SERVER_URL=" + esc(mcp_server_url),
         "",
         "# Client UI (build-time in Next; passed as compose build arg — keep true for mobile shell)",
         "NEXT_PUBLIC_ENABLE_MOBILE_BOTTOM_NAV=" + esc(os.environ.get("E_ENABLE_MOBILE_BOTTOM_NAV", "true")),
