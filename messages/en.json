@@ -2,6 +2,7 @@
   "Navigation": {
     "finance": "Finance",
     "organization": "Organization",
+    "chat": "Chat",
     "settings": "Settings",
     "primaryNavLabel": "Primary navigation",
     "mainNavLabel": "Main navigation",
@@ -60,6 +61,14 @@
     "step3": "Select OAuth authentication",
     "step4": "Sign in with your Google account",
     "noApiKeys": "Authentication is handled automatically via OAuth. No API keys required."
+  },
+  "Chat": {
+    "title": "Chat",
+    "placeholder": "Ask about your organization or data…",
+    "sendLabel": "Send",
+    "loadingLabel": "Thinking…",
+    "errorLabel": "Something went wrong. Try again.",
+    "emptyState": "Start a conversation. Your AVCD tools run through the secure MCP connection."
   },
   "Metadata": {
     "title": "AVCD — Organization",

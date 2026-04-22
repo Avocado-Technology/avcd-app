@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react"
-import { Settings, Users, Wallet } from "lucide-react"
+import { MessageSquare, Settings, Users, Wallet } from "lucide-react"
 
 /** Canonical nav item shared by sidebar, bottom bar, and overflow. */
 export type MobileNavItemConfig = {
@@ -12,6 +12,7 @@ export type MobileNavItemConfig = {
 export const APP_NAV_ITEMS: MobileNavItemConfig[] = [
   { labelKey: "finance", href: "/finance", icon: Wallet },
   { labelKey: "organization", href: "/org", icon: Users },
+  { labelKey: "chat", href: "/chat", icon: MessageSquare },
   /** MCP connection UI at this path; Traefik serves the MCP protocol at `/mcp` separately. */
   { labelKey: "settings", href: "/settings/mcp", icon: Settings },
 ]

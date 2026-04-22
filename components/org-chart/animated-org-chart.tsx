@@ -1,33 +1,18 @@
 'use client'
 
-import { useMemo, memo, useImperativeHandle, forwardRef, useEffect } from 'react'
-import dynamic from 'next/dynamic'
-import { useNodesState, useEdgesState } from 'reactflow'
+import {
+  useMemo,
+  memo,
+  useImperativeHandle,
+  forwardRef,
+  useRef,
+} from 'react'
 import type { Organization } from '@/lib/mock-org-data'
 import { useAnimationState } from '@/lib/hooks/useAnimationState'
 import { OrgChartEmpty } from './org-chart-empty'
 import { OrgChartErrorBoundary } from './org-chart-error-boundary'
-import { transformOrgToNodes, transformOrgToEdges, applyElkLayout } from './utils/layout-utils'
-import { AnimatedOrganizationNode } from './nodes/animated-organization-node'
-import { AnimatedStoreNode } from './nodes/animated-store-node'
-import { AnimatedEmployeeNode } from './nodes/animated-employee-node'
-
-const ReactFlow = dynamic(
-  () => import('reactflow').then((mod) => mod.ReactFlow),
-  {
-    ssr: false,
-  }
-)
-
-const Controls = dynamic(
-  () => import('reactflow').then((mod) => mod.Controls),
-  { ssr: false }
-)
-
-const Background = dynamic(
-  () => import('reactflow').then((mod) => mod.Background),
-  { ssr: false }
-)
+import { transformOrgToD3Data } from './utils/d3-transform'
+import { D3OrgChartWrapper, type D3OrgChartWrapperRef } from './d3-org-chart-wrapper'
 
 interface AnimatedOrgChartProps {
   data: Organization
@@ -39,124 +24,60 @@ export interface AnimatedOrgChartRef {
   markAsRecent: (nodeId: string, duration?: number) => void
   highlightNode: (nodeId: string, duration?: number) => void
   clearAll: () => void
+  /** Highlight node in d3-org-chart, expand ancestors, and zoom pan to center it */
+  focusNode: (nodeId: string) => void
 }
 
-/** Stable reference — React Flow warns if a new object is passed each render. */
-const NODE_TYPES = {
-  organizationNode: AnimatedOrganizationNode,
-  storeNode: AnimatedStoreNode,
-  employeeNode: AnimatedEmployeeNode,
-};
+export const AnimatedOrgChart = memo(
+  forwardRef<AnimatedOrgChartRef, AnimatedOrgChartProps>(
+    function AnimatedOrgChart({ data }, ref) {
+      const chartHandleRef = useRef<D3OrgChartWrapperRef>(null)
 
-export const AnimatedOrgChart = memo(forwardRef<AnimatedOrgChartRef, AnimatedOrgChartProps>(
-  function AnimatedOrgChart({ data }, ref) {
-    const {
-      recentChanges,
-      highlightedNodes,
-      markAsRecent,
-      highlightNode,
-      clearAll,
-    } = useAnimationState()
+      const {
+        recentChanges,
+        highlightedNodes,
+        markAsRecent,
+        highlightNode,
+        clearAll,
+      } = useAnimationState()
 
-    // Expose animation controls via ref
-    useImperativeHandle(ref, () => ({
-      markAsRecent,
-      highlightNode,
-      clearAll,
-    }), [markAsRecent, highlightNode, clearAll])
+      useImperativeHandle(
+        ref,
+        () => ({
+          markAsRecent,
+          highlightNode,
+          clearAll,
+          focusNode: (nodeId: string) => {
+            chartHandleRef.current?.highlight(nodeId)
+          },
+        }),
+        [markAsRecent, highlightNode, clearAll]
+      )
 
-    // Transform org data to nodes and edges
-    const initialNodes = useMemo(() => {
-      const rawNodes = transformOrgToNodes(data)
-      return rawNodes
-    }, [data])
+      const chartData = useMemo(
+        () =>
+          transformOrgToD3Data(data, recentChanges, highlightedNodes),
+        [data, recentChanges, highlightedNodes]
+      )
 
-    const initialEdges = useMemo(() => transformOrgToEdges(data), [data])
-
-    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
-    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
-
-    // Apply ELK layout when data changes
-    useEffect(() => {
-      const layoutData = async () => {
-        const rawNodes = transformOrgToNodes(data)
-        const rawEdges = transformOrgToEdges(data)
-        
-        try {
-          const layoutedNodes = await applyElkLayout(rawNodes, rawEdges, { 
-            direction: 'DOWN',
-            nodeSpacing: 100,
-            layerSpacing: 120,
-            nodePlacement: 'BRANDES_KOEPF',
-            favorStraightEdges: true,
-            considerModelOrder: 'NODES_AND_EDGES',
-            fixedAlignment: 'BALANCED'
-          })
-          
-          setNodes(layoutedNodes)
-          setEdges(rawEdges)
-        } catch (error) {
-          console.error('Failed to layout org chart:', error)
-          // Set raw nodes as fallback
-          setNodes(rawNodes)
-          setEdges(rawEdges)
-        }
+      if (!data || !data.stores || data.stores.length === 0) {
+        return <OrgChartEmpty />
       }
-      
-      layoutData()
-    }, [data, setNodes, setEdges])
 
-    // Enhance nodes with animation state
-    const enhancedNodes = useMemo(() => {
-      return nodes.map(node => ({
-        ...node,
-        data: {
-          ...node.data,
-          isRecent: recentChanges.has(node.id),
-          isHighlighted: highlightedNodes.has(node.id),
-        }
-      }))
-    }, [nodes, recentChanges, highlightedNodes])
-
-    // Check for empty state
-    if (!data.stores || data.stores.length === 0) {
-      return <OrgChartEmpty />
-    }
-
-    return (
-      <OrgChartErrorBoundary key={data.id}>
-        <div
-          className="w-full h-full"
-          style={{ background: 'var(--bg)' }}
-          role="application"
-          aria-label="Interactive animated organization chart"
-          data-zoom-on-pinch="true"
-          data-pan-on-scroll="true"
-        >
-          <ReactFlow
-            nodes={enhancedNodes}
-            edges={edges}
-            nodeTypes={NODE_TYPES}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            fitView
-            minZoom={0.3}
-            maxZoom={1.5}
-            panOnScroll={true}
-            zoomOnPinch={true}
-            defaultEdgeOptions={{
-              animated: false,
-              style: { 
-                strokeWidth: 1.5,
-                stroke: 'var(--g300)',
-              },
-            }}
+      return (
+        <OrgChartErrorBoundary key={data.id}>
+          <div
+            className="h-full w-full"
+            style={{ background: 'var(--bg)' }}
+            role="application"
+            aria-label="Interactive animated organization chart"
+            data-zoom-on-pinch="true"
+            data-pan-on-scroll="true"
           >
-            <Controls aria-label="Chart controls" showInteractive={false} />
-            <Background gap={12} />
-          </ReactFlow>
-        </div>
-      </OrgChartErrorBoundary>
-    )
-  }
-))
+            <D3OrgChartWrapper ref={chartHandleRef} data={chartData} />
+          </div>
+        </OrgChartErrorBoundary>
+      )
+    }
+  )
+)

@@ -1,66 +1,23 @@
 /**
- * Shared TypeScript type definitions for org chart components
- * Provides type safety and consistency across all node types
+ * Shared TypeScript type definitions for org chart components (d3-org-chart).
  */
 
-/**
- * Base interface for all node data
- */
-export interface BaseNodeData {
+/** Semantic node kind for flat chart rows */
+export type OrgNodeType = 'organization' | 'store' | 'employee'
+
+/** One row for d3-org-chart (stratify by id / parentId) */
+export interface D3OrgChartNode {
   id: string
-}
-
-/**
- * Employee node data
- */
-export interface EmployeeNodeData extends BaseNodeData {
+  /** Root uses empty string */
+  parentId: string
   name: string
-  role: string
-}
-
-/**
- * Animated employee node data with animation state
- */
-export interface AnimatedEmployeeNodeData extends EmployeeNodeData {
+  nodeType: OrgNodeType
+  /** Store-specific */
+  location?: string
+  employeeCount?: number
+  /** Employee-specific */
+  role?: string
+  /** Merged from animation state before render */
   isRecent?: boolean
   isHighlighted?: boolean
 }
-
-/**
- * Store node data
- */
-export interface StoreNodeData extends BaseNodeData {
-  name: string
-  location: string
-  employeeCount: number
-}
-
-/**
- * Animated store node data with animation state
- */
-export interface AnimatedStoreNodeData extends StoreNodeData {
-  isRecent?: boolean
-  isHighlighted?: boolean
-}
-
-/**
- * Organization node data
- */
-export interface OrganizationNodeData extends BaseNodeData {
-  name: string
-}
-
-/**
- * Node type constants with literal types
- * Use `as const` to ensure type safety
- */
-export const NODE_TYPES = {
-  ORGANIZATION: 'organizationNode',
-  STORE: 'storeNode',
-  EMPLOYEE: 'employeeNode',
-} as const
-
-/**
- * Union type of all valid node types
- */
-export type NodeType = (typeof NODE_TYPES)[keyof typeof NODE_TYPES]

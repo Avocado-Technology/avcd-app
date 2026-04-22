@@ -5,11 +5,11 @@
  * the OAuth access token via refresh_token when the stored JWT is expired.
  */
 
-import {
-  AccessTokenError,
-  getAccessToken,
-} from "@auth0/nextjs-auth0";
 import { NextRequest, NextResponse } from "next/server";
+
+import { AccessTokenError } from "@auth0/nextjs-auth0/errors";
+
+import { auth0 } from "@/lib/auth0";
 
 /** Never statically cache; session and token responses must be fresh */
 export const dynamic = "force-dynamic";
@@ -24,13 +24,13 @@ export async function GET(req: NextRequest) {
   const res = new NextResponse();
 
   try {
-    const { accessToken } = await getAccessToken(req, res);
+    const { token } = await auth0.getAccessToken(req, res);
 
-    if (!accessToken) {
+    if (!token?.trim()) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const json = NextResponse.json({ accessToken }, res);
+    const json = NextResponse.json({ accessToken: token }, res);
     json.headers.set("Cache-Control", "private, no-store, max-age=0");
     return json;
   } catch (error) {

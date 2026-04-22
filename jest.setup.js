@@ -4,6 +4,9 @@ import { toHaveNoViolations } from 'jest-axe'
 
 expect.extend(toHaveNoViolations)
 
+// Auth0 app client: avoid loading ESM `@auth0/nextjs-auth0/server` in Jest (real client stays in production).
+jest.mock("@/lib/auth0", () => require("./__tests__/mocks/auth0-lib.js"));
+
 // Mock next-intl
 jest.mock('next-intl', () => ({
   useTranslations: (namespace) => (key) => namespace ? `${namespace}.${key}` : key,
@@ -29,7 +32,7 @@ jest.mock('@/components/ui/sheet', () => {
   const React = require('react');
   return {
     Sheet: ({ children }) => <div>{children}</div>,
-    SheetContent: ({ children }) => <div>{children}</div>,
+    SheetContent: ({ children }) => <div role="dialog">{children}</div>,
     SheetTrigger: ({ children, asChild }) => {
       if (asChild) return children;
       return <button>{children}</button>;
@@ -49,16 +52,19 @@ jest.mock('@/components/ui/sidebar', () => {
     SidebarMenu: ({ children }) => <div data-testid="sidebar-menu">{children}</div>,
     SidebarMenuItem: ({ children }) => <div data-testid="sidebar-menu-item">{children}</div>,
     SidebarMenuButton: React.forwardRef(({ children, isActive, asChild, ...props }, ref) => {
-      const className = `${isActive ? 'bg-gray-100' : ''}`;
+      // Mirror real sidebarMenuButtonVariants defaults (touch targets on mobile).
+      const baseCls = 'h-11 min-h-[44px] flex w-full items-center gap-2 overflow-hidden rounded-md p-2';
+      const activeCls = isActive ? 'bg-gray-100' : '';
       if (asChild && React.isValidElement(children)) {
+        const merged = [children.props.className, baseCls, activeCls].filter(Boolean).join(' ');
         return React.cloneElement(children, {
           ref,
-          className: `${children.props.className || ''} ${className}`,
+          className: merged || undefined,
           ...props
         });
       }
       return (
-        <div ref={ref} className={className} {...props}>{children}</div>
+        <button type="button" ref={ref} className={[baseCls, activeCls].filter(Boolean).join(' ') || undefined} {...props}>{children}</button>
       );
     }),
     SidebarProvider: ({ children }) => <div data-testid="sidebar-provider">{children}</div>,
@@ -86,21 +92,24 @@ jest.mock('@/components/ui/sidebar', () => {
   };
 });
 
-// Minimal matchMedia for hooks (tests may replace with mockMatchMedia)
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  configurable: true,
-  value: jest.fn().mockImplementation((query) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  })),
-})
+// Minimal matchMedia for hooks (tests may replace with mockMatchMedia).
+// Skip when running @jest-environment node suites (no window).
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    configurable: true,
+    value: jest.fn().mockImplementation((query) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    })),
+  })
+}
 
 // Mock environment variables
 process.env.AUTH0_SECRET = 'test-secret-key-for-auth0-testing-only-32-chars-long'
@@ -118,94 +127,3 @@ global.ResizeObserver = class ResizeObserver {
   unobserve() {}
   disconnect() {}
 }
-
-// Mock elkjs for testing (main entry point)
-jest.mock('elkjs', () => {
-  return class MockELK {
-    async layout(graph) {
-      // Return a hierarchical positioned graph based on input
-      const children = graph.children || []
-      const edges = graph.edges || []
-      const opts = graph.layoutOptions || {}
-      
-      // Parse spacing and alignment options
-      const nodeSpacing = parseInt(opts['elk.spacing.nodeNode'] || '80', 10)
-      const layerSpacing = parseInt(opts['elk.layered.spacing.nodeNodeBetweenLayers'] || '150', 10)
-      const direction = opts['elk.direction'] || 'RIGHT'
-      const nodePlacement = opts['elk.layered.nodePlacement.strategy'] || 'BRANDES_KOEPF'
-      const favorStraightEdges = opts['elk.layered.nodePlacement.favorStraightEdges'] === 'true'
-      const fixedAlignment = opts['elk.layered.nodePlacement.bk.fixedAlignment'] || 'NONE'
-      
-      // Build parent-child map
-      const parentMap = new Map()
-      const childrenMap = new Map()
-      
-      edges.forEach(edge => {
-        const parent = edge.sources[0]
-        const child = edge.targets[0]
-        parentMap.set(child, parent)
-        if (!childrenMap.has(parent)) {
-          childrenMap.set(parent, [])
-        }
-        childrenMap.get(parent).push(child)
-      })
-      
-      // Find root nodes (nodes with no parents)
-      const roots = children.filter(node => !parentMap.has(node.id))
-      
-      // Assign layers (depth in hierarchy)
-      const layers = new Map()
-      const assignLayer = (nodeId, depth) => {
-        layers.set(nodeId, depth)
-        const kids = childrenMap.get(nodeId) || []
-        kids.forEach(kid => assignLayer(kid, depth + 1))
-      }
-      roots.forEach(root => assignLayer(root.id, 0))
-      
-      // Group nodes by layer
-      const nodesByLayer = new Map()
-      children.forEach(node => {
-        const layer = layers.get(node.id) || 0
-        if (!nodesByLayer.has(layer)) {
-          nodesByLayer.set(layer, [])
-        }
-        nodesByLayer.get(layer).push(node)
-      })
-      
-      // Position nodes based on direction
-      const positionedChildren = children.map(node => {
-        const layer = layers.get(node.id) || 0
-        const nodesInLayer = nodesByLayer.get(layer) || []
-        const indexInLayer = nodesInLayer.indexOf(node)
-        
-        // Apply alignment improvements with favorStraightEdges and fixedAlignment
-        const alignmentFactor = (favorStraightEdges || fixedAlignment === 'BALANCED') ? 0.45 : 1.0
-        const nodePlacementFactor = nodePlacement === 'NETWORK_SIMPLEX' ? 0.65 : 1.0
-        
-        if (direction === 'RIGHT' || direction === 'LEFT') {
-          // Horizontal layout with improved vertical alignment
-          const baseY = indexInLayer * nodeSpacing * alignmentFactor * nodePlacementFactor
-          return {
-            ...node,
-            x: layer * layerSpacing,
-            y: baseY,
-          }
-        } else {
-          // Vertical layout with improved horizontal alignment
-          const baseX = indexInLayer * nodeSpacing * alignmentFactor * nodePlacementFactor
-          return {
-            ...node,
-            x: baseX,
-            y: layer * layerSpacing,
-          }
-        }
-      })
-      
-      return {
-        id: graph.id || 'root',
-        children: positionedChildren,
-        edges: edges
-      }
-    }
-  }
-})

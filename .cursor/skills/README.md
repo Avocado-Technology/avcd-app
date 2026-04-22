@@ -8,6 +8,35 @@ This directory contains specialized AI skills that provide in-depth knowledge ab
 
 ## Available Skills
 
+### Framework & Language Skills (Official — Vercel Labs)
+
+| Skill | Source | Covers |
+|-------|--------|--------|
+| `next-best-practices` | vercel-labs/next-skills | RSC boundaries, async APIs, route handlers, metadata, suspense, hydration, self-hosting |
+| `vercel-react-best-practices` | vercel-labs/agent-skills | 40+ React/Next.js perf rules, eliminating waterfalls, bundle optimization |
+| `vercel-react-view-transitions` | vercel-labs/agent-skills | Native View Transitions API in React/Next.js, page animations, shared elements |
+| `web-design-guidelines` | vercel-labs/agent-skills | 100+ rules: a11y, focus, forms, animation, typography, images, i18n, dark mode, touch |
+
+### AI & Integrations
+
+| Skill | Source | Covers |
+|-------|--------|--------|
+| `ai-sdk` | vercel/vercel-plugin | AI SDK v6 patterns, v5→v6 migration, `ToolLoopAgent`, `useChat`, streaming, tool calling |
+| `auth0-nextjs` | auth0/agent-skills | `@auth0/nextjs-auth0` v3, App Router, middleware, protected routes, server components |
+| `graphql-codegen` | project-specific | `@graphql-codegen/cli` client-preset, operation writing, scalar config, fragment usage |
+
+### Cursor-Native Workflow Skills
+
+| Skill | Covers |
+|-------|--------|
+| `visual-qa-testing` | Browser screenshot verification after changes |
+| `grinding-until-pass` | Autonomous fix-run-check loop until tests/build pass |
+| `auto-type-checking` | Run `tsc --noEmit` after file edits to catch type errors immediately |
+| `parallel-exploring` | Parallel read-only subagents for fast codebase exploration |
+| `writing-tests` | Comprehensive unit + integration tests with mocking and edge cases |
+
+---
+
 ### 1. **Apollo Client** (`apollo-client/SKILL.md`)
 **GraphQL client for React with Next.js integration**
 
@@ -227,23 +256,43 @@ needs left target handle and right source handle for proper connections.
 | shadcn/ui | 464 | 11KB | 60+ components |
 | Motion | 746 | 15KB | 30+ APIs/hooks |
 | React Flow | 961 | 20KB | Complete API |
-| **Total** | **3,371+** | **96KB** | **100+ concepts** |
+| next-best-practices | 700+ | 30KB | 19 topic files |
+| vercel-react-best-practices | 200+ | 8KB | 40+ perf rules |
+| vercel-react-view-transitions | 150+ | 5KB | View Transitions API |
+| web-design-guidelines | 250+ | 10KB | 100+ UX/a11y rules |
+| ai-sdk | 100+ | 4KB | AI SDK v6 complete |
+| auth0-nextjs | 100+ | 3KB | Auth0 v3 for Next.js |
+| graphql-codegen | 80+ | 3KB | Project codegen config |
+| **Total** | **5,000+** | **160KB+** | **300+ concepts** |
 
 ## Directory Structure
 
 ```
 .cursor/skills/
 ├── README.md                    # This file
-├── avocado-style/
-│   └── SKILL.md                # Design system (608 lines, 20KB)
-├── apollo-client/
-│   └── SKILL.md                # GraphQL client (1,200+ lines, 50KB)
-├── shadcn-ui/
-│   └── SKILL.md                # Component library (464 lines)
-├── motion/
-│   └── SKILL.md                # Animation library (746 lines)
-└── react-flow/
-    └── SKILL.md                # Node-based UIs (961 lines)
+│
+│   ── Owned skills (full files) ──────────────────────────────────────
+├── apollo-client/               # GraphQL client (1,200+ lines, 50KB)
+├── avocado-style/               # Design system
+├── mobile-design-guidelines/    # Mobile UX
+├── motion/                      # Animation library
+├── react-flow/                  # Node-based UIs
+├── shadcn-ui/                   # Component library
+├── ui-engineering/              # React/Next.js UI engineering
+│
+│   ── Symlinked from .agents/skills/ (installed via npx skills) ──────
+├── next-best-practices ->       # Next.js 15 best practices
+├── vercel-react-best-practices ->  # React perf rules
+├── vercel-react-view-transitions -> # View Transitions API
+├── web-design-guidelines ->     # UX/a11y audit rules
+├── ai-sdk ->                    # Vercel AI SDK v6
+├── auth0-nextjs ->              # Auth0 Next.js v3
+├── graphql-codegen ->           # GraphQL Code Generator
+├── visual-qa-testing ->         # Browser QA automation
+├── grinding-until-pass ->       # Autonomous test fixing
+├── auto-type-checking ->        # TypeScript checking
+├── parallel-exploring ->        # Parallel codebase exploration
+└── writing-tests ->             # Unit/integration test writing
 ```
 
 ## Quick Reference
