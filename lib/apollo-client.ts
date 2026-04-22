@@ -22,7 +22,15 @@ import { CombinedGraphQLErrors, ServerError } from '@apollo/client/errors';
 // RetryLink is in the core package
 import { RetryLink } from '@apollo/client/link/retry';
 
-const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || 'http://localhost:8000/graphql';
+function publicGraphqlUri(): string {
+  const explicit = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT?.trim();
+  if (explicit) return explicit;
+  const base = process.env.NEXT_PUBLIC_AVCD_API_URL?.trim().replace(/\/+$/, '');
+  if (base) return `${base}/graphql`;
+  return 'http://localhost:8000/graphql';
+}
+
+const GRAPHQL_ENDPOINT = publicGraphqlUri();
 
 /**
  * Create HTTP Link for GraphQL endpoint
