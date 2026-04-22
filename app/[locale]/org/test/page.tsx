@@ -2,11 +2,10 @@
  * Organization Page (Test with Mock Data)
  *
  * Auto-running demo: adds/removes nodes and moves employees between stores
- * so ELK layout and animations are easy to see.
+ * so layout updates and animations are easy to see.
  */
 
 import { OrgChartTestDemo } from '@/components/org-chart/org-chart-test-demo'
-import 'reactflow/dist/style.css'
 
 export default async function OrganizationTestPage() {
   return (

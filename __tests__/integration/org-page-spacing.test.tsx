@@ -1,6 +1,6 @@
 import { describe, it, expect } from '@jest/globals'
 import { render, screen } from '@testing-library/react'
-import { OrgPageWithData } from '@/app/org/org-page-with-data'
+import { OrgPageWithData } from '@/app/[locale]/org/org-page-with-data'
 import { AppTopBar } from '@/app/components/AppTopBar'
 
 // Mock the useOrganizationTree hook
@@ -9,7 +9,7 @@ jest.mock('@/lib/hooks/use-organization-tree', () => ({
     data: [{
       id: 'org-1',
       name: 'Organization',
-      stores: [],
+      stores: [{ id: 's1', name: 'Store', location: 'X', employees: [] }],
     }],
     loading: false,
     error: null,
@@ -24,6 +24,10 @@ jest.mock('@/components/org-chart/animated-org-chart', () => ({
       Animated Chart: {data.name}
     </div>
   ),
+}))
+
+jest.mock('@/components/org-chart/org-chart-search-bar', () => ({
+  OrgChartSearchBar: () => <div data-testid="org-chart-search-bar">Search</div>,
 }))
 
 jest.mock('next/navigation', () => ({
@@ -70,12 +74,13 @@ describe('Org Page Spacing Integration', () => {
     expect(cls).toContain("bg-[var(--g50)]")
   })
 
-  it("should use zero padding on small viewports and sp-6 at lg+ (className)", () => {
+  it("should use finance-matched content column padding (sp-4 mobile, sp-6 at lg+)", () => {
     const { container } = render(<OrgPageWithData />)
-    const main = container.querySelector("main")
-    const cls = main?.getAttribute("class") || ""
-    expect(cls).toMatch(/p-0/)
-    expect(cls).toMatch(/lg:p-\[var\(--sp-6\)\]/)
+    const content = container.querySelector('[data-testid="org-page-content"]')
+    const cls = content?.getAttribute("class") || ""
+    expect(cls).toMatch(/px-\[var\(--sp-4\)\]/)
+    expect(cls).toMatch(/lg:px-\[var\(--sp-6\)\]/)
+    expect(cls).toMatch(/gap-\[var\(--sp-6\)\]/)
   })
 
   it("should have region with flex layout for the chart", () => {

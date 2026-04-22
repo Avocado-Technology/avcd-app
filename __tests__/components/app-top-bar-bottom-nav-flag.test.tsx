@@ -32,7 +32,7 @@ describe("AppTopBar — bottom nav feature flag", () => {
         </SidebarProvider>
       </ThemeProvider>,
     )
-    expect(screen.queryByLabelText(/open navigation menu/i)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/Navigation\.openMenuLabel/i)).not.toBeInTheDocument()
   })
 
   it("shows drawer trigger when bottom nav flag is disabled", () => {
@@ -44,6 +44,6 @@ describe("AppTopBar — bottom nav feature flag", () => {
         </SidebarProvider>
       </ThemeProvider>,
     )
-    expect(screen.getByLabelText(/open navigation menu/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Navigation\.openMenuLabel/i)).toBeInTheDocument()
   })
 })

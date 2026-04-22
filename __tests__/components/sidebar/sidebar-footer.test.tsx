@@ -85,7 +85,7 @@ describe('SidebarFooter Component', () => {
     if (userButton) {
       await user.click(userButton)
       const signOutLink = screen.getByText('Sign out').closest('a')
-      expect(signOutLink).toHaveAttribute('href', '/api/auth/logout')
+      expect(signOutLink).toHaveAttribute('href', '/api/auth/logout?federated')
     }
   })
 

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { getSession } from "@auth0/nextjs-auth0";
+import { auth0 } from "@/lib/auth0";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { routing } from "@/i18n/routing";
@@ -21,7 +21,9 @@ export const metadata: Metadata = {
   title: "AVCD — Organization",
   description: "Company org chart and team management",
   metadataBase: new URL(
-    process.env.AUTH0_BASE_URL ?? "http://localhost:3000",
+    process.env.APP_BASE_URL ??
+      process.env.AUTH0_BASE_URL ??
+      "http://localhost:3000",
   ),
   icons: {
     icon: [{ url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" }],
@@ -54,16 +56,17 @@ export default async function LocaleLayout({
 }) {
   const { locale } = await params;
   const messages = await getMessages();
-  const session = await getSession();
+  const session = await auth0.getSession();
 
-  const serializedSession = session ? {
-    user: {
-      name: session.user?.name,
-      email: session.user?.email,
-      picture: session.user?.picture,
-    },
-    accessToken: session.accessToken,
-  } : null;
+  const serializedSession = session
+    ? {
+        user: {
+          name: session.user?.name,
+          email: session.user?.email,
+          picture: session.user?.picture,
+        },
+      }
+    : null;
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -84,7 +87,7 @@ export default async function LocaleLayout({
         {/* NextIntlClientProvider must be outermost to provide locale to all client components */}
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider>
-            <SessionProvider>
+            <SessionProvider user={session?.user}>
               <ApolloProvider>
                 {serializedSession ? (
                   <SidebarProvider>

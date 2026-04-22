@@ -8,12 +8,8 @@ const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
-  serverExternalPackages: ["elkjs"],
   turbopack: {
     resolveExtensions: [".js", ".jsx", ".ts", ".tsx", ".json"],
-    resolveAlias: {
-      "elkjs/lib/elk.bundled.js": "elkjs/lib/elk.bundled.js",
-    },
   },
   webpack: (config, { isServer }) => {
     if (!isServer && process.env.WATCHPACK_POLLING === "true") {

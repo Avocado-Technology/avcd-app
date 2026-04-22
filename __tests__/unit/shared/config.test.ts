@@ -4,8 +4,6 @@ import {
   ANIMATION_DURATIONS,
   NODE_ANIMATIONS,
 } from '@/lib/animation-constants'
-import { NODE_DIMENSIONS } from '@/components/org-chart/config'
-import { NODE_TYPES } from '@/components/org-chart/types'
 
 describe('Animation Constants', () => {
   describe('ANIMATION_SPRING', () => {
@@ -90,84 +88,12 @@ describe('Animation Constants', () => {
   })
 })
 
-describe('Node Dimensions Configuration', () => {
-  describe('NODE_DIMENSIONS', () => {
-    it('should have dimensions for all node types', () => {
-      expect(NODE_DIMENSIONS).toHaveProperty(NODE_TYPES.ORGANIZATION)
-      expect(NODE_DIMENSIONS).toHaveProperty(NODE_TYPES.STORE)
-      expect(NODE_DIMENSIONS).toHaveProperty(NODE_TYPES.EMPLOYEE)
-    })
-
-    it('should have width and height for organization nodes', () => {
-      const orgDimensions = NODE_DIMENSIONS[NODE_TYPES.ORGANIZATION]
-      expect(orgDimensions).toHaveProperty('width')
-      expect(orgDimensions).toHaveProperty('height')
-      expect(typeof orgDimensions.width).toBe('number')
-      expect(typeof orgDimensions.height).toBe('number')
-    })
-
-    it('should have width and height for store nodes', () => {
-      const storeDimensions = NODE_DIMENSIONS[NODE_TYPES.STORE]
-      expect(storeDimensions).toHaveProperty('width')
-      expect(storeDimensions).toHaveProperty('height')
-      expect(typeof storeDimensions.width).toBe('number')
-      expect(typeof storeDimensions.height).toBe('number')
-    })
-
-    it('should have width and height for employee nodes', () => {
-      const empDimensions = NODE_DIMENSIONS[NODE_TYPES.EMPLOYEE]
-      expect(empDimensions).toHaveProperty('width')
-      expect(empDimensions).toHaveProperty('height')
-      expect(typeof empDimensions.width).toBe('number')
-      expect(typeof empDimensions.height).toBe('number')
-    })
-
-    it('should have uniform dimensions for consistent visual hierarchy', () => {
-      // All nodes use the same dimensions for better visualization
-      expect(NODE_DIMENSIONS[NODE_TYPES.ORGANIZATION].width).toBe(240)
-      expect(NODE_DIMENSIONS[NODE_TYPES.ORGANIZATION].height).toBe(80)
-      
-      expect(NODE_DIMENSIONS[NODE_TYPES.STORE].width).toBe(240)
-      expect(NODE_DIMENSIONS[NODE_TYPES.STORE].height).toBe(80)
-      
-      expect(NODE_DIMENSIONS[NODE_TYPES.EMPLOYEE].width).toBe(240)
-      expect(NODE_DIMENSIONS[NODE_TYPES.EMPLOYEE].height).toBe(80)
-    })
-
-    it('should have consistent dimensions across all node types', () => {
-      const orgWidth = NODE_DIMENSIONS[NODE_TYPES.ORGANIZATION].width
-      const storeWidth = NODE_DIMENSIONS[NODE_TYPES.STORE].width
-      const empWidth = NODE_DIMENSIONS[NODE_TYPES.EMPLOYEE].width
-      
-      const orgHeight = NODE_DIMENSIONS[NODE_TYPES.ORGANIZATION].height
-      const storeHeight = NODE_DIMENSIONS[NODE_TYPES.STORE].height
-      const empHeight = NODE_DIMENSIONS[NODE_TYPES.EMPLOYEE].height
-      
-      // All widths should be equal
-      expect(orgWidth).toBe(storeWidth)
-      expect(storeWidth).toBe(empWidth)
-      
-      // All heights should be equal
-      expect(orgHeight).toBe(storeHeight)
-      expect(storeHeight).toBe(empHeight)
-    })
-
-    it('should be readonly (const assertion)', () => {
-      // TypeScript will prevent modification at compile time
-      // At runtime, verify the object exists
-      expect(NODE_DIMENSIONS).toBeDefined()
-      expect(Object.keys(NODE_DIMENSIONS).length).toBe(3)
-    })
-  })
-})
-
 describe('Configuration Integration', () => {
   it('should have all constants properly typed', () => {
     // Verify types are available and correctly structured
     expect(ANIMATION_SPRING).toBeDefined()
     expect(ANIMATION_DURATIONS).toBeDefined()
     expect(NODE_ANIMATIONS).toBeDefined()
-    expect(NODE_DIMENSIONS).toBeDefined()
   })
 
   it('should have no hardcoded animation values', () => {

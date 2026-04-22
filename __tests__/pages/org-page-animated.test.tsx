@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from '@jest/globals'
 import { render, screen } from '@testing-library/react'
-import { OrgPageWithData } from '@/app/org/org-page-with-data'
+import { OrgPageWithData } from '@/app/[locale]/org/org-page-with-data'
 
 // Mock ResizeObserver
 beforeAll(() => {

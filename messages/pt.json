@@ -2,6 +2,7 @@
   "Navigation": {
     "finance": "Finanças",
     "organization": "Organização",
+    "chat": "Chat",
     "settings": "Configurações",
     "primaryNavLabel": "Navegação principal",
     "mainNavLabel": "Navegação principal",
@@ -60,6 +61,14 @@
     "step3": "Selecione autenticação OAuth",
     "step4": "Entre com sua conta Google",
     "noApiKeys": "A autenticação é feita automaticamente via OAuth. Não são necessárias chaves de API."
+  },
+  "Chat": {
+    "title": "Chat",
+    "placeholder": "Pergunte sobre sua organização ou dados…",
+    "sendLabel": "Enviar",
+    "loadingLabel": "Pensando…",
+    "errorLabel": "Algo deu errado. Tente novamente.",
+    "emptyState": "Inicie uma conversa. Suas ferramentas AVCD usam a conexão MCP segura."
   },
   "Metadata": {
     "title": "AVCD — Organização",

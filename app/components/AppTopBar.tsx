@@ -7,7 +7,6 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { isMobileBottomNavEnabled } from "@/lib/feature-flags";
-import NextLink from "next/link";
 
 type Props = {
   session: {
@@ -103,9 +102,11 @@ export function AppTopBar({ session }: Props) {
         <div className="flex items-center gap-[var(--sp-3)]">
           <ThemeToggle />
           <Button variant="secondary" size="default" className="min-h-11 shrink-0 font-sans text-xs font-medium" asChild>
-            <NextLink href="/api/auth/logout" prefetch={false}>
+            {/* Native <a>: full GET so Auth0 logout clears cookies; Link would soft-navigate. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a href="/api/auth/logout?federated">
               Sign out
-            </NextLink>
+            </a>
           </Button>
         </div>
       ) : null}

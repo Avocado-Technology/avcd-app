@@ -1,6 +1,6 @@
 import { describe, it, expect } from '@jest/globals'
 import { render } from '@testing-library/react'
-import { OrgPageWithData } from '@/app/org/org-page-with-data'
+import { OrgPageWithData } from '@/app/[locale]/org/org-page-with-data'
 
 // Mock the useOrganizationTree hook
 jest.mock('@/lib/hooks/use-organization-tree', () => ({

@@ -1,4 +1,3 @@
-import Link from "next/link"
 import { ChevronUp, LogOut } from "lucide-react"
 import {
   SidebarMenu,
@@ -53,10 +52,11 @@ export function SidebarFooter({ user }: SidebarFooterProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem asChild>
-                <Link href="/api/auth/logout" className="flex items-center gap-2 cursor-pointer">
+                {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- native GET for Auth0 federated logout */}
+                <a href="/api/auth/logout?federated" className="flex items-center gap-2 cursor-pointer">
                   <LogOut className="h-4 w-4" />
                   <span>Sign out</span>
-                </Link>
+                </a>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -3,27 +3,16 @@
  */
 
 import { NextRequest } from "next/server";
-import { getAccessToken, AccessTokenError } from "@auth0/nextjs-auth0";
+import {
+  AccessTokenError,
+  AccessTokenErrorCode,
+} from "@auth0/nextjs-auth0/errors";
+
 import { GET } from "@/app/api/auth/token/route";
 
-jest.mock("@auth0/nextjs-auth0", () => {
-  class MockAccessTokenError extends Error {
-    readonly code: string;
-    constructor(code: string, message: string) {
-      super(message);
-      this.name = "AccessTokenError";
-      this.code = code;
-    }
-  }
-  return {
-    getAccessToken: jest.fn(),
-    AccessTokenError: MockAccessTokenError,
-  };
-});
+import { auth0 } from "@/lib/auth0";
 
-const mockedGetAccessToken = getAccessToken as jest.MockedFunction<
-  typeof getAccessToken
->;
+const mockedGetAccessToken = jest.mocked(auth0.getAccessToken);
 
 describe("Token API Route", () => {
   beforeEach(() => {
@@ -37,7 +26,8 @@ describe("Token API Route", () => {
   describe("GET /api/auth/token", () => {
     it("returns access token when getAccessToken resolves", async () => {
       mockedGetAccessToken.mockResolvedValue({
-        accessToken: "fresh-jwt-from-sdk",
+        token: "fresh-jwt-from-sdk",
+        expiresAt: Date.now() / 1000 + 3600,
       });
 
       const response = await GET(makeRequest());
@@ -55,7 +45,10 @@ describe("Token API Route", () => {
           "Set-Cookie",
           "appSession=test-chunk; Path=/; HttpOnly",
         );
-        return { accessToken: "jwt-with-cookie-merge" };
+        return {
+          token: "jwt-with-cookie-merge",
+          expiresAt: Date.now() / 1000 + 3600,
+        };
       });
 
       const response = await GET(makeRequest());
@@ -74,7 +67,8 @@ describe("Token API Route", () => {
 
     it("returns 401 when access token is missing", async () => {
       mockedGetAccessToken.mockResolvedValue({
-        accessToken: undefined,
+        token: "",
+        expiresAt: 0,
       });
 
       const response = await GET(makeRequest());
@@ -87,7 +81,10 @@ describe("Token API Route", () => {
 
     it("returns 401 when getAccessToken throws AccessTokenError", async () => {
       mockedGetAccessToken.mockRejectedValue(
-        new AccessTokenError("ERR_MISSING_SESSION", "no session"),
+        new AccessTokenError(
+          AccessTokenErrorCode.MISSING_SESSION,
+          "no session",
+        ),
       );
 
       const response = await GET(makeRequest());
@@ -113,7 +110,10 @@ describe("Token API Route", () => {
     });
 
     it("sets Cache-Control to disable caching", async () => {
-      mockedGetAccessToken.mockResolvedValue({ accessToken: "jwt" });
+      mockedGetAccessToken.mockResolvedValue({
+        token: "jwt",
+        expiresAt: Date.now() / 1000 + 3600,
+      });
 
       const response = await GET(makeRequest());
 

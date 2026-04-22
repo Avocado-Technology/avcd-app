@@ -37,9 +37,10 @@ describe('AppSidebar Component', () => {
 
   it('should render navigation items', () => {
     renderWithProvider(mockUser, '/')
-    expect(screen.getByText('Settings')).toBeInTheDocument()
-    expect(screen.getByText('Organization')).toBeInTheDocument()
-    expect(screen.getByText('Finance')).toBeInTheDocument()
+    expect(screen.getByText('Navigation.settings')).toBeInTheDocument()
+    expect(screen.getByText('Navigation.organization')).toBeInTheDocument()
+    expect(screen.getByText('Navigation.finance')).toBeInTheDocument()
+    expect(screen.getByText('Navigation.chat')).toBeInTheDocument()
   })
 
   it('should render footer with user info', () => {
@@ -48,8 +49,7 @@ describe('AppSidebar Component', () => {
   })
 
   it('should render as collapsible sidebar', () => {
-    const { container } = renderWithProvider(mockUser, '/')
-    const sidebar = container.querySelector('[data-sidebar="sidebar"]')
-    expect(sidebar).toBeInTheDocument()
+    renderWithProvider(mockUser, '/')
+    expect(screen.getByTestId('sidebar')).toBeInTheDocument()
   })
 })

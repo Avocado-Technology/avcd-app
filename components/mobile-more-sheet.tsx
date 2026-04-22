@@ -6,7 +6,7 @@ import { MobileBottomSheet } from "@/components/ui/mobile-bottom-sheet"
 import { Button } from "@/components/ui/button"
 import type { MobileNavItemConfig } from "@/lib/mobile-nav-config"
 import { useTranslations } from 'next-intl'
-import NextLink from "next/link"
+
 
 export type MobileMoreSheetProps = {
   open: boolean
@@ -64,13 +64,13 @@ export function MobileMoreSheet({
           className="min-h-11 w-full font-sans text-sm"
           asChild
         >
-          <NextLink
-            href="/api/auth/logout"
-            prefetch={false}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- native GET for Auth0 federated logout */}
+          <a
+            href="/api/auth/logout?federated"
             onClick={() => onOpenChange(false)}
           >
             Sign out
-          </NextLink>
+          </a>
         </Button>
       </div>
     </MobileBottomSheet>

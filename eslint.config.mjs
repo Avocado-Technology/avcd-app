@@ -18,6 +18,10 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      // Jest / coverage: not part of `next build` lint (app + lib only)
+      "__tests__/**",
+      "__mocks__/**",
+      "coverage/**",
     ],
   },
 ];
