@@ -1,12 +1,13 @@
-# Local development with hot reload
+# Local development with hot reload (Docker Compose Watch)
+# Usage: npm run dev   (same as: docker compose up --watch)
 # Prerequisites: Copy .env.local.example → .env.local and add Auth0 secrets.
-# Usage: docker compose up --build
-# Hot reload: Edit files locally, changes reflect instantly
+#
+# Hot reload: bind mount + develop.watch (Compose Watch). Without Docker: npm run dev:local
 #
 # The web_node_modules volume keeps Linux-built deps. After changing package-lock.json,
 # entrypoint runs npm ci when the lockfile checksum changes. To force a full reinstall:
-#   FORCE_NPM_CI=1 docker compose up --build
-# Or remove the volume: docker compose down -v && docker compose up --build
+#   FORCE_NPM_CI=1 docker compose up --build --watch
+# Or remove the volume: docker compose down -v && npm run dev
 
 services:
   web:

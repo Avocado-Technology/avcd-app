@@ -29,10 +29,12 @@ Runs `next dev --turbopack` on the host (not inside Docker).
 
 ## How it works
 
-1. `Dockerfile.dev` installs dependencies in the container
-2. Source is bind-mounted at `.:/app` with named/anonymous volumes for `node_modules` and `.next`
-3. `develop.watch` in `docker-compose.yml` syncs file changes (Compose Watch)
-4. `WATCHPACK_POLLING=true` helps file watching on macOS/Windows Docker Desktop
+1. On the **host**, `npm run dev` runs `docker compose up --watch` (Compose Watch + this file).
+2. Inside the **container**, `docker-entrypoint-dev.sh` runs `npm run dev:local` → `next dev` (never `docker compose` in-container).
+3. `Dockerfile.dev` installs dependencies in the container
+4. Source is bind-mounted at `.:/app` with named/anonymous volumes for `node_modules` and `.next`
+5. `develop.watch` in `docker-compose.yml` syncs file changes (Compose Watch)
+6. `WATCHPACK_POLLING=true` helps file watching on macOS/Windows Docker Desktop
 
 ## Prerequisites
 

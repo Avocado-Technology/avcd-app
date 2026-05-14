@@ -29,6 +29,14 @@ describe("NPM Scripts Configuration", () => {
   });
 });
 
+describe("Docker entrypoint", () => {
+  it("should run Next.js in-container via dev:local (not docker compose)", () => {
+    const script = fs.readFileSync("docker-entrypoint-dev.sh", "utf8");
+    expect(script).toContain("exec npm run dev:local");
+    expect(script).not.toContain("exec npm run dev\n");
+  });
+});
+
 describe("Documentation References", () => {
   it("should reference npm run dev in docker docs", () => {
     const content = fs.readFileSync("docs/DOCKER_DEVELOPMENT.md", "utf8");
@@ -36,3 +44,4 @@ describe("Documentation References", () => {
     expect(content).toContain("docker compose");
   });
 });
+

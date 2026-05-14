@@ -21,7 +21,7 @@ describe('Development Docker Setup - Hot Reload', () => {
       const scriptPath = path.join(webRoot, 'docker-entrypoint-dev.sh');
       expect(fs.existsSync(scriptPath)).toBe(true);
       const script = fs.readFileSync(scriptPath, 'utf8');
-      expect(script).toContain('exec npm run dev');
+      expect(script).toContain('exec npm run dev:local');
     });
 
     it('should be single-stage build (no multi-stage FROM)', () => {
