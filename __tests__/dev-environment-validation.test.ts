@@ -1,0 +1,99 @@
+/**
+ * Development environment validation (repo contract for onboarding).
+ */
+
+/* eslint-disable @typescript-eslint/no-require-imports */
+const fs = require("fs");
+const yaml = require("yaml");
+
+describe("Dev Environment Setup Validation", () => {
+  describe("Environment File Presence", () => {
+    it("should have .env file committed (public defaults)", () => {
+      expect(fs.existsSync(".env")).toBe(true);
+    });
+
+    it("should have .env.local.example template", () => {
+      expect(fs.existsSync(".env.local.example")).toBe(true);
+    });
+
+    it("should have .env.local or warn if missing", () => {
+      const hasLocal = fs.existsSync(".env.local");
+      const hasExample = fs.existsSync(".env.local.example");
+
+      if (!hasLocal) {
+        expect(hasExample).toBe(true);
+      }
+    });
+  });
+
+  describe("Auth0 Configuration Structure", () => {
+    it("should have v4-style variables in .env.local.example", () => {
+      const content = fs.readFileSync(".env.local.example", "utf8");
+
+      expect(content).toContain("APP_BASE_URL");
+      expect(content).toContain("AUTH0_DOMAIN");
+    });
+
+    it("should document how to get Auth0 credentials", () => {
+      const content = fs.readFileSync(".env.local.example", "utf8");
+
+      expect(content.toLowerCase()).toContain("terraform");
+      expect(content.toLowerCase()).toContain("output");
+    });
+  });
+
+  describe("Docker Compose Integration", () => {
+    it("should load env files in correct order", () => {
+      const compose = yaml.parse(fs.readFileSync("docker-compose.yml", "utf8"));
+
+      const webService = compose.services.web;
+      const envFiles = webService.env_file || [];
+
+      const envIndex = envFiles.findIndex(
+        (f: { path?: string } | string) => (typeof f === "object" ? f.path : f) === ".env",
+      );
+      const localIndex = envFiles.findIndex(
+        (f: { path?: string } | string) => (typeof f === "object" ? f.path : f) === ".env.local",
+      );
+
+      if (envIndex !== -1 && localIndex !== -1) {
+        expect(localIndex).toBeGreaterThan(envIndex);
+      }
+    });
+  });
+
+  describe("No Secret Leakage", () => {
+    it("should not have secrets in committed .env", () => {
+      const content = fs.readFileSync(".env", "utf8");
+
+      const suspiciousPatterns = [
+        /sk-[a-zA-Z0-9]{20,}/,
+        /[a-f0-9]{64}/i,
+        /client_secret[a-zA-Z0-9]{20,}/i,
+      ];
+
+      suspiciousPatterns.forEach((pattern) => {
+        expect(content).not.toMatch(pattern);
+      });
+    });
+  });
+
+  describe("Documentation Currency", () => {
+    it("should have up-to-date setup guide", () => {
+      const guidePath = "docs/setup-guides/AUTH0_LOCALHOST_SETUP.md";
+      expect(fs.existsSync(guidePath)).toBe(true);
+
+      const content = fs.readFileSync(guidePath, "utf8");
+      expect(content).toContain(".env.local");
+    });
+
+    it("should reference docker compose in setup guide", () => {
+      const content = fs.readFileSync(
+        "docs/setup-guides/AUTH0_LOCALHOST_SETUP.md",
+        "utf8",
+      );
+
+      expect(content.toLowerCase()).toContain("docker compose");
+    });
+  });
+});

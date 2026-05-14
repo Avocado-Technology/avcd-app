@@ -1,6 +1,20 @@
-import { describe, it, expect, jest } from "@jest/globals"
+import { describe, it, expect, jest, beforeAll, afterAll } from "@jest/globals"
 import { render } from "@testing-library/react"
 import { MobileBottomNav } from "@/components/mobile-bottom-nav"
+
+const prevMobileNav = process.env.NEXT_PUBLIC_ENABLE_MOBILE_BOTTOM_NAV
+
+beforeAll(() => {
+  process.env.NEXT_PUBLIC_ENABLE_MOBILE_BOTTOM_NAV = "true"
+})
+
+afterAll(() => {
+  if (prevMobileNav === undefined) {
+    delete process.env.NEXT_PUBLIC_ENABLE_MOBILE_BOTTOM_NAV
+  } else {
+    process.env.NEXT_PUBLIC_ENABLE_MOBILE_BOTTOM_NAV = prevMobileNav
+  }
+})
 
 jest.mock('@/components/mobile-more-sheet', () => ({
   MobileMoreSheet: ({ open, onOpenChange, overflowItems }) => (

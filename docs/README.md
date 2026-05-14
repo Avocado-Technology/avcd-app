@@ -30,6 +30,7 @@ Step-by-step setup instructions:
 - [Dark Mode Guide](./DARK_MODE_GUIDE.md) - Dark mode implementation guide
 - [Dark Mode TDD Template](./DARK_MODE_TDD_TEMPLATE.md) - TDD template for dark mode
 - [Docker Development](./DOCKER_DEVELOPMENT.md) - Docker development environment
+- [Auth0 Localhost](./setup-guides/AUTH0_LOCALHOST_SETUP.md) - `.env` + `.env.local` and Auth0 v4 variables for local dev
 
 ### 🔧 [Fixes](./fixes/)
 Bug fixes and troubleshooting:

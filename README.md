@@ -132,7 +132,7 @@ See [`deploy/production/README.md`](deploy/production/README.md) for deployment 
 | `ANIMATION_SYSTEM_UPGRADE.md` | Animation framework documentation |
 | `components/examples/AnimationExamples.tsx` | Copy-paste animation patterns |
 | `SHADCN_SETUP_COMPLETE.md` | shadcn/ui component setup |
-| `AUTH0_LOCALHOST_SETUP.md` | Authentication configuration |
+| [`docs/setup-guides/AUTH0_LOCALHOST_SETUP.md`](docs/setup-guides/AUTH0_LOCALHOST_SETUP.md) | Authentication configuration |
 
 ## 🎨 Design Tokens
 

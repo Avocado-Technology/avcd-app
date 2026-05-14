@@ -1,5 +1,5 @@
 # Local development with hot reload
-# Prerequisites: None (standalone)
+# Prerequisites: Copy .env.local.example → .env.local and add Auth0 secrets.
 # Usage: docker compose up --build
 # Hot reload: Edit files locally, changes reflect instantly
 #
@@ -28,39 +28,16 @@ services:
       - "host.docker.internal:host-gateway"
     env_file:
       - path: .env
-        required: false
+        required: true
       - path: .env.local
         required: false
     environment:
-      # CRITICAL: Enable file watching in Docker (macOS/Windows)
+      # Docker-only overrides (Compose); secrets stay in .env.local
       WATCHPACK_POLLING: "true"
-      # Development mode
       NODE_ENV: development
-      # Auth0 Configuration
-      AUTH0_SECRET: ${AUTH0_SECRET:-}
-      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
-      AUTH0_BASE_URL: ${AUTH0_BASE_URL:-http://localhost:3000}
-      AUTH0_ISSUER_BASE_URL: ${AUTH0_ISSUER_BASE_URL:-}
-      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID:-}
-      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET:-}
-      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE:-}
-      AUTH0_SCOPE: ${AUTH0_SCOPE:-openid profile email offline_access}
-      # API URLs
-      NEXT_PUBLIC_AVCD_API_URL: ${NEXT_PUBLIC_AVCD_API_URL:-http://localhost:8000}
-      # Server-side GraphQL API URL — uses Docker service name (api resolves inside Docker network)
       AVCD_API_URL: http://api:8000
-      AVCD_AUTH_URL: ${AVCD_AUTH_URL:-http://host.docker.internal:8010}
-      # MCP URLs
-      NEXT_PUBLIC_AUTH0_MCP_CLIENT_ID: ${NEXT_PUBLIC_AUTH0_MCP_CLIENT_ID:-}
-      NEXT_PUBLIC_MCP_SERVER_URL: ${NEXT_PUBLIC_MCP_SERVER_URL:-http://localhost:8000/mcp}
-      PUBLIC_HOST: ${PUBLIC_HOST:-localhost}
-      # Server-side MCP URL for in-app chat — Apollo MCP Server bundled with Apollo Runtime (port 5001 on host)
-      # Hardcoded to host.docker.internal; localhost would resolve to the container itself
+      AVCD_AUTH_URL: http://host.docker.internal:8010
       AVCD_MCP_URL: http://host.docker.internal:5001/mcp
-      # OpenAI API key for in-app chat
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      CHAT_MODEL: ${CHAT_MODEL:-gpt-4o}
-    # Optional: Use Compose Watch for advanced sync
     develop:
       watch:
         - action: sync

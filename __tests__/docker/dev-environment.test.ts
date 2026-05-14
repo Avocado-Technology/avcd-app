@@ -13,15 +13,16 @@ describe('Development Docker Environment', () => {
     composeConfig = yaml.parse(content);
   });
 
-  it('should have AUTH0_SECRET environment variable', () => {
-    expect(composeConfig.services.web.environment.AUTH0_SECRET).toBeDefined();
+  it('should not inline AUTH0_SECRET in compose (use .env.local via env_file)', () => {
+    expect(composeConfig.services.web.environment.AUTH0_SECRET).toBeUndefined();
   });
 
-  it('should have NEXT_PUBLIC_AVCD_API_URL with localhost default', () => {
-    const apiUrl = composeConfig.services.web.environment.NEXT_PUBLIC_AVCD_API_URL;
-    expect(apiUrl).toBeDefined();
-    // Should have a default value that includes localhost or be explicitly set
-    expect(typeof apiUrl === 'string').toBe(true);
+  it('should load NEXT_PUBLIC_AVCD_API_URL from committed .env (env_file), not duplicate in compose', () => {
+    const envPath = path.join(webRoot, '.env');
+    expect(fs.existsSync(envPath)).toBe(true);
+    const envText = fs.readFileSync(envPath, 'utf8');
+    expect(envText).toContain('NEXT_PUBLIC_AVCD_API_URL=');
+    expect(composeConfig.services.web.environment.NEXT_PUBLIC_AVCD_API_URL).toBeUndefined();
   });
 
   it('should set NODE_ENV to development', () => {
