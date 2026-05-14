@@ -88,10 +88,10 @@ cd ../infra/
 | `AUTH0_DOMAIN` | `terraform output` / tenant hostname only | Auth0 tenant (v4) |
 | `AUTH0_CLIENT_ID` | `terraform output` | Web app client ID |
 | `AUTH0_CLIENT_SECRET` | `terraform output` | Web app secret |
-| `AUTH0_AUDIENCE` | `terraform output` | API identifier (must end with `/mcp`) |
+| `AUTH0_AUDIENCE` | `terraform output auth0_graphql_api_identifier` | GraphQL API audience (must end with `/api`) |
 | `OPENAI_API_KEY` | OpenAI dashboard | Chat feature (optional) |
 
-**Important:** `AUTH0_AUDIENCE` must match the value from `terraform output auth0_api_identifier`, which typically ends with `/mcp` (e.g., `https://dev.avcd.ai/mcp`). Using just `https://dev.avcd.ai/` will cause "Service not found" errors.
+**Important:** `AUTH0_AUDIENCE` must match `terraform output -raw auth0_graphql_api_identifier` (typically `https://dev.avcd.ai/api`). The MCP server and Claude clients use `terraform output -raw auth0_mcp_api_identifier` (typically `https://dev.avcd.ai/mcp`). Using just `https://dev.avcd.ai/` will cause "Service not found" errors.
 
 **Note:** Prefer Auth0 v4 names (`APP_BASE_URL`, `AUTH0_DOMAIN`). Deprecated v3 names (`AUTH0_BASE_URL`, `AUTH0_ISSUER_BASE_URL`) still work as fallbacks in `lib/auth0.ts` but are not recommended for new setups.
 
@@ -135,7 +135,11 @@ terraform output auth0_web_client_secret
 # Get MCP Client ID (public)
 terraform output auth0_mcp_client_id
 
-# Get API identifier
+# Get API identifiers (GraphQL for web; MCP for MCP server / Claude)
+terraform output auth0_graphql_api_identifier
+terraform output auth0_mcp_api_identifier
+
+# Deprecated alias (same value as auth0_graphql_api_identifier)
 terraform output auth0_api_identifier
 ```
 

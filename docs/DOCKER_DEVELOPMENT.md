@@ -52,7 +52,7 @@ APP_BASE_URL=http://localhost:3000
 AUTH0_DOMAIN=your-tenant.us.auth0.com
 AUTH0_CLIENT_ID=your-client-id
 AUTH0_CLIENT_SECRET=your-client-secret
-AUTH0_AUDIENCE=your-api-audience
+AUTH0_AUDIENCE=https://dev.avcd.ai/api
 
 # API URLs
 NEXT_PUBLIC_AVCD_API_URL=http://localhost:8000
