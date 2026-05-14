@@ -88,12 +88,25 @@ cd ../infra/
 | `AUTH0_DOMAIN` | `terraform output` / tenant hostname only | Auth0 tenant (v4) |
 | `AUTH0_CLIENT_ID` | `terraform output` | Web app client ID |
 | `AUTH0_CLIENT_SECRET` | `terraform output` | Web app secret |
-| `AUTH0_AUDIENCE` | `terraform output` | GraphQL API identifier |
+| `AUTH0_AUDIENCE` | `terraform output` | API identifier (must end with `/mcp`) |
 | `OPENAI_API_KEY` | OpenAI dashboard | Chat feature (optional) |
+
+**Important:** `AUTH0_AUDIENCE` must match the value from `terraform output auth0_api_identifier`, which typically ends with `/mcp` (e.g., `https://dev.avcd.ai/mcp`). Using just `https://dev.avcd.ai/` will cause "Service not found" errors.
 
 **Note:** Prefer Auth0 v4 names (`APP_BASE_URL`, `AUTH0_DOMAIN`). Deprecated v3 names (`AUTH0_BASE_URL`, `AUTH0_ISSUER_BASE_URL`) still work as fallbacks in `lib/auth0.ts` but are not recommended for new setups.
 
 Public values such as `NEXT_PUBLIC_AUTH0_MCP_CLIENT_ID` can live in `.env` (defaults) or be overridden in `.env.local` if your Terraform script sets them there.
+
+### Critical: Auth0 Dashboard Manual Setup
+
+**Before OAuth will work, you MUST enable these settings in Auth0 Dashboard:**
+
+1. Go to: https://manage.auth0.com/dashboard → **Settings** → **Advanced** → **OAuth**
+2. Enable: **"Resource Parameter Compatibility Profile"** (fixes "Service not found" errors)
+3. Enable: **"Enable Application Connections"**
+4. Click **Save Changes**
+
+These settings cannot be managed via Terraform. See [`/infra/CRITICAL_MANUAL_SETUP_REQUIRED.md`](/infra/CRITICAL_MANUAL_SETUP_REQUIRED.md) for full details.
 
 ### 3. Retrieve Auth0 Credentials
 
