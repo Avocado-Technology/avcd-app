@@ -2,12 +2,12 @@
 # Usage: npm run dev   (same as: docker compose up --watch)
 # Prerequisites: Copy .env.local.example → .env.local and add Auth0 secrets.
 #
-# Hot reload: bind mount + develop.watch (Compose Watch). Without Docker: npm run dev:local
+# Hot reload: develop.watch syncs files into the container (Compose Watch).
+# Fallback without Docker: npm run dev:local
 #
-# The web_node_modules volume keeps Linux-built deps. After changing package-lock.json,
-# entrypoint runs npm ci when the lockfile checksum changes. To force a full reinstall:
-#   FORCE_NPM_CI=1 docker compose up --build --watch
-# Or remove the volume: docker compose down -v && npm run dev
+# After changing package-lock.json, the entrypoint runs npm ci automatically.
+# To force a full reinstall: FORCE_NPM_CI=1 docker compose up --build --watch
+# To reset volumes: docker compose down -v && npm run dev
 
 services:
   web:
@@ -18,13 +18,10 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
+    # Named volumes keep Linux-built deps and build cache isolated from the host.
     volumes:
-      # Mount source code for hot reload
-      - .:/app
-      # Persist deps in-container (see header); entrypoint syncs from package-lock.json
-      - web_node_modules:/app/node_modules
-      # Prevent overwriting .next (use container's version)
-      - /app/.next
+      - app_node_modules:/app/node_modules
+      - app_next:/app/.next
     extra_hosts:
       - "host.docker.internal:host-gateway"
     env_file:
@@ -33,7 +30,7 @@ services:
       - path: .env.local
         required: false
     environment:
-      # Docker-only overrides (Compose); secrets stay in .env.local
+      # Docker-only overrides (secrets stay in .env.local)
       WATCHPACK_POLLING: "true"
       NODE_ENV: development
       AVCD_API_URL: http://api:8000
@@ -42,12 +39,27 @@ services:
     develop:
       watch:
         - action: sync
-          path: .
-          target: /app
+          path: ./app
+          target: /app/app
           ignore:
             - node_modules/
             - .next/
-            - .git/
+        - action: sync
+          path: ./lib
+          target: /app/lib
+        - action: sync
+          path: ./components
+          target: /app/components
+        - action: sync
+          path: ./public
+          target: /app/public
+        - action: sync
+          path: ./package.json
+          target: /app/package.json
+        - action: rebuild
+          path: ./package-lock.json
+          target: /app/package-lock.json
 
 volumes:
-  web_node_modules:
+  app_node_modules:
+  app_next:

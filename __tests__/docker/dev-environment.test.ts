@@ -52,4 +52,12 @@ describe('Development Docker Environment', () => {
     });
     expect(hasEnvLocal).toBe(true);
   });
+
+  it('should use named volumes (not bind mount) for node_modules and .next', () => {
+    const volumes = composeConfig.services.web.volumes;
+    expect(volumes.some((v: string) => v.includes('app_node_modules:/app/node_modules'))).toBe(true);
+    expect(volumes.some((v: string) => v.includes('app_next:/app/.next'))).toBe(true);
+    // Should NOT bind mount source code
+    expect(volumes.some((v: string) => v.startsWith('.:/app'))).toBe(false);
+  });
 });

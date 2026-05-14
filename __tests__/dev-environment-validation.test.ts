@@ -60,6 +60,20 @@ describe("Dev Environment Setup Validation", () => {
         expect(localIndex).toBeGreaterThan(envIndex);
       }
     });
+
+    it("should use develop.watch instead of bind mount for source code", () => {
+      const compose = yaml.parse(fs.readFileSync("docker-compose.yml", "utf8"));
+      const webService = compose.services.web;
+
+      // Should have develop.watch configured
+      expect(webService.develop).toBeDefined();
+      expect(webService.develop.watch).toBeDefined();
+      expect(webService.develop.watch.length).toBeGreaterThan(0);
+
+      // Should NOT have bind mount of source code
+      const volumes = webService.volumes || [];
+      expect(volumes.some((v: string) => v.startsWith(".:/app"))).toBe(false);
+    });
   });
 
   describe("No Secret Leakage", () => {

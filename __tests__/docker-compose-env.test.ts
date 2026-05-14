@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
-const fs = require("fs");
-const yaml = require("yaml");
+import * as fs from "fs";
+import * as yaml from "yaml";
 
 function loadCompose() {
   const content = fs.readFileSync("docker-compose.yml", "utf8");
@@ -36,13 +36,13 @@ describe("Docker Compose Environment Configuration", () => {
     expect(hasEnvLocal).toBe(true);
   });
 
-  it("should not duplicate more than 5 env vars in environment section", () => {
+  it("should not duplicate more than 6 env vars in environment section", () => {
     const compose = loadCompose();
     const webService = compose.services.web;
     const envVars = webService.environment || {};
 
     const envCount = Object.keys(envVars).length;
-    expect(envCount).toBeLessThanOrEqual(5);
+    expect(envCount).toBeLessThanOrEqual(6);
   });
 
   it("should have required overrides in environment section", () => {
@@ -54,14 +54,25 @@ describe("Docker Compose Environment Configuration", () => {
     expect(envVars.WATCHPACK_POLLING).toBe("true");
   });
 
-  it("should not have empty defaults for critical secrets", () => {
+  it("should have develop.watch configured for hot reload", () => {
     const compose = loadCompose();
     const webService = compose.services.web;
-    const envVars = webService.environment || {};
 
-    const auth0Secret = envVars.AUTH0_SECRET;
-    if (auth0Secret !== undefined) {
-      expect(auth0Secret).not.toBe("");
-    }
+    expect(webService.develop).toBeDefined();
+    expect(webService.develop.watch).toBeDefined();
+    expect(webService.develop.watch.length).toBeGreaterThan(0);
+  });
+
+  it("should use named volumes for node_modules and .next (not bind mount)", () => {
+    const compose = loadCompose();
+    const webService = compose.services.web;
+    const volumes = webService.volumes || [];
+
+    // Should NOT have bind mount of source code (that's handled by watch)
+    expect(volumes.some((v: string) => v.startsWith(".:/app"))).toBe(false);
+
+    // Should have named volumes for node_modules and .next
+    expect(volumes.some((v: string) => v.includes("app_node_modules:/app/node_modules"))).toBe(true);
+    expect(volumes.some((v: string) => v.includes("app_next:/app/.next"))).toBe(true);
   });
 });

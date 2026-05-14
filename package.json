@@ -13,7 +13,6 @@
     "test:watch": "jest --watch",
     "codegen": "graphql-codegen --config codegen.ts",
     "codegen:watch": "graphql-codegen --config codegen.ts --watch",
-    "test:graphql": "jest __tests__/lib/graphql/ __tests__/lib/apollo-client.test.ts __tests__/lib/apollo-provider.test.tsx __tests__/app/api/auth/token.test.ts",
     "prepare": "husky"
   },
   "dependencies": {
