@@ -75,21 +75,27 @@ npm install
 
 ### Development
 
-#### Local (without Docker)
+**Recommended (Docker + Compose Watch + hot reload):**
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+Opens [http://localhost:3000](http://localhost:3000) via Docker. Same as `docker compose up --watch` from the `web/` directory.
 
-#### Local (with Docker + hot reload)
+**Without Docker:**
 
 ```bash
-docker compose up --build
+npm run dev:local
 ```
 
-Docker provides a consistent environment and hot reload. See [`docs/DOCKER_DEVELOPMENT.md`](docs/DOCKER_DEVELOPMENT.md) for full guide.
+**Turbopack on the host:**
+
+```bash
+npm run dev:turbo
+```
+
+See [`docs/DOCKER_DEVELOPMENT.md`](docs/DOCKER_DEVELOPMENT.md) for the full Docker guide, env files, and troubleshooting.
 
 ### Build
 

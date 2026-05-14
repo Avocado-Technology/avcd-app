@@ -28,3 +28,11 @@ describe("NPM Scripts Configuration", () => {
     expect(packageJson.scripts.dev).not.toBe("next dev");
   });
 });
+
+describe("Documentation References", () => {
+  it("should reference npm run dev in docker docs", () => {
+    const content = fs.readFileSync("docs/DOCKER_DEVELOPMENT.md", "utf8");
+    expect(content).toContain("npm run dev");
+    expect(content).toContain("docker compose");
+  });
+});
