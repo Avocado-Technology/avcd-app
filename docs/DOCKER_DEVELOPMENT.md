@@ -30,11 +30,11 @@ Runs `next dev --turbopack` on the host (not inside Docker).
 ## How it works
 
 1. On the **host**, `npm run dev` runs `docker compose up --watch` (Compose Watch + this file).
-2. Inside the **container**, `docker-entrypoint-dev.sh` runs `npm run dev:local` → `next dev` (never `docker compose` in-container).
-3. `Dockerfile.dev` installs dependencies in the container
-4. Source is bind-mounted at `.:/app` with named/anonymous volumes for `node_modules` and `.next`
-5. `develop.watch` in `docker-compose.yml` syncs file changes (Compose Watch)
-6. `WATCHPACK_POLLING=true` helps file watching on macOS/Windows Docker Desktop
+2. Inside the **container**, `docker-entrypoint-dev.sh` runs `npm run dev:local` → `next dev`.
+3. `Dockerfile.dev` installs dependencies in the container.
+4. `develop.watch` in `docker-compose.yml` syncs source files (`app/`, `lib/`, `components/`, `public/`, etc.) into the container on change (no bind mount needed).
+5. Named volumes (`app_node_modules`, `app_next`) isolate container dependencies and build cache from the host.
+6. `WATCHPACK_POLLING=true` helps Next.js detect synced file changes on macOS/Windows Docker Desktop.
 
 ## Prerequisites
 
@@ -109,7 +109,7 @@ docker compose exec web chown -R node:node /app
 # Recommended: watch + hot reload (same as npm run dev)
 docker compose up --watch
 
-# Foreground without watch (still uses bind mount)
+# Foreground without watch (no file syncing; use watch for dev)
 docker compose up
 
 # Background
@@ -138,7 +138,7 @@ See [DOCKER_SETUPS_COMPARISON.md](../DOCKER_SETUPS_COMPARISON.md) for a detailed
 Key differences:
 
 - Development uses `Dockerfile.dev` (single-stage, fast)
-- Source code mounted via volumes (instant updates)
-- Compose Watch + `WATCHPACK_POLLING` for reliable reloads
+- Source code synced via Compose Watch (fast, reliable, no bind mount conflicts)
+- Named volumes isolate `node_modules` and `.next` from the host
 - No Traefik labels (local only)
 - No optimization or minification
