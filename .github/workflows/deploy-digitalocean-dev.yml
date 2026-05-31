@@ -127,6 +127,21 @@ jobs:
             echo "::error::KEYCLOAK_AUDIENCE must not end with / (use https://dev.avcd.ai/api not https://dev.avcd.ai/)"
             exit 1
           fi
+          sudo apt-get update && sudo apt-get install -y jq
+          response="$(curl -s -X POST "${KEYCLOAK_URL%/}/realms/${KEYCLOAK_REALM:-avcd}/protocol/openid-connect/token" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "client_id=${KEYCLOAK_CLIENT_ID}" \
+            -d "client_secret=${KEYCLOAK_CLIENT_SECRET}" \
+            -d "grant_type=authorization_code" \
+            -d "code=avcd-verify-web-oidc-client-secret" \
+            -d "redirect_uri=https://${PUBLIC_HOST}/api/auth/callback/keycloak")"
+          error="$(echo "$response" | jq -r '.error // empty')"
+          if [ "$error" != "invalid_grant" ]; then
+            echo "::error::KEYCLOAK_CLIENT_SECRET rejected by Keycloak ($error). Re-run infra keycloak-config-apply and redeploy."
+            echo "$response" >&2
+            exit 1
+          fi
+          echo "✓ Keycloak accepted avcd-web client credentials from Infisical"
           echo "✓ Infisical export ready"
 
       - name: Copy .env.infisical to deploy directory
