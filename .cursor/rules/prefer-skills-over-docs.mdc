@@ -1,0 +1,261 @@
+---
+description: Always prefer creating Cursor Skills over loose markdown files in project root or docs/
+globs: "*.md"
+alwaysApply: true
+---
+
+# Prefer Skills Over Root Documents
+
+**CRITICAL RULE**: Implementation patterns, guides, how-tos, and reusable knowledge MUST be stored as **Cursor Skills** in `.cursor/skills/`, NOT as loose markdown files in the project root or `docs/` folder.
+
+## The Golden Rule
+
+| What you're creating | Where it goes |
+|---------------------|---------------|
+| **README.md** | Project root ✅ |
+| **Implementation patterns, guides, how-tos** | `.cursor/skills/<category>/<name>/SKILL.md` ✅ |
+| **Architecture decisions, ADRs** | `docs/decisions/` ✅ |
+| **Manual test procedures** | `docs/development/manual-tests/` ✅ |
+| **API reference documentation** | `docs/api/` ✅ |
+| **Setup.md, Guide.md, IMPLEMENTATION.md in root** | ❌ NEVER |
+| **E2E_TEST_SETUP.md, TEST_PLAN.md in root** | ❌ NEVER |
+
+## Why Skills Over Root Documents?
+
+**Skills are superior because:**
+- They follow a standardized format with frontmatter
+- They support glob patterns for automatic application
+- They can be versioned and cross-referenced
+- They don't clutter the project root
+- They are discoverable by all Cursor agents
+- They enforce consistent structure
+
+## Before Creating ANY File
+
+### 1. Is this a skill-worthy topic?
+
+Ask yourself:
+- Is this an implementation pattern or guide? → **Create/update a Skill**
+- Is this reusable knowledge for future development? → **Create/update a Skill**
+- Is this a how-to for developers? → **Create/update a Skill**
+- Is this a project-specific decision or test? → **Use docs/ folder**
+
+### 2. CRITICAL: Check for Existing Skills FIRST (ALL 3 Levels)
+
+**⚠️ NEVER create a new skill without checking if one already exists.**
+
+Duplicate skills fragment knowledge and make maintenance harder. Always search thoroughly before creating new skills.
+
+**Search ALL skill levels:**
+```bash
+# 1. Project-level (current directory)
+ls -la .cursor/skills/*/ 2>/dev/null
+
+# 2. Monorepo-level (from project, adjust path as needed)
+ls -la ../../.cursor/skills/*/ 2>/dev/null
+
+# 3. User-level (global)
+ls -la ~/.cursor/skills/*/
+```
+
+**Search by topic across ALL levels:**
+```bash
+TOPIC="pagination"
+
+# Project-level
+grep -r "$TOPIC" .cursor/skills/ --include="*.md" 2>/dev/null | head -10
+
+# Monorepo-level (adjust path from project)
+grep -r "$TOPIC" ../../.cursor/skills/ --include="*.md" 2>/dev/null | head -10
+
+# User-level
+grep -r "$TOPIC" ~/.cursor/skills/ --include="*.md" 2>/dev/null | head -10
+```
+
+**One-liner to check ALL levels:**
+```bash
+SKILL="graphql"
+echo "=== Project ==="; ls .cursor/skills/*/ 2>/dev/null | grep -i $SKILL
+echo "=== Monorepo ==="; ls ../../.cursor/skills/*/ 2>/dev/null | grep -i $SKILL
+echo "=== User ==="; ls ~/.cursor/skills/*/ 2>/dev/null | grep -i $SKILL
+```
+
+### 3. Decision Matrix
+
+| Scenario | Action | Example |
+|----------|--------|---------|
+| Adding GraphQL pagination pattern | Update/create skill | `.cursor/skills/api/graphql-pagination/SKILL.md` |
+| Documenting E2E test setup | Create skill | `.cursor/skills/testing/e2e-setup/SKILL.md` |
+| Recording architecture decision | Use docs/ | `docs/decisions/ADR-001-e2e-strategy.md` |
+| Manual test procedure | Use docs/ | `docs/development/manual-tests/e2e/auth-test.md` |
+| Implementation completion notes | Use skill | `.cursor/skills/api/e2e-implementation/SKILL.md` |
+
+## Prohibited Actions
+
+❌ **NEVER create these in project root:**
+- `E2E_TEST_SETUP.md`
+- `IMPLEMENTATION_COMPLETE.md`
+- `TEST_PLAN.md`
+- `SETUP_GUIDE.md`
+- `DEPLOYMENT_NOTES.md`
+- Any `*_GUIDE.md`, `*_SETUP.md`, `*_PLAN.md`
+
+❌ **NEVER create these in docs/ for skill-worthy content:**
+- `docs/development/e2e-setup.md` (implementation guide)
+- `docs/graphql-patterns.md` (reusable patterns)
+- `docs/how-to-test.md` (how-to guide)
+
+❌ **NEVER create skills without checking first:**
+- Duplicate skills on the same topic
+- New skills when existing ones could be updated
+- Fragmented content across multiple similar skills
+
+✅ **ALWAYS:**
+- **Search for existing skills BEFORE creating new ones**
+- **Update existing skills when adding related content**
+- Create/update skills in `.cursor/skills/<category>/<name>/SKILL.md`
+- Use frontmatter with `name` and `description`
+- Cross-reference related skills
+- Update `docs/INDEX.md` only for non-skill documentation
+
+## Skill Hierarchy: User vs Monorepo vs Project
+
+Skills exist at **three levels**. Choose based on scope:
+
+| Level | Location | Scope | Example |
+|-------|----------|-------|---------|
+| **User** | `~/.cursor/skills/` | All projects system-wide | Generic React patterns, framework guides |
+| **Monorepo** | `/avcd/.cursor/skills/` | All AVCD services | Shared infrastructure, monorepo conventions |
+| **Project** | `/avcd/<project>/.cursor/skills/` | Single service only | Project-specific API patterns |
+
+### Decision Tree
+
+```
+Is this a generic framework/tool pattern?
+  → YES → User-level (~/.cursor/skills/)
+  → NO  → Used across multiple AVCD services?
+            → YES → Monorepo-level (/avcd/.cursor/skills/)
+            → NO  → Project-level (/avcd/<project>/.cursor/skills/)
+```
+
+### Check ALL Levels for Existing Skills
+
+When searching, check **all three levels** before creating:
+1. Project: `.cursor/skills/`
+2. Monorepo: `../../.cursor/skills/` (from project) or `/avcd/.cursor/skills/`
+3. User: `~/.cursor/skills/`
+
+## Skill Categories
+
+Place skills in the appropriate category folder:
+
+```
+.cursor/skills/
+├── api/              # API patterns, GraphQL, REST
+├── architecture/     # System design patterns
+├── database/         # DB patterns, migrations
+├── deployment/       # CI/CD, infrastructure
+├── frontend/         # UI components, React, Next.js
+├── security/         # Auth, security patterns
+├── testing/          # Test patterns, E2E, unit tests
+└── troubleshooting/  # Common issues, debugging
+```
+
+## Skill Template
+
+```markdown
+---
+name: <skill-name>
+description: <one-line description of what this skill covers>
+---
+
+# <Title>
+
+> **Related**: [Skill Name](../other-category/skill-name/SKILL.md) | [Doc](../../docs/category/DOC.md)
+
+## Overview
+
+Brief description of when and why to use this pattern.
+
+## Pattern
+
+```python
+# Code example
+```
+
+## Common Issues
+
+| Issue | Solution |
+|-------|----------|
+| Problem | Fix |
+
+## References
+
+- [Link to external resource](url)
+```
+
+## Verification Checklist
+
+Before creating any file, verify:
+
+- [ ] This isn't a skill-worthy topic (implementation pattern/guide)
+- [ ] Checked for existing skills on this topic
+- [ ] If skill-worthy: placed in `.cursor/skills/<category>/<name>/SKILL.md`
+- [ ] If skill-worthy: has proper frontmatter
+- [ ] If not skill-worthy: placed in appropriate `docs/` subfolder
+- [ ] No loose .md files in project root (except README.md)
+
+## Examples
+
+### ❌ Incorrect: Root Document for Implementation Guide
+
+```
+/Users/genarionogueira/Documents/avcd/api/E2E_TEST_SETUP.md
+```
+This should be a skill: `.cursor/skills/testing/e2e-setup/SKILL.md`
+
+### ❌ Incorrect: Docs Folder for Reusable Pattern
+
+```
+/Users/genarionogueira/Documents/avcd/api/docs/development/graphql-patterns.md
+```
+This should be a skill: `.cursor/skills/api/graphql-patterns/SKILL.md`
+
+### ✅ Correct: Creating a Skill
+
+```
+.cursor/skills/testing/e2e-container-setup/SKILL.md
+```
+Contains reusable E2E testing patterns with frontmatter.
+
+### ✅ Correct: Docs for Project-Specific Decision
+
+```
+docs/decisions/ADR-012-e2e-framework.md
+```
+Records why we chose a specific E2E framework for this project.
+
+## Remember
+
+**When in doubt, create a Skill.** But first, check if one exists.
+
+Skills are more valuable than loose documents because they:
+1. Follow a consistent format
+2. Are automatically discoverable
+3. Can be applied contextually via globs
+4. Support versioning and cross-referencing
+5. Don't pollute the project root
+
+### The Skill Check Command
+
+Before creating any skill, run:
+```bash
+# Quick check
+ls .cursor/skills/*/SKILL.md ~/.cursor/skills/*/SKILL.md 2>/dev/null | xargs grep -l "<topic>" 2>/dev/null
+
+# Deep check
+grep -r "<topic>" .cursor/skills/ ~/.cursor/skills/ 2>/dev/null | head -20
+```
+
+**Found a match?** → Update the existing skill.  
+**No matches?** → Create a new skill.

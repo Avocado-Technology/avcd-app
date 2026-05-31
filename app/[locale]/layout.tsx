@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { auth0 } from "@/lib/auth0";
+import { getSession } from "@/lib/auth/session";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { routing } from "@/i18n/routing";
@@ -21,8 +21,7 @@ export const metadata: Metadata = {
   title: "AVCD — Organization",
   description: "Company org chart and team management",
   metadataBase: new URL(
-    process.env.APP_BASE_URL ??
-      process.env.AUTH0_BASE_URL ??
+      process.env.APP_BASE_URL ??
       "http://localhost:3000",
   ),
   icons: {
@@ -56,14 +55,14 @@ export default async function LocaleLayout({
 }) {
   const { locale } = await params;
   const messages = await getMessages();
-  const session = await auth0.getSession();
+  const session = await getSession();
 
-  const serializedSession = session
+  const serializedSession = session?.user
     ? {
         user: {
-          name: session.user?.name,
-          email: session.user?.email,
-          picture: session.user?.picture,
+          name: session.user.name,
+          email: session.user.email,
+          picture: session.user.image,
         },
       }
     : null;

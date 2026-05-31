@@ -1,75 +1,69 @@
-# Local development with hot reload
-# Prerequisites: None (standalone)
-# Usage: docker compose up --build
-# Hot reload: Edit files locally, changes reflect instantly
+# Local development with hot reload (Docker Compose Watch)
+# Usage: npm run dev   (same as: docker compose up --watch)
+# Prerequisites: Copy .env.local.example → .env.local and add Auth0 secrets.
 #
-# The web_node_modules volume keeps Linux-built deps. After changing package-lock.json,
-# entrypoint runs npm ci when the lockfile checksum changes. To force a full reinstall:
-#   FORCE_NPM_CI=1 docker compose up --build
-# Or remove the volume: docker compose down -v && docker compose up --build
+# Hot reload: develop.watch syncs files into the container (Compose Watch).
+# Fallback without Docker: npm run dev:local
+#
+# After changing package-lock.json, the entrypoint runs npm ci automatically.
+# To force a full reinstall: FORCE_NPM_CI=1 docker compose up --build --watch
+# To reset volumes: docker compose down -v && npm run dev
 
 services:
   web:
     container_name: web-dev
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
+      target: dev
     restart: unless-stopped
     ports:
       - "3000:3000"
+    # Named volumes keep Linux-built deps and build cache isolated from the host.
     volumes:
-      # Mount source code for hot reload
-      - .:/app
-      # Persist deps in-container (see header); entrypoint syncs from package-lock.json
-      - web_node_modules:/app/node_modules
-      # Prevent overwriting .next (use container's version)
-      - /app/.next
+      - app_node_modules:/app/node_modules
+      - app_next:/app/.next
     extra_hosts:
       - "host.docker.internal:host-gateway"
     env_file:
       - path: .env
-        required: false
+        required: true
       - path: .env.local
         required: false
     environment:
-      # CRITICAL: Enable file watching in Docker (macOS/Windows)
+      # Docker-only overrides (secrets stay in .env.local)
       WATCHPACK_POLLING: "true"
-      # Development mode
       NODE_ENV: development
-      # Auth0 Configuration
-      AUTH0_SECRET: ${AUTH0_SECRET:-}
-      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
-      AUTH0_BASE_URL: ${AUTH0_BASE_URL:-http://localhost:3000}
-      AUTH0_ISSUER_BASE_URL: ${AUTH0_ISSUER_BASE_URL:-}
-      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID:-}
-      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET:-}
-      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE:-}
-      AUTH0_SCOPE: ${AUTH0_SCOPE:-openid profile email offline_access}
-      # API URLs
-      NEXT_PUBLIC_AVCD_API_URL: ${NEXT_PUBLIC_AVCD_API_URL:-http://localhost:8000}
-      # Server-side GraphQL API URL — uses Docker service name (api resolves inside Docker network)
       AVCD_API_URL: http://api:8000
-      AVCD_AUTH_URL: ${AVCD_AUTH_URL:-http://host.docker.internal:8010}
-      # MCP URLs
-      NEXT_PUBLIC_AUTH0_MCP_CLIENT_ID: ${NEXT_PUBLIC_AUTH0_MCP_CLIENT_ID:-}
-      NEXT_PUBLIC_MCP_SERVER_URL: ${NEXT_PUBLIC_MCP_SERVER_URL:-http://localhost:8000/mcp}
-      PUBLIC_HOST: ${PUBLIC_HOST:-localhost}
-      # Server-side MCP URL for in-app chat — Apollo MCP Server bundled with Apollo Runtime (port 5001 on host)
-      # Hardcoded to host.docker.internal; localhost would resolve to the container itself
+      AVCD_AUTH_URL: http://host.docker.internal:8010
       AVCD_MCP_URL: http://host.docker.internal:5001/mcp
-      # OpenAI API key for in-app chat
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      CHAT_MODEL: ${CHAT_MODEL:-gpt-4o}
-    # Optional: Use Compose Watch for advanced sync
     develop:
       watch:
         - action: sync
-          path: .
-          target: /app
+          path: ./app
+          target: /app/app
           ignore:
             - node_modules/
             - .next/
-            - .git/
+        - action: sync
+          path: ./lib
+          target: /app/lib
+        - action: sync
+          path: ./components
+          target: /app/components
+        - action: sync
+          path: ./messages
+          target: /app/messages
+        - action: sync
+          path: ./public
+          target: /app/public
+        - action: sync
+          path: ./package.json
+          target: /app/package.json
+        - action: rebuild
+          path: ./package-lock.json
+          target: /app/package-lock.json
 
 volumes:
-  web_node_modules:
+  app_node_modules:
+  app_next:

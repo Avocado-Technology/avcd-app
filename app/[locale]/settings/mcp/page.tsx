@@ -1,4 +1,4 @@
-import { auth0 } from "@/lib/auth0";
+import { getSession } from "@/lib/auth/session";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
@@ -11,7 +11,7 @@ import { SettingsLocalePreference } from "@/components/settings-locale-preferenc
  * Routed under `/settings/mcp` so `/mcp` stays reserved for the Traefik → Apollo MCP HTTP endpoint.
  */
 export default async function McpSetupSettingsPage() {
-  const session = await auth0.getSession();
+  const session = await getSession();
 
   if (!session || !session.user) {
     redirect({ href: "/", locale: routing.defaultLocale });

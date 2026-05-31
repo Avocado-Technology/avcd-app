@@ -21,7 +21,7 @@ describe('Development Docker Setup - Hot Reload', () => {
       const scriptPath = path.join(webRoot, 'docker-entrypoint-dev.sh');
       expect(fs.existsSync(scriptPath)).toBe(true);
       const script = fs.readFileSync(scriptPath, 'utf8');
-      expect(script).toContain('exec npm run dev');
+      expect(script).toContain('exec npm run dev:local');
     });
 
     it('should be single-stage build (no multi-stage FROM)', () => {
@@ -69,23 +69,27 @@ describe('Development Docker Setup - Hot Reload', () => {
       expect(composeConfig.services.web.build.dockerfile).toBe('Dockerfile.dev');
     });
 
-    it('should have volume mounts for source code', () => {
+    it('should not have bind mount for source code (watch handles sync)', () => {
       const volumes = composeConfig.services.web.volumes;
       expect(volumes).toBeDefined();
-      expect(volumes.some((v: string) => v.includes('.:/app'))).toBe(true);
+      // Source code is synced via develop.watch, not bind mount
+      expect(volumes.some((v: string) => v.startsWith('.:/app'))).toBe(false);
     });
 
-    it('should isolate node_modules from the bind mount with a dedicated volume', () => {
+    it('should isolate node_modules with a named volume (not bind mount)', () => {
       const volumes = composeConfig.services.web.volumes;
       expect(
-        volumes.some((v: string) => v === 'web_node_modules:/app/node_modules'),
+        volumes.some((v: string) => v === 'app_node_modules:/app/node_modules'),
       ).toBe(true);
-      expect(composeConfig.volumes?.web_node_modules).toBeDefined();
+      expect(composeConfig.volumes?.app_node_modules).toBeDefined();
+      // No source bind mount when using watch
+      expect(volumes.some((v: string) => v.startsWith('.:/app'))).toBe(false);
     });
 
-    it('should exclude .next from volume sync', () => {
+    it('should use named volume for .next (not anonymous volume)', () => {
       const volumes = composeConfig.services.web.volumes;
-      expect(volumes.some((v: string) => v === '/app/.next')).toBe(true);
+      expect(volumes.some((v: string) => v === 'app_next:/app/.next')).toBe(true);
+      expect(composeConfig.volumes?.app_next).toBeDefined();
     });
 
     it('should set WATCHPACK_POLLING to true', () => {

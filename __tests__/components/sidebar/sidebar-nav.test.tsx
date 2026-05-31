@@ -7,6 +7,7 @@ describe("SidebarNav Component", () => {
   it("should render navigation items", () => {
     const { getByText } = render(<SidebarNav currentPath="/" />)
     expect(getByText(/Navigation.finance/i)).toBeInTheDocument()
+    expect(getByText(/Navigation.tips/i)).toBeInTheDocument()
     expect(getByText(/Navigation.organization/i)).toBeInTheDocument()
     expect(getByText(/Navigation.settings/i)).toBeInTheDocument()
   })
@@ -14,6 +15,7 @@ describe("SidebarNav Component", () => {
   it("should have correct link hrefs", () => {
     const { getByRole } = render(<SidebarNav currentPath="/" />)
     expect(getByRole("link", { name: /Navigation.finance/i }).getAttribute("href")).toBe("/finance")
+    expect(getByRole("link", { name: /Navigation.tips/i }).getAttribute("href")).toBe("/tips")
     expect(getByRole("link", { name: /Navigation.organization/i }).getAttribute("href")).toBe("/org")
     expect(getByRole("link", { name: /Navigation.settings/i }).getAttribute("href")).toBe("/settings/mcp")
   })

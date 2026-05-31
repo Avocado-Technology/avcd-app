@@ -11,9 +11,7 @@ const customJestConfig = {
   testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {
     '^@ai-sdk/react$': '<rootDir>/__tests__/mocks/ai-sdk-react.ts',
-    '^@auth0/nextjs-auth0/errors$': '<rootDir>/__tests__/mocks/auth0-errors.js',
     '^pkce-challenge$': '<rootDir>/__tests__/mocks/pkce-challenge.js',
-    '^@auth0/nextjs-auth0$': '<rootDir>/__tests__/mocks/nextjs-auth0.js',
     // ESM-only packages — SWC doesn't rewrite bare specifiers, so these patterns fire correctly.
     '^marked$': '<rootDir>/__tests__/mocks/marked.js',
     '^react-markdown$': '<rootDir>/__tests__/mocks/react-markdown.js',
@@ -31,7 +29,7 @@ const customJestConfig = {
     '!**/node_modules/**',
   ],
   transformIgnorePatterns: [
-    'node_modules/(?!(@auth0/nextjs-auth0|@auth0|jose|d3-org-chart|d3-flextree|@modelcontextprotocol|pkce-challenge|marked|react-markdown|remark-gfm|remark-parse|remark-rehype|unified|bail|is-plain-obj|trough|vfile|vfile-message|unist-util-stringify-position|unist-util-visit|unist-util-position-from-estree|unist-builder|hast-util-to-jsx-runtime|hast-util-to-html|hast-util-from-html|html-url-attributes|mdast-util-to-hast|mdast-util-from-markdown|micromark|decode-named-character-reference|character-entities|devlop)/)',
+    'node_modules/(?!(@auth/core|next-auth|jose|d3-org-chart|d3-flextree|@modelcontextprotocol|pkce-challenge|marked|react-markdown|remark-gfm|remark-parse|remark-rehype|unified|bail|is-plain-obj|trough|vfile|vfile-message|unist-util-stringify-position|unist-util-visit|unist-util-position-from-estree|unist-builder|hast-util-to-jsx-runtime|hast-util-to-html|hast-util-from-html|html-url-attributes|mdast-util-to-hast|mdast-util-from-markdown|micromark|decode-named-character-reference|character-entities|devlop)/)',
   ],
   modulePathIgnorePatterns: ['<rootDir>/.next/'],
 }

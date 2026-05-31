@@ -13,10 +13,10 @@ jest.mock("@/app/[locale]/chat/chat-client", () => ({
   ChatClient: () => <div data-testid="chat-client">chat-client</div>,
 }));
 
-import { auth0 } from "@/lib/auth0";
+import { getSession } from "@/lib/auth/session";
 import { redirect } from "@/i18n/navigation";
 
-const mockedGetSession = jest.mocked(auth0.getSession);
+const mockedGetSession = jest.mocked(getSession);
 const mockedRedirect = jest.mocked(redirect);
 
 describe("ChatPage", () => {

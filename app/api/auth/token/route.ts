@@ -1,15 +1,13 @@
 /**
- * Auth0 Token API Route
+ * Keycloak access token API route.
  *
- * Returns an access token for GraphQL using getAccessToken(), which refreshes
- * the OAuth access token via refresh_token when the stored JWT is expired.
+ * Returns an access token for GraphQL using the Auth.js session JWT,
+ * refreshing via refresh_token when the stored JWT is expired.
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-import { AccessTokenError } from "@auth0/nextjs-auth0/errors";
-
-import { auth0 } from "@/lib/auth0";
+import { getAccessToken } from "@/lib/auth/session";
 
 /** Never statically cache; session and token responses must be fresh */
 export const dynamic = "force-dynamic";
@@ -20,23 +18,18 @@ export const dynamic = "force-dynamic";
  * @returns {accessToken: string}
  * @returns 401 if not authenticated or token unavailable
  */
-export async function GET(req: NextRequest) {
-  const res = new NextResponse();
-
+export async function GET() {
   try {
-    const { token } = await auth0.getAccessToken(req, res);
+    const tokenResult = await getAccessToken();
 
-    if (!token?.trim()) {
+    if (!tokenResult?.token?.trim()) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const json = NextResponse.json({ accessToken: token }, res);
+    const json = NextResponse.json({ accessToken: tokenResult.token });
     json.headers.set("Cache-Control", "private, no-store, max-age=0");
     return json;
   } catch (error) {
-    if (error instanceof AccessTokenError) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
     console.error("Error fetching access token:", error);
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

@@ -1,10 +1,10 @@
-import { auth0 } from "@/lib/auth0";
+import { getSession } from "@/lib/auth/session";
 import { redirect } from "@/i18n/navigation";
 
 import { FinancePageShell } from "./finance-page-shell";
 
 export default async function FinancePage() {
-  const session = await auth0.getSession();
+  const session = await getSession();
   if (!session?.user) {
     redirect({ href: "/", locale: "en" });
   }

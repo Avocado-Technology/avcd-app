@@ -49,11 +49,8 @@ describe("Chat API route POST", () => {
   it("GivenNoAccessToken_WhenPOST_ThenReturns401", async () => {
     process.env.OPENAI_API_KEY = "sk-test-key";
 
-    const { auth0 } = require("@/lib/auth0") as typeof import("@/lib/auth0");
-    jest.mocked(auth0.getAccessToken).mockResolvedValue({
-      token: "",
-      expiresAt: 0,
-    });
+    const { getAccessToken } = require("@/lib/auth/session") as typeof import("@/lib/auth/session");
+    jest.mocked(getAccessToken).mockResolvedValue(null);
 
     const { POST } = await import("@/app/api/chat/route");
     const res = await POST(
@@ -74,11 +71,8 @@ describe("Chat API route POST", () => {
   it("GivenEmptyMessages_WhenPOST_ThenReturns400", async () => {
     process.env.OPENAI_API_KEY = "sk-test-key";
 
-    const { auth0 } = require("@/lib/auth0") as typeof import("@/lib/auth0");
-    jest.mocked(auth0.getAccessToken).mockResolvedValue({
-      token: "tok",
-      expiresAt: Date.now() / 1000 + 3600,
-    });
+    const { getAccessToken } = require("@/lib/auth/session") as typeof import("@/lib/auth/session");
+    jest.mocked(getAccessToken).mockResolvedValue({ token: "tok" });
 
     const { POST } = await import("@/app/api/chat/route");
     const res = await POST(postJson({ messages: [] }));

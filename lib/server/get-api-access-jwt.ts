@@ -1,22 +1,22 @@
 /**
- * Server-only: get Auth0 access token for AVCD API from session.
+ * Server-only: get Keycloak access token for AVCD API from session.
  */
 
 import type { Fail } from "@/lib/server/backend-fetch";
 
-import { auth0 } from "@/lib/auth0";
+import { getAccessToken } from "@/lib/auth/session";
 
 export async function getApiAccessJwt(): Promise<
   { ok: true; token: string } | Fail
 > {
   try {
-    const tokenResult = await auth0.getAccessToken();
+    const tokenResult = await getAccessToken();
 
     if (!tokenResult?.token) {
       return {
         ok: false,
         error:
-          "You are not signed in. Please sign in with Google via Auth0.",
+          "You are not signed in. Please sign in with Google via Keycloak.",
       };
     }
 

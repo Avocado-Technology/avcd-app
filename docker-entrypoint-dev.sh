@@ -19,4 +19,4 @@ elif [ ! -f "$MARKER" ] || [ "$(cat "$MARKER" 2>/dev/null)" != "$LOCK_SUM" ] || 
   run_ci
 fi
 
-exec npm run dev
+exec npm run dev:local

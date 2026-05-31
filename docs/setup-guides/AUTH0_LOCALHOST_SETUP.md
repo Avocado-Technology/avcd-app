@@ -57,21 +57,56 @@ The Terraform configuration (`/infra/modules/auth0/main.tf`) already includes lo
 
 ### 2. Environment Variables
 
-The web application requires Auth0 credentials in `.env.local`:
+The project uses a two-file approach following Next.js best practices:
+
+**`.env`** — Committed to git, contains public defaults (API URLs, feature flags).  
+**`.env.local`** — Git-ignored, contains your secrets (Auth0 credentials, API keys).
+
+#### Quick setup
 
 ```bash
-# Auth0 Configuration
-AUTH0_SECRET=<generate with: openssl rand -base64 32>
-AUTH0_BASE_URL=http://localhost:3000
-AUTH0_ISSUER_BASE_URL=https://avcdtech.us.auth0.com
-AUTH0_CLIENT_ID=<from terraform output>
-AUTH0_CLIENT_SECRET=<from terraform output>
-AUTH0_AUDIENCE=https://dev.avcd.ai/api
-AUTH0_SCOPE=openid profile email offline_access
+cd web/
 
-# MCP Client ID (public)
-NEXT_PUBLIC_AUTH0_MCP_CLIENT_ID=<from terraform output>
+# 1. Copy the secrets template
+cp .env.local.example .env.local
+
+# 2. Fill in Auth0 credentials (from Terraform)
+cd ../infra/
+./scripts/update-web-env.sh
+# Or manually:
+# terraform output auth0_web_client_id
+# terraform output auth0_web_client_secret
+# terraform output auth0_mcp_client_id
 ```
+
+#### Required variables in `.env.local`
+
+| Variable | Source | Purpose |
+|----------|--------|---------|
+| `AUTH0_SECRET` | `openssl rand -base64 32` | Session encryption |
+| `APP_BASE_URL` | `http://localhost:3000` | OAuth redirect base (Auth0 v4) |
+| `AUTH0_DOMAIN` | `terraform output` / tenant hostname only | Auth0 tenant (v4) |
+| `AUTH0_CLIENT_ID` | `terraform output` | Web app client ID |
+| `AUTH0_CLIENT_SECRET` | `terraform output` | Web app secret |
+| `AUTH0_AUDIENCE` | `terraform output auth0_graphql_api_identifier` | GraphQL API audience (must end with `/api`) |
+| `OPENAI_API_KEY` | OpenAI dashboard | Chat feature (optional) |
+
+**Important:** `AUTH0_AUDIENCE` must match `terraform output -raw auth0_graphql_api_identifier` (typically `https://dev.avcd.ai/api`). The MCP server and Claude clients use `terraform output -raw auth0_mcp_api_identifier` (typically `https://dev.avcd.ai/mcp`). Using just `https://dev.avcd.ai/` will cause "Service not found" errors.
+
+**Note:** Prefer Auth0 v4 names (`APP_BASE_URL`, `AUTH0_DOMAIN`). Deprecated v3 names (`AUTH0_BASE_URL`, `AUTH0_ISSUER_BASE_URL`) still work as fallbacks in `lib/auth0.ts` but are not recommended for new setups.
+
+Public values such as `NEXT_PUBLIC_AUTH0_MCP_CLIENT_ID` can live in `.env` (defaults) or be overridden in `.env.local` if your Terraform script sets them there.
+
+### Critical: Auth0 Dashboard Manual Setup
+
+**Before OAuth will work, you MUST enable these settings in Auth0 Dashboard:**
+
+1. Go to: https://manage.auth0.com/dashboard → **Settings** → **Advanced** → **OAuth**
+2. Enable: **"Resource Parameter Compatibility Profile"** (fixes "Service not found" errors)
+3. Enable: **"Enable Application Connections"**
+4. Click **Save Changes**
+
+These settings cannot be managed via Terraform. See [`/infra/CRITICAL_MANUAL_SETUP_REQUIRED.md`](/infra/CRITICAL_MANUAL_SETUP_REQUIRED.md) for full details.
 
 ### 3. Retrieve Auth0 Credentials
 
@@ -100,7 +135,11 @@ terraform output auth0_web_client_secret
 # Get MCP Client ID (public)
 terraform output auth0_mcp_client_id
 
-# Get API identifier
+# Get API identifiers (GraphQL for web; MCP for MCP server / Claude)
+terraform output auth0_graphql_api_identifier
+terraform output auth0_mcp_api_identifier
+
+# Deprecated alias (same value as auth0_graphql_api_identifier)
 terraform output auth0_api_identifier
 ```
 
@@ -123,20 +162,26 @@ Then manually update `/web/.env.local` with these values.
    - Enable: "Resource Parameter Compatibility Profile"
    - Enable: "Enable Application Connections"
 
-3. **Update Web Environment Variables**
+3. **Create local secrets file**
    ```bash
-   cd infra/
+   cd web/
+   cp .env.local.example .env.local
+   ```
+
+4. **Update Web Environment Variables**
+   ```bash
+   cd ../infra/
    ./scripts/update-web-env.sh
    ```
 
-4. **Start Web Application**
+5. **Start Web Application**
    ```bash
    cd ../web/
-   docker-compose up -d web
+   docker compose up
    # or: npm run dev
    ```
 
-5. **Access Application**
+6. **Access Application**
    - Open: http://localhost:3000
    - Click "Sign In with Google"
    - Authenticate with Google
@@ -145,12 +190,15 @@ Then manually update `/web/.env.local` with these values.
 ### Daily Development
 
 ```bash
-# Start the web app
+# Start the web app with hot reload
 cd web/
-docker-compose up -d web
+docker compose up
+
+# Or run tests inside the container (another terminal)
+docker compose exec web npm test
 
 # View logs
-docker-compose logs -f web
+docker compose logs -f web
 
 # Access the app
 open http://localhost:3000

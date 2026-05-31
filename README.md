@@ -75,21 +75,27 @@ npm install
 
 ### Development
 
-#### Local (without Docker)
+**Recommended (Docker + Compose Watch + hot reload):**
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+Opens [http://localhost:3000](http://localhost:3000) via Docker. Same as `docker compose up --watch` from the `web/` directory.
 
-#### Local (with Docker + hot reload)
+**Without Docker:**
 
 ```bash
-docker compose up --build
+npm run dev:local
 ```
 
-Docker provides a consistent environment and hot reload. See [`docs/DOCKER_DEVELOPMENT.md`](docs/DOCKER_DEVELOPMENT.md) for full guide.
+**Turbopack on the host:**
+
+```bash
+npm run dev:turbo
+```
+
+See [`docs/DOCKER_DEVELOPMENT.md`](docs/DOCKER_DEVELOPMENT.md) for the full Docker guide, env files, and troubleshooting.
 
 ### Build
 
@@ -132,7 +138,7 @@ See [`deploy/production/README.md`](deploy/production/README.md) for deployment 
 | `ANIMATION_SYSTEM_UPGRADE.md` | Animation framework documentation |
 | `components/examples/AnimationExamples.tsx` | Copy-paste animation patterns |
 | `SHADCN_SETUP_COMPLETE.md` | shadcn/ui component setup |
-| `AUTH0_LOCALHOST_SETUP.md` | Authentication configuration |
+| [`docs/setup-guides/AUTH0_LOCALHOST_SETUP.md`](docs/setup-guides/AUTH0_LOCALHOST_SETUP.md) | Authentication configuration |
 
 ## 🎨 Design Tokens
 
@@ -178,6 +184,12 @@ All design tokens are defined in:
 npm test
 ```
 
+### GraphQL + Auth (Apollo Client 4)
+
+- **Browser client** (`lib/apollo-client.ts`): `TokenService` coalesces `/api/auth/token` refreshes, proactive JWT refresh from `exp`, silent **one-shot** retry on GraphQL `UNAUTHENTICATED` via the error link, then login redirect if refresh fails. In production, known operations send `X-GraphQL-Document-Hash` (SHA-256 from codegen `persistedDocuments`, exposed on documents as `__meta__.__documentHash`).
+- **Server / RSC** (`lib/apollo-server-client.ts`): `getClient()` uses `getApiAccessJwt()` (no browser token hop). In tests, each call returns a fresh client; in other environments the client is memoized per React server request via `cache()`.
+- **Codegen**: `npm run codegen` — `codegen.ts` enables `persistedDocuments` (SHA-256; hashes live on each document under `__meta__.__documentHash`). Regenerate after schema changes when the API is reachable.
+
 ### Animation Testing Checklist
 - [ ] Animations use only `transform` and `opacity`
 - [ ] Test with "Reduce motion" enabled
@@ -209,7 +221,8 @@ npm test
 - **UI Components**: shadcn/ui (customized)
 - **Typography**: Geist Sans + Geist Mono
 - **Icons**: Lucide React
-- **Auth**: Auth0
+- **Auth**: Auth0 (`@auth0/nextjs-auth0` v4)
+- **Data**: Apollo Client 4 + GraphQL Code Generator (client preset, persisted document hashes)
 
 ## 📄 License
 

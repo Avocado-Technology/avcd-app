@@ -1,0 +1,57 @@
+export type KeycloakAuthEnv = {
+  KEYCLOAK_URL?: string;
+  KEYCLOAK_REALM?: string;
+  KEYCLOAK_CLIENT_ID?: string;
+  KEYCLOAK_CLIENT_SECRET?: string;
+  KEYCLOAK_AUDIENCE?: string;
+  AUTH_SECRET?: string;
+  APP_BASE_URL?: string;
+};
+
+export type KeycloakAuthConfig = {
+  issuer: string;
+  clientId: string;
+  clientSecret: string;
+  audience: string;
+  authorizationParams: {
+    scope: string;
+    kc_idp_hint: string;
+  };
+};
+
+export function buildKeycloakAuthConfig(
+  env: KeycloakAuthEnv | NodeJS.ProcessEnv,
+): KeycloakAuthConfig {
+  const keycloakUrl = env.KEYCLOAK_URL?.trim();
+  if (!keycloakUrl) {
+    throw new Error("KEYCLOAK_URL is required");
+  }
+
+  const realm = env.KEYCLOAK_REALM?.trim() || "avcd";
+  const clientId = env.KEYCLOAK_CLIENT_ID?.trim();
+  const clientSecret = env.KEYCLOAK_CLIENT_SECRET?.trim();
+  const audience = env.KEYCLOAK_AUDIENCE?.trim();
+
+  if (!clientId) {
+    throw new Error("KEYCLOAK_CLIENT_ID is required");
+  }
+  if (!clientSecret) {
+    throw new Error("KEYCLOAK_CLIENT_SECRET is required");
+  }
+  if (!audience) {
+    throw new Error("KEYCLOAK_AUDIENCE is required");
+  }
+
+  const issuer = `${keycloakUrl.replace(/\/$/, "")}/realms/${realm}`;
+
+  return {
+    issuer,
+    clientId,
+    clientSecret,
+    audience,
+    authorizationParams: {
+      scope: "openid offline_access",
+      kc_idp_hint: "google",
+    },
+  };
+}
