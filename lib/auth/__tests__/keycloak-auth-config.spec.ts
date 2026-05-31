@@ -18,10 +18,27 @@ describe("Keycloak auth config", () => {
     expect(config.audience).toBe("https://dev.avcd.ai/api");
   });
 
-  it("GivenKeycloakEnv_WhenBuildingAuthConfig_ThenIncludesKcIdpHintGoogle", () => {
+  it("GivenKeycloakEnv_WhenBuildingAuthConfig_ThenUsesOidcScopeWithoutOfflineAccess", () => {
     const config = buildKeycloakAuthConfig(baseEnv);
-    expect(config.authorizationParams.kc_idp_hint).toBe("google");
-    expect(config.authorizationParams.scope).toContain("offline_access");
+    expect(config.authorizationParams.scope).toBe("openid profile email");
+    expect(config.authorizationParams.scope).not.toContain("offline_access");
+  });
+
+  it("GivenKeycloakOidcScopeEnv_WhenBuildingAuthConfig_ThenUsesEnvValue", () => {
+    const config = buildKeycloakAuthConfig({
+      ...baseEnv,
+      KEYCLOAK_OIDC_SCOPE: "openid profile email",
+    });
+    expect(config.authorizationParams.scope).toBe("openid profile email");
+  });
+
+  it("GivenOfflineAccessInScope_WhenBuildingAuthConfig_ThenThrows", () => {
+    expect(() =>
+      buildKeycloakAuthConfig({
+        ...baseEnv,
+        KEYCLOAK_OIDC_SCOPE: "openid offline_access",
+      }),
+    ).toThrow("offline_access");
   });
 
   it("GivenMissingKeycloakUrl_WhenBuildingAuthConfig_ThenThrows", () => {

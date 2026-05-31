@@ -4,6 +4,8 @@ export type KeycloakAuthEnv = {
   KEYCLOAK_CLIENT_ID?: string;
   KEYCLOAK_CLIENT_SECRET?: string;
   KEYCLOAK_AUDIENCE?: string;
+  /** OIDC scope for Auth.js authorization (from Infisical / Terraform web-secrets). */
+  KEYCLOAK_OIDC_SCOPE?: string;
   AUTH_SECRET?: string;
   APP_BASE_URL?: string;
 };
@@ -44,13 +46,21 @@ export function buildKeycloakAuthConfig(
 
   const issuer = `${keycloakUrl.replace(/\/$/, "")}/realms/${realm}`;
 
+  const oidcScope =
+    env.KEYCLOAK_OIDC_SCOPE?.trim() || "openid profile email";
+  if (oidcScope.includes("offline_access")) {
+    throw new Error(
+      "KEYCLOAK_OIDC_SCOPE must not include offline_access (Keycloak broker login rejects it)",
+    );
+  }
+
   return {
     issuer,
     clientId,
     clientSecret,
     audience,
     authorizationParams: {
-      scope: "openid offline_access",
+      scope: oidcScope,
       kc_idp_hint: "google",
     },
   };

@@ -20,6 +20,7 @@ const customJestConfig = {
   },
   testMatch: [
     '**/__tests__/**/*.(spec|test).[jt]s?(x)',
+    '**/__tests__/**/*.e2e-spec.[jt]s?(x)',
     '**/?(*.)+(spec|test).[jt]s?(x)'
   ],
   collectCoverageFrom: [

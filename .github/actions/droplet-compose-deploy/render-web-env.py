@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Emit a docker-compose `.env` body for GitHub-managed web deploy (stdout). Reads E_* from os.environ."""
+"""DEPRECATED: Web deploy now uses Infisical OIDC export (.env.infisical) via
+Avocado-Technology/avcd-actions/droplet-compose-deploy@v2. This script remains
+for reference only; deploy workflows no longer invoke it.
+
+Emit a docker-compose `.env` body for GitHub-managed web deploy (stdout). Reads E_* from os.environ."""
 from __future__ import annotations
 
 import os

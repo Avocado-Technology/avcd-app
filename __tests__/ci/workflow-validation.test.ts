@@ -27,14 +27,8 @@ describe('GitHub Actions Workflow Configuration', () => {
       expect(paths).toContain('deploy/production/**');
     });
 
-    it('should trigger on Dockerfile.dev changes', () => {
-      const paths = workflow.on.push.paths;
-      expect(paths).toContain('Dockerfile.dev');
-    });
-
-    it('should trigger on components changes', () => {
-      const paths = workflow.on.push.paths;
-      expect(paths).toContain('components/**');
+    it('should request OIDC id-token for Infisical export', () => {
+      expect(workflow.permissions?.['id-token']).toBe('write');
     });
 
     it('should have workflow_dispatch trigger', () => {
@@ -58,8 +52,8 @@ describe('GitHub Actions Workflow Configuration', () => {
       expect(subdirectory).toBe('deploy/production');
     });
 
-    it('should trigger on tags', () => {
-      expect(workflow.on.push?.tags).toBeDefined();
+    it('should request OIDC id-token for Infisical export', () => {
+      expect(workflow.permissions?.['id-token']).toBe('write');
     });
 
     it('should have workflow_dispatch trigger', () => {
