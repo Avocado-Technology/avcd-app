@@ -37,6 +37,8 @@ describe("Infisical web deploy env", () => {
     expect(workflow).toContain("KEYCLOAK_CLIENT_SECRET");
     expect(workflow).toContain("AUTH_SECRET");
     expect(workflow).toContain("KEYCLOAK_AUDIENCE");
+    expect(workflow).toContain("KEYCLOAK_OIDC_SCOPE");
+    expect(workflow).toContain("offline_access");
   });
 
   it("docker-compose.yml loads .env.infisical", () => {
