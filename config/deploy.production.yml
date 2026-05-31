@@ -1,0 +1,4 @@
+env:
+  clear:
+    AUTH0_BASE_URL: https://__DO_DEPLOY_HOST__
+    APP_BASE_URL: https://__DO_DEPLOY_HOST__

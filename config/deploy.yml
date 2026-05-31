@@ -1,0 +1,71 @@
+# Kamal deploy — AVCD Web (Next.js, Traefik on avcd_edge)
+
+service: avcd-web
+image: avcd/web
+
+servers:
+  web:
+    hosts:
+      - __DO_DEPLOY_HOST__
+    options:
+      network: avcd_edge
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: avcd_edge
+      traefik.http.routers.avcd-web.rule: Host(`__DO_DEPLOY_HOST__`)
+      traefik.http.routers.avcd-web.entrypoints: websecure
+      traefik.http.routers.avcd-web.tls: "true"
+      traefik.http.routers.avcd-web.tls.certresolver: le
+      traefik.http.routers.avcd-web.priority: "50"
+      traefik.http.routers.avcd-web.service: avcd-web
+      traefik.http.services.avcd-web.loadbalancer.server.port: "3000"
+      traefik.http.routers.avcd-web-api-auth.rule: Host(`__DO_DEPLOY_HOST__`) && PathPrefix(`/api/auth`)
+      traefik.http.routers.avcd-web-api-auth.entrypoints: websecure
+      traefik.http.routers.avcd-web-api-auth.tls: "true"
+      traefik.http.routers.avcd-web-api-auth.tls.certresolver: le
+      traefik.http.routers.avcd-web-api-auth.priority: "150"
+      traefik.http.routers.avcd-web-api-auth.service: avcd-web
+      traefik.http.routers.avcd-web-api-chat.rule: Host(`__DO_DEPLOY_HOST__`) && PathPrefix(`/api/chat`)
+      traefik.http.routers.avcd-web-api-chat.entrypoints: websecure
+      traefik.http.routers.avcd-web-api-chat.tls: "true"
+      traefik.http.routers.avcd-web-api-chat.tls.certresolver: le
+      traefik.http.routers.avcd-web-api-chat.priority: "150"
+      traefik.http.routers.avcd-web-api-chat.service: avcd-web
+
+registry:
+  server: __DOCR_REGISTRY_SERVER__
+  username:
+    - DOCR_USERNAME
+  password:
+    - REGISTRY_PASSWORD
+
+builder:
+  arch: amd64
+  context: .
+  dockerfile: Dockerfile
+  args:
+    AUTH0_BASE_URL: https://__DO_DEPLOY_HOST__
+    NEXT_PUBLIC_GRAPHQL_ENDPOINT: https://__DO_DEPLOY_HOST__/api/graphql
+    NEXT_PUBLIC_ENABLE_MOBILE_BOTTOM_NAV: "true"
+
+env:
+  secret:
+    - AUTH_SECRET
+    - KEYCLOAK_CLIENT_SECRET
+    - KEYCLOAK_URL
+    - KEYCLOAK_REALM
+    - KEYCLOAK_CLIENT_ID
+    - KEYCLOAK_AUDIENCE
+    - KEYCLOAK_OIDC_SCOPE
+    - AUTH_URL
+    - APP_BASE_URL
+    - OPENAI_API_KEY
+  clear:
+    PUBLIC_HOST: __DO_DEPLOY_HOST__
+    NEXT_PUBLIC_GRAPHQL_ENDPOINT: https://__DO_DEPLOY_HOST__/api/graphql
+    NEXT_PUBLIC_MCP_SERVER_URL: https://__DO_DEPLOY_HOST__/mcp
+
+healthcheck:
+  path: /health
+  port: 3000
+  max_attempts: 15

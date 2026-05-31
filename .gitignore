@@ -37,6 +37,12 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Kamal rendered secrets
+.kamal/secrets
+.kamal/secrets.*
+!.kamal/secrets.ci.template
+!.kamal/hooks/**
 .env.dev
 .env.prod
 .env.staging

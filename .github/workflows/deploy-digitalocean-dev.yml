@@ -13,7 +13,8 @@ on:
       - "types/**"
       - "components/**"
       - "public/**"
-      - "deploy/production/**"
+      - "config/**"
+      - ".kamal/**"
       - "Dockerfile"
       - "next.config.ts"
       - "next.config.mjs"
@@ -144,24 +145,33 @@ jobs:
           echo "✓ Keycloak accepted avcd-web client credentials from Infisical"
           echo "✓ Infisical export ready"
 
-      - name: Copy .env.infisical to deploy directory
+      - name: Resolve deploy targets
+        id: deploy
+        env:
+          DO_DEPLOY_HOST: ${{ vars.DO_DEPLOY_HOST || secrets.DO_DEPLOY_HOST }}
+          DOCR_REGISTRY_URL: ${{ vars.DOCR_REGISTRY_URL }}
         run: |
-          cp .env.infisical deploy/production/.env.infisical
-          ls -la deploy/production/.env.infisical
+          set -euo pipefail
+          H="${{ steps.traefik_host.outputs.host }}"
+          R="${DOCR_REGISTRY_URL:-}"
+          [ -n "$R" ] || { echo "::error::Set DOCR_REGISTRY_URL org variable"; exit 1; }
+          echo "host=$H" >> "$GITHUB_OUTPUT"
+          echo "health_url=https://${H}/health" >> "$GITHUB_OUTPUT"
+          echo "docr_url=$R" >> "$GITHUB_OUTPUT"
 
-      - name: Deploy web stack
-        uses: Avocado-Technology/avcd-actions/droplet-compose-deploy@v2
+      - name: Deploy web with Kamal
+        uses: Avocado-Technology/avcd-actions/kamal-deploy@v5
         with:
-          deploy_host: ${{ vars.DO_DEPLOY_HOST || secrets.DO_DEPLOY_HOST }}
+          deploy_host: ${{ steps.deploy.outputs.host }}
           deploy_user: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER }}
-          deploy_path: ${{ vars.DO_DEPLOY_PATH || secrets.DO_DEPLOY_PATH }}
           ssh_key: ${{ secrets.DO_DEPLOY_SSH_KEY }}
-          compose_subdirectory: "deploy/production"
-          public_host: ${{ steps.traefik_host.outputs.host }}
-          acme_email: ""
-          pass_compose_tls_env: "false"
-          clear_published_ports: "3000"
-          verify_mode: http
-          verify_url: ${{ vars.DO_WEB_HEALTH_URL || steps.traefik_host.outputs.health_url }}
+          docr_registry_url: ${{ steps.deploy.outputs.docr_url }}
+          infisical_api_url: ${{ vars.INFISICAL_API_URL || 'https://secrets.dev.avcd.ai/api' }}
+          infisical_project_id: ${{ vars.INFISICAL_PROJECT_ID }}
+          infisical_infra_project_id: ${{ vars.INFISICAL_INFRA_PROJECT_ID || 'e9b80cfd-9be4-4024-a1d6-753db87bc3b9' }}
+          infisical_oidc_identity_id: ${{ vars.INFISICAL_OIDC_IDENTITY_ID }}
+          infisical_oidc_audience: ${{ vars.INFISICAL_OIDC_AUDIENCE || 'https://github.com/Avocado-Technology' }}
+          kamal_version: ${{ vars.KAMAL_VERSION || '2.5.3' }}
+          kamal_destination: development
+          verify_url: ${{ vars.DO_WEB_HEALTH_URL || steps.deploy.outputs.health_url }}
           verify_body_substring: '"status":"ok"'
-          verify_http_insecure_first: "false"
