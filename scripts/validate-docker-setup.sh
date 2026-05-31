@@ -8,16 +8,16 @@ echo "🔍 Validating Docker Setup..."
 # Check files exist
 echo "📁 Checking file structure..."
 test -f Dockerfile || { echo "❌ Dockerfile missing"; exit 1; }
-test -f Dockerfile.dev || { echo "❌ Dockerfile.dev missing"; exit 1; }
 test -f docker-compose.yml || { echo "❌ docker-compose.yml missing"; exit 1; }
 test -f deploy/production/docker-compose.yml || { echo "❌ Production compose missing"; exit 1; }
 
 # Validate development setup
 echo "🛠️  Validating development setup..."
-grep -q "Dockerfile.dev" docker-compose.yml || { echo "❌ Dev compose not using Dockerfile.dev"; exit 1; }
+grep -q 'dockerfile: Dockerfile' docker-compose.yml || { echo "❌ Dev compose not using Dockerfile"; exit 1; }
+grep -q 'target: dev' docker-compose.yml || { echo "❌ Dev compose not targeting the dev stage"; exit 1; }
 grep -q "WATCHPACK_POLLING" docker-compose.yml || { echo "❌ WATCHPACK_POLLING not set"; exit 1; }
 grep -q "volumes:" docker-compose.yml || { echo "❌ No volumes in dev compose"; exit 1; }
-grep -q '"npm", "run", "dev"' Dockerfile.dev || { echo "❌ Dev Dockerfile not using npm run dev"; exit 1; }
+grep -q 'docker-entrypoint-dev.sh' Dockerfile || { echo "❌ Dockerfile missing dev entrypoint reference"; exit 1; }
 
 # Validate production setup
 echo "🚀 Validating production setup..."

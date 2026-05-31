@@ -1,13 +1,13 @@
 import { getTranslations } from "next-intl/server";
 
-import { auth0 } from "@/lib/auth0";
+import { getSession } from "@/lib/auth/session";
 import { redirect } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 
 import { ChatClient } from "./chat-client";
 
 export default async function ChatPage() {
-  const session = await auth0.getSession();
+  const session = await getSession();
 
   if (!session?.user) {
     redirect({ href: "/", locale: routing.defaultLocale });

@@ -8,7 +8,12 @@ const config: CodegenConfig = {
     "./lib/__generated__/": {
       preset: "client",
       presetConfig: {
-        fragmentMasking: false, // Apollo has native data masking
+        fragmentMasking: false,
+        persistedDocuments: {
+          hashAlgorithm: "sha256",
+          mode: "embedHashInDocument",
+          hashPropertyName: "__documentHash",
+        },
       },
       config: {
         avoidOptionals: {

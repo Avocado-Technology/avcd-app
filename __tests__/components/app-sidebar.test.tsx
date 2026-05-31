@@ -39,6 +39,7 @@ describe('AppSidebar Component', () => {
     renderWithProvider(mockUser, '/')
     expect(screen.getByText('Navigation.settings')).toBeInTheDocument()
     expect(screen.getByText('Navigation.organization')).toBeInTheDocument()
+    expect(screen.getByText('Navigation.tips')).toBeInTheDocument()
     expect(screen.getByText('Navigation.finance')).toBeInTheDocument()
     expect(screen.getByText('Navigation.chat')).toBeInTheDocument()
   })

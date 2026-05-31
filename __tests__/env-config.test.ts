@@ -26,31 +26,21 @@ describe("Environment Local Template", () => {
     expect(fs.existsSync(".env.local.example")).toBe(true);
   });
 
-  it("should contain all required Auth0 v4 variables", () => {
+  it("should contain all required Keycloak / Auth.js variables", () => {
     const content = fs.readFileSync(".env.local.example", "utf8");
 
-    expect(content).toContain("AUTH0_SECRET");
+    expect(content).toContain("AUTH_SECRET");
     expect(content).toContain("APP_BASE_URL");
-    expect(content).toContain("AUTH0_DOMAIN");
-    expect(content).toContain("AUTH0_CLIENT_ID");
-    expect(content).toContain("AUTH0_CLIENT_SECRET");
-    expect(content).toContain("AUTH0_AUDIENCE");
-  });
-
-  it("should not have v3 variables as primary (AUTH0_ISSUER_BASE_URL)", () => {
-    const content = fs.readFileSync(".env.local.example", "utf8");
-
-    const hasV3Issuer =
-      content.includes("AUTH0_ISSUER_BASE_URL") &&
-      !content.includes("# Legacy v3 variable, prefer AUTH0_DOMAIN");
-    expect(hasV3Issuer).toBe(false);
+    expect(content).toContain("KEYCLOAK_URL");
+    expect(content).toContain("KEYCLOAK_CLIENT_ID");
+    expect(content).toContain("KEYCLOAK_CLIENT_SECRET");
+    expect(content).toContain("KEYCLOAK_AUDIENCE");
   });
 
   it("should have empty values or placeholders for secrets", () => {
     const content = fs.readFileSync(".env.local.example", "utf8");
 
-    expect(content).toContain("AUTH0_CLIENT_ID=");
-    expect(content.toLowerCase()).toContain("terraform");
-    expect(content.toLowerCase()).toContain("output");
+    expect(content).toContain("KEYCLOAK_CLIENT_ID=");
+    expect(content).toContain("local-web-client-secret");
   });
 });

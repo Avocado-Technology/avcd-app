@@ -6,7 +6,7 @@ function messageForAuthError(code: string | null): string | null {
   if (!code) return null;
   switch (code) {
     case "Configuration":
-      return "Sign-in is misconfigured on the server (check Auth0 settings).";
+      return "Sign-in is misconfigured on the server (check Keycloak settings).";
     case "AccessDenied":
     case "access_denied":
       return "Access was denied. You may not be allowed to sign in.";

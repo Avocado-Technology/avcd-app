@@ -26,19 +26,19 @@ describe("Dev Environment Setup Validation", () => {
     });
   });
 
-  describe("Auth0 Configuration Structure", () => {
-    it("should have v4-style variables in .env.local.example", () => {
+  describe("Keycloak Configuration Structure", () => {
+    it("should have Keycloak variables in .env.local.example", () => {
       const content = fs.readFileSync(".env.local.example", "utf8");
 
       expect(content).toContain("APP_BASE_URL");
-      expect(content).toContain("AUTH0_DOMAIN");
+      expect(content).toContain("KEYCLOAK_URL");
+      expect(content).toContain("KEYCLOAK_CLIENT_ID");
     });
 
-    it("should document how to get Auth0 credentials", () => {
+    it("should document local Keycloak setup", () => {
       const content = fs.readFileSync(".env.local.example", "utf8");
 
-      expect(content.toLowerCase()).toContain("terraform");
-      expect(content.toLowerCase()).toContain("output");
+      expect(content.toLowerCase()).toContain("keycloak");
     });
   });
 

@@ -31,7 +31,17 @@ def main() -> None:
     mcp_server_url = (os.environ.get("E_MCP_SERVER_URL") or "").strip() or f"https://{ph}/mcp"
 
     lines = [
-        "# Auth0 Configuration",
+        "# Keycloak / Auth.js Configuration",
+        "AUTH_SECRET=" + esc(os.environ.get("E_AUTH_SECRET") or os.environ["E_AUTH0_SECRET"]),
+        "AUTH_URL=" + esc(base_url),
+        "APP_BASE_URL=" + esc(base_url),
+        "KEYCLOAK_URL=" + esc(os.environ.get("E_KEYCLOAK_URL", "")),
+        "KEYCLOAK_REALM=" + esc(os.environ.get("E_KEYCLOAK_REALM", "avcd")),
+        "KEYCLOAK_CLIENT_ID=" + esc(os.environ.get("E_KEYCLOAK_CLIENT_ID", "avcd-web")),
+        "KEYCLOAK_CLIENT_SECRET=" + esc(os.environ.get("E_KEYCLOAK_CLIENT_SECRET", "")),
+        "KEYCLOAK_AUDIENCE=" + esc(os.environ.get("E_KEYCLOAK_AUDIENCE", os.environ.get("E_AUTH0_AUDIENCE", ""))),
+        "",
+        "# Legacy Auth0 variables (deprecated — kept during transition)",
         "AUTH0_SECRET=" + esc(os.environ["E_AUTH0_SECRET"]),
         "AUTH0_BASE_URL=" + esc(base_url),
         "AUTH0_ISSUER_BASE_URL=" + esc(os.environ["E_AUTH0_ISSUER"]),

@@ -1,0 +1,7 @@
+{
+  "62756e4b93a93a0717cb164ba54793b35aeee89a7700581fc96ef53babe80668": "fragment FinanceAccountFields on FinanceAccount { currency description id isActive kind name openingBalanceCents organizationId } query GetFinanceAccounts($organizationId: String!) { financeAccounts(organizationId: $organizationId) { ...FinanceAccountFields } }",
+  "07e62fe033c94427ca79d495ca6691b08f6cada2f54da84b556aa3accdb7cea0": "fragment FinanceTransactionFields on FinanceTransaction { accountId amountCents categoryId currency date description id organizationId reference status type } query GetFinanceTransactions($organizationId: String!) { financeTransactions(organizationId: $organizationId) { ...FinanceTransactionFields } }",
+  "27b2a06533d778aa9eeba155f18cff4090675116c8bba31f5883f2db22d25c74": "fragment OrganizationFields on Organization { address id name userId } query GetOrganizations { organizations { ...OrganizationFields } }",
+  "1c511cb73d99c53ba6a89399b5131584670823460580234852cd08c83dcccef5": "fragment StoreFields on Store { address id name organizationId } query GetStoresByOrganization($organizationId: String!) { stores(organizationId: $organizationId) { ...StoreFields } }",
+  "6c6f391422e1c2054cf3b1c7f7375d9464a1253f196a1b8bd8c1f636148b3251": "fragment EmployeeFields on Employee { address id name organizationId salary } query GetEmployeesByOrganization($organizationId: String!) { employees(organizationId: $organizationId) { ...EmployeeFields } }"
+}

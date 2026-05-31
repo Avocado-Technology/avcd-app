@@ -109,6 +109,26 @@ inputs:
     description: NEXT_PUBLIC_MCP_SERVER_URL shown on the /settings/mcp setup page. Defaults to https://PUBLIC_HOST/mcp when empty.
     required: false
     default: ""
+  web_keycloak_url:
+    description: KEYCLOAK_URL base (e.g. https://auth.dev.avcd.ai)
+    required: false
+    default: ""
+  web_keycloak_realm:
+    description: KEYCLOAK_REALM (default avcd)
+    required: false
+    default: "avcd"
+  web_keycloak_client_id:
+    description: KEYCLOAK_CLIENT_ID for web OIDC client (default avcd-web)
+    required: false
+    default: "avcd-web"
+  web_keycloak_client_secret:
+    description: KEYCLOAK_CLIENT_SECRET for web OIDC client
+    required: false
+    default: ""
+  web_keycloak_audience:
+    description: KEYCLOAK_AUDIENCE (GraphQL API identifier)
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -253,6 +273,11 @@ runs:
         WEB_AVCD_MCP_URL_IN: ${{ inputs.web_avcd_mcp_url }}
         WEB_MCP_CLIENT_ID_IN: ${{ inputs.web_mcp_client_id }}
         WEB_MCP_SERVER_URL_IN: ${{ inputs.web_mcp_server_url }}
+        WEB_KEYCLOAK_URL_IN: ${{ inputs.web_keycloak_url }}
+        WEB_KEYCLOAK_REALM_IN: ${{ inputs.web_keycloak_realm }}
+        WEB_KEYCLOAK_CLIENT_ID_IN: ${{ inputs.web_keycloak_client_id }}
+        WEB_KEYCLOAK_CLIENT_SECRET_IN: ${{ inputs.web_keycloak_client_secret }}
+        WEB_KEYCLOAK_AUDIENCE_IN: ${{ inputs.web_keycloak_audience }}
       run: |
         set -euo pipefail
         if [ -n "${WEB_AUTH_SECRET_IN:-}" ]; then
@@ -289,6 +314,12 @@ runs:
             export E_AVCD_MCP_URL="$WEB_AVCD_MCP_URL_IN"
             export E_MCP_CLIENT_ID="$WEB_MCP_CLIENT_ID_IN"
             export E_MCP_SERVER_URL="$WEB_MCP_SERVER_URL_IN"
+            export E_AUTH_SECRET="$WEB_AUTH0_SECRET_IN"
+            export E_KEYCLOAK_URL="$WEB_KEYCLOAK_URL_IN"
+            export E_KEYCLOAK_REALM="$WEB_KEYCLOAK_REALM_IN"
+            export E_KEYCLOAK_CLIENT_ID="$WEB_KEYCLOAK_CLIENT_ID_IN"
+            export E_KEYCLOAK_CLIENT_SECRET="$WEB_KEYCLOAK_CLIENT_SECRET_IN"
+            export E_KEYCLOAK_AUDIENCE="$WEB_KEYCLOAK_AUDIENCE_IN"
             export E_PH="$PUBLIC_HOST_IN"
             python3 "$RENDER_PY"
           )

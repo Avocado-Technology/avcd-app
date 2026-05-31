@@ -20,23 +20,21 @@ describe("E2E: Dev Environment Setup - Business Goal: New developer can set up a
     });
   });
 
-  it("should validate Auth0 v4 environment variables without v3 confusion", () => {
-    const requiredV4Vars = [
-      "AUTH0_SECRET",
+  it("should validate Keycloak / Auth.js environment variables in template", () => {
+    const requiredVars = [
+      "AUTH_SECRET",
       "APP_BASE_URL",
-      "AUTH0_DOMAIN",
-      "AUTH0_CLIENT_ID",
-      "AUTH0_CLIENT_SECRET",
-      "AUTH0_AUDIENCE",
+      "KEYCLOAK_URL",
+      "KEYCLOAK_CLIENT_ID",
+      "KEYCLOAK_CLIENT_SECRET",
+      "KEYCLOAK_AUDIENCE",
     ];
 
     const envExample = fs.readFileSync(".env.local.example", "utf8");
 
-    requiredV4Vars.forEach((v) => {
+    requiredVars.forEach((v) => {
       expect(envExample).toContain(v);
     });
-
-    expect(envExample).not.toContain("AUTH0_ISSUER_BASE_URL");
   });
 
   it("should have docker compose loading env files correctly", () => {
@@ -65,7 +63,7 @@ describe("E2E: Dev Environment Setup - Business Goal: New developer can set up a
       return;
     }
 
-    const required = ["AUTH0_SECRET", "APP_BASE_URL", "AUTH0_DOMAIN"];
+    const required = ["AUTH_SECRET", "APP_BASE_URL", "KEYCLOAK_URL"];
 
     required.forEach((v) => {
       expect(process.env[v]).toBeDefined();

@@ -19,6 +19,8 @@ const nextConfig = {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         "web-worker": false,
+        // node:crypto is server-only; browser uses crypto.subtle (lib/graphql/persisted-operations.ts)
+        crypto: false,
       };
     }
     return config;

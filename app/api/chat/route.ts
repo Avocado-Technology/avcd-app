@@ -1,5 +1,5 @@
 /**
- * Streaming chat API: OpenAI GPT-4o + AVCD MCP tools (OAuth bearer from Auth0).
+ * Streaming chat API: OpenAI GPT-4o + AVCD MCP tools (OAuth bearer from Keycloak).
  */
 
 import { createOpenAI } from "@ai-sdk/openai";
@@ -14,9 +14,7 @@ import {
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { NextRequest, NextResponse } from "next/server";
 
-import { AccessTokenError } from "@auth0/nextjs-auth0/errors";
-
-import { auth0 } from "@/lib/auth0";
+import { getAccessToken } from "@/lib/auth/session";
 import { createMcpClient } from "@/lib/chat/mcp-client";
 import { extractBearerToken } from "@/lib/chat/token-extractor";
 import { getMcpServerUrl } from "@/lib/mcp-server-url";
@@ -66,15 +64,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const tokenWrapper = new NextResponse();
   let accessToken: string | undefined;
   try {
-    const tokenResult = await auth0.getAccessToken(req, tokenWrapper);
-    accessToken = tokenResult.token;
+    const tokenResult = await getAccessToken();
+    accessToken = tokenResult?.token;
   } catch (error) {
-    if (error instanceof AccessTokenError) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
     console.error("[chat] getAccessToken:", error);
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -186,12 +180,6 @@ export async function POST(req: NextRequest) {
     headers: {
       "Cache-Control": "private, no-store, max-age=0",
     },
-  });
-
-  tokenWrapper.headers.forEach((value, key) => {
-    if (key.toLowerCase() === "set-cookie") {
-      streamResponse.headers.append(key, value);
-    }
   });
 
   return streamResponse;

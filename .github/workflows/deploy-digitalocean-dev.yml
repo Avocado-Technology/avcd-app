@@ -14,7 +14,6 @@ on:
       - "public/**"
       - "deploy/production/**"
       - "Dockerfile"
-      - "Dockerfile.dev"
       - "next.config.ts"
       - "next.config.mjs"
       - "middleware.ts"
@@ -85,6 +84,11 @@ jobs:
           web_auth0_client_secret: ${{ secrets.WEB_AUTH0_CLIENT_SECRET }}
           web_auth0_audience: ${{ vars.WEB_AUTH0_AUDIENCE || secrets.WEB_AUTH0_AUDIENCE }}
           web_auth0_scope: "openid profile email offline_access"
+          web_keycloak_url: ${{ vars.KEYCLOAK_URL || 'https://auth.dev.avcd.ai' }}
+          web_keycloak_realm: avcd
+          web_keycloak_client_id: avcd-web
+          web_keycloak_client_secret: ${{ secrets.KEYCLOAK_WEB_CLIENT_SECRET }}
+          web_keycloak_audience: ${{ vars.WEB_AUTH0_AUDIENCE || secrets.WEB_AUTH0_AUDIENCE || 'https://dev.avcd.ai/api' }}
           web_base_url: ${{ vars.WEB_BASE_URL }}
           web_openai_api_key: ${{ secrets.OPENAI_API_KEY }}
           web_chat_model: ${{ vars.CHAT_MODEL || 'gpt-4o' }}

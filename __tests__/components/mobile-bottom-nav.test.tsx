@@ -40,7 +40,7 @@ describe("MobileBottomNav Component", () => {
     const { getByLabelText } = render(<MobileBottomNav />)
     expect(getByLabelText(/Navigation.primaryNavLabel/i)).toBeInTheDocument()
     expect(getByLabelText(/Navigation.finance/i)).toBeInTheDocument()
-    expect(getByLabelText(/Navigation.organization/i)).toBeInTheDocument()
+    expect(getByLabelText(/Navigation.tips/i)).toBeInTheDocument()
   })
 
   it("GivenMoreOptionsClicked_WhenRendered_ThenShowsMoreSheet", () => {

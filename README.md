@@ -184,6 +184,12 @@ All design tokens are defined in:
 npm test
 ```
 
+### GraphQL + Auth (Apollo Client 4)
+
+- **Browser client** (`lib/apollo-client.ts`): `TokenService` coalesces `/api/auth/token` refreshes, proactive JWT refresh from `exp`, silent **one-shot** retry on GraphQL `UNAUTHENTICATED` via the error link, then login redirect if refresh fails. In production, known operations send `X-GraphQL-Document-Hash` (SHA-256 from codegen `persistedDocuments`, exposed on documents as `__meta__.__documentHash`).
+- **Server / RSC** (`lib/apollo-server-client.ts`): `getClient()` uses `getApiAccessJwt()` (no browser token hop). In tests, each call returns a fresh client; in other environments the client is memoized per React server request via `cache()`.
+- **Codegen**: `npm run codegen` — `codegen.ts` enables `persistedDocuments` (SHA-256; hashes live on each document under `__meta__.__documentHash`). Regenerate after schema changes when the API is reachable.
+
 ### Animation Testing Checklist
 - [ ] Animations use only `transform` and `opacity`
 - [ ] Test with "Reduce motion" enabled
@@ -215,7 +221,8 @@ npm test
 - **UI Components**: shadcn/ui (customized)
 - **Typography**: Geist Sans + Geist Mono
 - **Icons**: Lucide React
-- **Auth**: Auth0
+- **Auth**: Auth0 (`@auth0/nextjs-auth0` v4)
+- **Data**: Apollo Client 4 + GraphQL Code Generator (client preset, persisted document hashes)
 
 ## 📄 License
 

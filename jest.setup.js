@@ -4,8 +4,8 @@ import { toHaveNoViolations } from 'jest-axe'
 
 expect.extend(toHaveNoViolations)
 
-// Auth0 app client: avoid loading ESM `@auth0/nextjs-auth0/server` in Jest (real client stays in production).
-jest.mock("@/lib/auth0", () => require("./__tests__/mocks/auth0-lib.js"));
+// Auth session: avoid loading Auth.js Keycloak provider in Jest.
+jest.mock("@/lib/auth/session", () => require("./__tests__/mocks/auth-session.js"));
 
 // Mock next-intl
 jest.mock('next-intl', () => ({
@@ -112,11 +112,13 @@ if (typeof window !== 'undefined') {
 }
 
 // Mock environment variables
-process.env.AUTH0_SECRET = 'test-secret-key-for-auth0-testing-only-32-chars-long'
-process.env.AUTH0_BASE_URL = 'http://localhost:3000'
-process.env.AUTH0_ISSUER_BASE_URL = 'https://test.auth0.com'
-process.env.AUTH0_CLIENT_ID = 'test-client-id'
-process.env.AUTH0_CLIENT_SECRET = 'test-client-secret'
+process.env.AUTH_SECRET = 'test-secret-key-for-keycloak-testing-only-32-chars'
+process.env.APP_BASE_URL = 'http://localhost:3000'
+process.env.KEYCLOAK_URL = 'http://localhost:8080'
+process.env.KEYCLOAK_REALM = 'avcd'
+process.env.KEYCLOAK_CLIENT_ID = 'avcd-web'
+process.env.KEYCLOAK_CLIENT_SECRET = 'test-client-secret-value-long-enough'
+process.env.KEYCLOAK_AUDIENCE = 'https://dev.avcd.ai/api'
 
 // Mock ResizeObserver for ReactFlow
 global.ResizeObserver = class ResizeObserver {
