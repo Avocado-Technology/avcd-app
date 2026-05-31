@@ -160,7 +160,7 @@ jobs:
           echo "docr_url=$R" >> "$GITHUB_OUTPUT"
 
       - name: Deploy web with Kamal
-        uses: Avocado-Technology/avcd-actions/kamal-deploy@v5
+        uses: Avocado-Technology/avcd-actions/kamal-deploy@v5.1
         with:
           deploy_host: ${{ steps.deploy.outputs.host }}
           deploy_user: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER }}
