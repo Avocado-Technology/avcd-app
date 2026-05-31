@@ -80,12 +80,21 @@ jobs:
           INFISICAL_API_URL: ${{ vars.INFISICAL_API_URL || 'https://secrets.dev.avcd.ai/api' }}
           INFISICAL_PROJECT_ID: ${{ vars.INFISICAL_PROJECT_ID }}
           INFISICAL_OIDC_IDENTITY_ID: ${{ vars.INFISICAL_OIDC_IDENTITY_ID }}
+          INFISICAL_OIDC_AUDIENCE: ${{ vars.INFISICAL_OIDC_AUDIENCE || 'https://github.com/Avocado-Technology' }}
           PUBLIC_HOST: ${{ steps.traefik_host.outputs.host }}
         run: |
+          set -euo pipefail
           [ -n "${INFISICAL_OIDC_IDENTITY_ID:-}" ] || { echo "::error::Set INFISICAL_OIDC_IDENTITY_ID on the development environment (Terraform github-org-bootstrap)."; exit 1; }
           [ -n "${INFISICAL_PROJECT_ID:-}" ] || { echo "::error::Set INFISICAL_PROJECT_ID on the development environment (Terraform github-org-bootstrap)."; exit 1; }
-          export INFISICAL_TOKEN=$(infisical login --method=oidc \
-            --identity-id="$INFISICAL_OIDC_IDENTITY_ID" \
+          OIDC_JWT=$(curl -sS -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${INFISICAL_OIDC_AUDIENCE}" | jq -r .value)
+          if [ -z "${OIDC_JWT:-}" ] || [ "$OIDC_JWT" = "null" ]; then
+            echo "::error::Failed to obtain GitHub OIDC token (check id-token: write and audience ${INFISICAL_OIDC_AUDIENCE})"
+            exit 1
+          fi
+          export INFISICAL_TOKEN=$(infisical login --method=oidc-auth \
+            --machine-identity-id="$INFISICAL_OIDC_IDENTITY_ID" \
+            --oidc-jwt="$OIDC_JWT" \
             --domain="${INFISICAL_API_URL%/api}" --silent --plain)
           infisical export --env=dev --path=/ \
             --projectId="$INFISICAL_PROJECT_ID" --token="$INFISICAL_TOKEN" \

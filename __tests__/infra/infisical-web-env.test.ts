@@ -12,6 +12,8 @@ describe("Infisical web deploy env", () => {
     );
     expect(workflow).toContain("id-token: write");
     expect(workflow).toContain("INFISICAL_OIDC_IDENTITY_ID");
+    expect(workflow).toContain("infisical login --method=oidc-auth");
+    expect(workflow).toContain("--machine-identity-id=");
     expect(workflow).toContain("infisical export");
     expect(workflow).toContain(".env.infisical");
   });
