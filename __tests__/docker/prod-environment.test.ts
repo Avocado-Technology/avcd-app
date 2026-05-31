@@ -25,10 +25,18 @@ describe('Production Docker Environment', () => {
     expect(hasPublicHost).toBe(true);
   });
 
-  it('should have AUTH0_SECRET in environment', () => {
+  it('should have AUTH_SECRET in environment', () => {
     const environment = prodComposeConfig.services.web.environment;
     expect(environment).toBeDefined();
-    expect(environment.AUTH0_SECRET !== undefined).toBe(true);
+    expect(environment.AUTH_SECRET !== undefined).toBe(true);
+  });
+
+  it('should load .env.infisical via env_file', () => {
+    const envFile = prodComposeConfig.services.web.env_file;
+    const paths = Array.isArray(envFile)
+      ? envFile.map((e: { path: string }) => e.path)
+      : [];
+    expect(paths).toContain('.env.infisical');
   });
 
   it('should not have WATCHPACK_POLLING in production', () => {

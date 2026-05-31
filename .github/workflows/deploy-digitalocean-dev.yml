@@ -1,5 +1,6 @@
 # Deploy Next.js web stack from this repository root (Docker + Traefik on avcd_edge).
-# Configure DO_* in GitHub: Settings → Environments → development (or repo Variables / Secrets).
+# GitHub bootstrap: org secrets/vars via Infisical sync + Terraform (infra enable_github_org_bootstrap).
+# App secrets: Infisical project web — fetched at runtime via OIDC + infisical export.
 
 name: Deploy web to DigitalOcean (dev)
 
@@ -31,6 +32,7 @@ concurrency:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   deploy:
@@ -47,6 +49,7 @@ jobs:
           H2: ${{ vars.PUBLIC_HOST || secrets.PUBLIC_HOST }}
           U1: ${{ vars.DO_WEB_URL || secrets.DO_WEB_URL }}
           U2: ${{ vars.DO_WEB_HEALTH_URL || secrets.DO_WEB_HEALTH_URL }}
+          DO_DEPLOY_HOST: ${{ vars.DO_DEPLOY_HOST || secrets.DO_DEPLOY_HOST }}
         run: |
           set -euo pipefail
           H="${H1:-}"; [ -n "$H" ] || H="${H2:-}"
@@ -56,14 +59,70 @@ jobs:
               H="${U#https://}"; H="${H#http://}"; H="${H%%/*}"
             fi
           fi
+          if [ -z "$H" ] && [ -n "${DO_DEPLOY_HOST:-}" ]; then
+            H="${DO_DEPLOY_HOST}"
+          fi
           if [ -z "$H" ]; then
-            echo "::error::Set DO_PUBLIC_HOST, PUBLIC_HOST, DO_WEB_URL, or DO_WEB_HEALTH_URL for this environment."
+            echo "::error::Set DO_PUBLIC_HOST, PUBLIC_HOST, DO_WEB_URL, DO_WEB_HEALTH_URL, or DO_DEPLOY_HOST."
             exit 1
           fi
           echo "host=$H" >> "$GITHUB_OUTPUT"
+          echo "health_url=https://${H}/health" >> "$GITHUB_OUTPUT"
+
+      - name: Install Infisical CLI
+        run: |
+          curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.deb.sh' | sudo -E bash
+          sudo apt-get update && sudo apt-get install -y infisical
+          infisical --version
+
+      - name: Fetch Secrets from Infisical
+        env:
+          INFISICAL_API_URL: ${{ vars.INFISICAL_API_URL || 'https://secrets.dev.avcd.ai/api' }}
+          INFISICAL_PROJECT_ID: ${{ vars.INFISICAL_PROJECT_ID }}
+          INFISICAL_OIDC_IDENTITY_ID: ${{ vars.INFISICAL_OIDC_IDENTITY_ID }}
+          PUBLIC_HOST: ${{ steps.traefik_host.outputs.host }}
+        run: |
+          [ -n "${INFISICAL_OIDC_IDENTITY_ID:-}" ] || { echo "::error::Set INFISICAL_OIDC_IDENTITY_ID on the development environment (Terraform github-org-bootstrap)."; exit 1; }
+          [ -n "${INFISICAL_PROJECT_ID:-}" ] || { echo "::error::Set INFISICAL_PROJECT_ID on the development environment (Terraform github-org-bootstrap)."; exit 1; }
+          export INFISICAL_TOKEN=$(infisical login --method=oidc \
+            --identity-id="$INFISICAL_OIDC_IDENTITY_ID" \
+            --domain="${INFISICAL_API_URL%/api}" --silent --plain)
+          infisical export --env=dev --path=/ \
+            --projectId="$INFISICAL_PROJECT_ID" --token="$INFISICAL_TOKEN" \
+            --format=dotenv --domain="${INFISICAL_API_URL%/api}" --silent \
+            > .env.infisical
+          test -s .env.infisical || (echo "::error::Infisical export empty (web project, env dev)" && exit 1)
+          {
+            echo "PUBLIC_HOST=${PUBLIC_HOST}"
+            echo "NEXT_PUBLIC_GRAPHQL_ENDPOINT=https://${PUBLIC_HOST}/api/graphql"
+            echo "NEXT_PUBLIC_MCP_SERVER_URL=https://${PUBLIC_HOST}/mcp"
+          } >> .env.infisical
+          echo "Verifying required secrets from Infisical (dev)..."
+          set -a
+          # shellcheck disable=SC1091
+          source .env.infisical
+          set +a
+          for key in AUTH_SECRET KEYCLOAK_CLIENT_SECRET KEYCLOAK_AUDIENCE KEYCLOAK_URL KEYCLOAK_CLIENT_ID; do
+            eval "val=\${$key:-}"
+            if [ -z "$val" ]; then
+              echo "::error::Missing $key in Infisical (project web, env dev)"
+              exit 1
+            fi
+            echo "::add-mask::$val"
+          done
+          if [[ "${KEYCLOAK_AUDIENCE}" == */ ]]; then
+            echo "::error::KEYCLOAK_AUDIENCE must not end with / (use https://dev.avcd.ai/api not https://dev.avcd.ai/)"
+            exit 1
+          fi
+          echo "✓ Infisical export ready"
+
+      - name: Copy .env.infisical to deploy directory
+        run: |
+          cp .env.infisical deploy/production/.env.infisical
+          ls -la deploy/production/.env.infisical
 
       - name: Deploy web stack
-        uses: ./.github/actions/droplet-compose-deploy
+        uses: Avocado-Technology/avcd-actions/droplet-compose-deploy@v2
         with:
           deploy_host: ${{ vars.DO_DEPLOY_HOST || secrets.DO_DEPLOY_HOST }}
           deploy_user: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER }}
@@ -75,23 +134,6 @@ jobs:
           pass_compose_tls_env: "false"
           clear_published_ports: "3000"
           verify_mode: http
-          verify_url: ${{ vars.DO_WEB_HEALTH_URL || secrets.DO_WEB_HEALTH_URL }}
+          verify_url: ${{ vars.DO_WEB_HEALTH_URL || steps.traefik_host.outputs.health_url }}
           verify_body_substring: '"status":"ok"'
           verify_http_insecure_first: "false"
-          web_auth0_secret: ${{ secrets.WEB_AUTH0_SECRET }}
-          web_auth0_issuer: ${{ vars.WEB_AUTH0_ISSUER || secrets.WEB_AUTH0_ISSUER }}
-          web_auth0_client_id: ${{ secrets.WEB_AUTH0_CLIENT_ID }}
-          web_auth0_client_secret: ${{ secrets.WEB_AUTH0_CLIENT_SECRET }}
-          web_auth0_audience: ${{ vars.WEB_AUTH0_AUDIENCE || secrets.WEB_AUTH0_AUDIENCE }}
-          web_auth0_scope: "openid profile email offline_access"
-          web_keycloak_url: ${{ vars.KEYCLOAK_URL || 'https://auth.dev.avcd.ai' }}
-          web_keycloak_realm: avcd
-          web_keycloak_client_id: avcd-web
-          web_keycloak_client_secret: ${{ secrets.KEYCLOAK_WEB_CLIENT_SECRET }}
-          web_keycloak_audience: ${{ vars.WEB_AUTH0_AUDIENCE || secrets.WEB_AUTH0_AUDIENCE || 'https://dev.avcd.ai/api' }}
-          web_base_url: ${{ vars.WEB_BASE_URL }}
-          web_openai_api_key: ${{ secrets.OPENAI_API_KEY }}
-          web_chat_model: ${{ vars.CHAT_MODEL || 'gpt-4o' }}
-          web_avcd_mcp_url: ${{ vars.AVCD_MCP_URL || secrets.AVCD_MCP_URL }}
-          web_mcp_client_id: ${{ vars.NEXT_PUBLIC_AUTH0_MCP_CLIENT_ID }}
-          web_mcp_server_url: ${{ vars.NEXT_PUBLIC_MCP_SERVER_URL }}

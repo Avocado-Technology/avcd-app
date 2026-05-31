@@ -6,7 +6,10 @@ export type OAuthCredentialsPanelProps = {
   mcpServerUrl: string;
 };
 
-const AUTH0_MCP_CLIENT_ID = process.env.NEXT_PUBLIC_AUTH0_MCP_CLIENT_ID || "cc5qINMngWbIsn02ZRC7zPMEpFkqe58y";
+const MCP_CLIENT_ID =
+  process.env.NEXT_PUBLIC_MCP_CLIENT_ID ||
+  process.env.NEXT_PUBLIC_AUTH0_MCP_CLIENT_ID ||
+  "cc5qINMngWbIsn02ZRC7zPMEpFkqe58y";
 const AUTH0_DOMAIN = process.env.NEXT_PUBLIC_AUTH0_ISSUER_BASE_URL?.replace('https://', '') || "avcdtech.us.auth0.com";
 
 const btnSecondary: CSSProperties = {
@@ -201,11 +204,11 @@ export function OAuthCredentialsPanel({ mcpServerUrl }: OAuthCredentialsPanelPro
             lineHeight: 1.5,
           }}
         >
-          {AUTH0_MCP_CLIENT_ID}
+          {MCP_CLIENT_ID}
         </code>
 
         <button
-          onClick={() => copyToClipboard(AUTH0_MCP_CLIENT_ID, setClientIdCopyHint)}
+          onClick={() => copyToClipboard(MCP_CLIENT_ID, setClientIdCopyHint)}
           onMouseDown={(e) => e.currentTarget.style.transform = "translateY(1px)"}
           onMouseUp={(e) => e.currentTarget.style.transform = "translateY(0)"}
           onMouseEnter={(e) => {
