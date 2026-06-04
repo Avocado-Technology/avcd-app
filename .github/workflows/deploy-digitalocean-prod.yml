@@ -36,9 +36,26 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: production
+    env:
+      DEPLOY_USER: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER || 'deploy' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Verify GitHub Environment configuration
+        env:
+          DO_DEPLOY_SSH_KEY: ${{ secrets.DO_DEPLOY_SSH_KEY }}
+          INFISICAL_PROJECT_ID: ${{ vars.INFISICAL_PROJECT_ID }}
+          INFISICAL_OIDC_IDENTITY_ID: ${{ vars.INFISICAL_OIDC_IDENTITY_ID }}
+          DOCR_REGISTRY_URL: ${{ vars.DOCR_REGISTRY_URL }}
+          DO_DEPLOY_USER: ${{ env.DEPLOY_USER }}
+        run: |
+          set -euo pipefail
+          for key in DO_DEPLOY_SSH_KEY INFISICAL_PROJECT_ID INFISICAL_OIDC_IDENTITY_ID DOCR_REGISTRY_URL DO_DEPLOY_USER; do
+            val="${!key:-}"
+            [ -n "$val" ] || { echo "::error::Missing $key on production environment"; exit 1; }
+            echo "✓ $key is set"
+          done
 
       - name: Resolve Traefik public hostname
         id: traefik_host
@@ -105,7 +122,7 @@ jobs:
         uses: Avocado-Technology/avcd-actions/kamal-deploy@v5.5
         with:
           deploy_host: ${{ steps.deploy.outputs.host }}
-          deploy_user: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER }}
+          deploy_user: ${{ env.DEPLOY_USER }}
           ssh_key: ${{ secrets.DO_DEPLOY_SSH_KEY }}
           docr_registry_url: ${{ steps.deploy.outputs.docr_url }}
           infisical_api_url: ${{ vars.INFISICAL_API_URL || 'https://secrets.avcd.ai/api' }}

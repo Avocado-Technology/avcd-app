@@ -5,17 +5,26 @@ import { join } from "path";
 const webRoot = join(process.cwd());
 
 describe("Infisical web deploy env", () => {
-  it("deploy-digitalocean-dev.yml has OIDC permissions and Infisical export", () => {
+  it("deploy-digitalocean-dev.yml has OIDC permissions and remote Infisical render", () => {
     const workflow = readFileSync(
       join(webRoot, ".github/workflows/deploy-digitalocean-dev.yml"),
       "utf8",
     );
+    const renderScript = readFileSync(
+      join(webRoot, "scripts/ci/render-secrets-via-deploy-host.sh"),
+      "utf8",
+    );
     expect(workflow).toContain("id-token: write");
     expect(workflow).toContain("INFISICAL_OIDC_IDENTITY_ID");
-    expect(workflow).toContain("infisical login --method=oidc-auth");
-    expect(workflow).toContain("--machine-identity-id=");
-    expect(workflow).toContain("infisical export");
-    expect(workflow).toContain(".env.infisical");
+    expect(workflow).toContain("render-secrets-via-deploy-host.sh");
+    expect(workflow).toContain("DEPLOY_USER");
+    expect(workflow).toContain("deploy");
+    expect(renderScript).toContain("infisical login --method=oidc-auth");
+    expect(renderScript).toContain("--machine-identity-id=");
+    expect(renderScript).toContain("secrets.ci.template");
+    expect(
+      readFileSync(join(webRoot, ".kamal/secrets.ci.template"), "utf8"),
+    ).toContain("infisical export");
   });
 
   it("deploy-digitalocean-dev.yml does not reference GitHub app secrets", () => {

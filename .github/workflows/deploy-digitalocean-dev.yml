@@ -1,5 +1,5 @@
 # Deploy Next.js web stack from this repository root (Docker + Traefik on avcd_edge).
-# GitHub bootstrap: org secrets/vars via Infisical sync + Terraform (pulumi-infra github stack).
+# GitHub bootstrap: org secrets/vars via Infisical sync + pulumi-infra github stack (avcd-app).
 # App secrets: Infisical project avcd-web on secrets.dev.avcd.ai (OIDC via deploy host SSH).
 
 name: Deploy web to DigitalOcean (dev)
@@ -27,6 +27,16 @@ on:
       - ".github/**"
       - "scripts/ci/**"
   workflow_dispatch:
+    inputs:
+      kamal_command:
+        description: Kamal command (deploy or setup for first run)
+        required: false
+        default: deploy
+        type: choice
+        options:
+          - deploy
+          - setup
+          - redeploy
 
 concurrency:
   group: deploy-web-do-dev
@@ -42,9 +52,25 @@ jobs:
     environment: development
     env:
       INFISICAL_API_URL: ${{ vars.INFISICAL_API_URL || 'https://secrets.dev.avcd.ai/api' }}
+      DEPLOY_USER: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER || 'deploy' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Verify GitHub Environment configuration
+        env:
+          DO_DEPLOY_SSH_KEY: ${{ secrets.DO_DEPLOY_SSH_KEY }}
+          INFISICAL_PROJECT_ID: ${{ vars.INFISICAL_PROJECT_ID }}
+          INFISICAL_OIDC_IDENTITY_ID: ${{ vars.INFISICAL_OIDC_IDENTITY_ID }}
+          DOCR_REGISTRY_URL: ${{ vars.DOCR_REGISTRY_URL }}
+          DO_DEPLOY_USER: ${{ env.DEPLOY_USER }}
+        run: |
+          set -euo pipefail
+          for key in DO_DEPLOY_SSH_KEY INFISICAL_PROJECT_ID INFISICAL_OIDC_IDENTITY_ID DOCR_REGISTRY_URL DO_DEPLOY_USER; do
+            val="${!key:-}"
+            [ -n "$val" ] || { echo "::error::Missing $key on development environment (or org secret for DO_DEPLOY_SSH_KEY)"; exit 1; }
+            echo "✓ $key is set"
+          done
 
       - name: Resolve Traefik public hostname
         id: traefik_host
@@ -91,7 +117,7 @@ jobs:
       - name: Configure SSH key
         env:
           DEPLOY_HOST: ${{ steps.deploy.outputs.ssh_host }}
-          DEPLOY_USER: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER || 'root' }}
+          DEPLOY_USER: ${{ env.DEPLOY_USER }}
           SSH_PRIVATE_KEY: ${{ secrets.DO_DEPLOY_SSH_KEY }}
         run: |
           set -euo pipefail
@@ -111,16 +137,17 @@ jobs:
           } >> ~/.ssh/config
           chmod 600 ~/.ssh/config
           ssh -o BatchMode=yes "${DEPLOY_USER}@${DEPLOY_HOST}" "echo ok" \
-            || { echo "::error::SSH to ${DEPLOY_USER}@${DEPLOY_HOST} failed. Add DO_DEPLOY_SSH_KEY pubkey to the droplet authorized_keys."; exit 1; }
+            || { echo "::error::SSH to ${DEPLOY_USER}@${DEPLOY_HOST} failed. Add DO_DEPLOY_SSH_KEY pubkey to the droplet authorized_keys for user ${DEPLOY_USER}."; exit 1; }
 
       - name: Render Kamal secrets via deploy host (Infisical OIDC)
         env:
           DEPLOY_HOST: ${{ steps.deploy.outputs.ssh_host }}
-          DEPLOY_USER: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER || 'root' }}
+          DEPLOY_USER: ${{ env.DEPLOY_USER }}
           INFISICAL_PROJECT_ID: ${{ vars.INFISICAL_PROJECT_ID }}
           INFISICAL_INFRA_PROJECT_ID: ${{ vars.INFISICAL_INFRA_PROJECT_ID || 'e9b80cfd-9be4-4024-a1d6-753db87bc3b9' }}
           INFISICAL_OIDC_IDENTITY_ID: ${{ vars.INFISICAL_OIDC_IDENTITY_ID }}
           INFISICAL_OIDC_AUDIENCE: ${{ vars.INFISICAL_OIDC_AUDIENCE || 'https://github.com/Avocado-Technology' }}
+          INFISICAL_BOOTSTRAP_PATH: ${{ vars.INFISICAL_BOOTSTRAP_PATH || '/ci-bootstrap' }}
           PUBLIC_HOST: ${{ steps.traefik_host.outputs.host }}
           REPO_ROOT: ${{ github.workspace }}
         run: |
@@ -134,7 +161,7 @@ jobs:
             echo "::error::Failed to obtain GitHub OIDC token"
             exit 1
           fi
-          export OIDC_JWT INFISICAL_API_URL
+          export OIDC_JWT INFISICAL_API_URL INFISICAL_BOOTSTRAP_PATH
           chmod +x scripts/ci/render-secrets-via-deploy-host.sh
           ./scripts/ci/render-secrets-via-deploy-host.sh
 
@@ -182,7 +209,7 @@ jobs:
         uses: Avocado-Technology/avcd-actions/kamal-deploy@v5.5
         with:
           deploy_host: ${{ steps.deploy.outputs.host }}
-          deploy_user: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER }}
+          deploy_user: ${{ env.DEPLOY_USER }}
           ssh_key: ${{ secrets.DO_DEPLOY_SSH_KEY }}
           docr_registry_url: ${{ steps.deploy.outputs.docr_url }}
           infisical_api_url: ${{ env.INFISICAL_API_URL }}
@@ -194,6 +221,7 @@ jobs:
           public_host: ${{ steps.traefik_host.outputs.host }}
           kamal_version: ${{ vars.KAMAL_VERSION || '2.11.0' }}
           kamal_destination: development
+          kamal_command: ${{ github.event_name == 'workflow_dispatch' && inputs.kamal_command || 'deploy' }}
           skip_accessory_boot: "true"
           skip_secrets_render: "true"
           verify_url: ${{ vars.DO_WEB_HEALTH_URL || steps.deploy.outputs.health_url }}

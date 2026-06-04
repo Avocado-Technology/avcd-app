@@ -17,12 +17,12 @@ Kamal config: [`config/deploy.yml`](../config/deploy.yml), destinations [`config
 
 ## GitHub variables and secrets
 
-Configure **Settings → Environments** → `development` / `production` (from **pulumi-infra** `github` stack).
+Configure **Settings → Environments** → `development` / `production` on **`avcd-app`** (from **pulumi-infra** `github` stack; legacy `web` repo vars are not used by CI).
 
 | Name | Type | Purpose |
 |------|------|---------|
-| `DO_DEPLOY_HOST` | Variable or secret | SSH host (also Traefik `Host()` after CI render) |
-| `DO_DEPLOY_USER` | Variable or secret | SSH user |
+| `DO_DEPLOY_HOST` | Variable or secret | SSH host (droplet IP or hostname; Traefik uses `DO_PUBLIC_HOST` for `Host()`) |
+| `DO_DEPLOY_USER` | Variable or secret | SSH user (**`deploy`**, same as Traefik dev) |
 | `DO_DEPLOY_SSH_KEY` | **Secret** | Private SSH key |
 | `DO_PUBLIC_HOST` or `PUBLIC_HOST` | Variable | Public hostname for health verify and Infisical URL injection |
 | `DO_WEB_HEALTH_URL` | Variable | Full HTTPS health URL (e.g. `https://dev.avcd.ai/health`) |
@@ -31,7 +31,8 @@ Configure **Settings → Environments** → `development` / `production` (from *
 | `INFISICAL_OIDC_IDENTITY_ID` | Variable | Machine identity for GitHub OIDC |
 | `INFISICAL_API_URL` | Variable | `https://secrets.dev.avcd.ai/api` (dev instance; CI reaches it via SSH on deploy host) |
 | `INFISICAL_OIDC_AUDIENCE` | Variable | Default `https://github.com/Avocado-Technology` |
-| `INFISICAL_INFRA_PROJECT_ID` | Variable | **avcd-infra** project for `/ci-bootstrap` (DOCR creds) |
+| `INFISICAL_INFRA_PROJECT_ID` | Variable | **avcd-infra** project for bootstrap path (DOCR creds) |
+| `INFISICAL_BOOTSTRAP_PATH` | Variable | Optional; default `/ci-bootstrap` (override if dev instance uses `/infra`) |
 | `KAMAL_VERSION` | Variable | Optional Kamal gem pin (default `2.11.0` in workflow) |
 
 App runtime secrets are **not** stored in GitHub; they are exported from Infisical at deploy time via OIDC.
