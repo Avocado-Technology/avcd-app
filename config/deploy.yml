@@ -60,6 +60,7 @@ env:
     - AUTH_URL
     - APP_BASE_URL
     - OPENAI_API_KEY
+    - CHAT_MODEL
   clear:
     PUBLIC_HOST: __DO_DEPLOY_HOST__
     NEXT_PUBLIC_GRAPHQL_ENDPOINT: https://__DO_DEPLOY_HOST__/api/graphql

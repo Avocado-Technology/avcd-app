@@ -104,9 +104,44 @@ npm run build
 npm start
 ```
 
-### Production Deployment
+### Infisical secrets (`avcd-web`)
 
-See [`deploy/production/README.md`](deploy/production/README.md) for deployment instructions.
+Upload local env vars to the **avcd-web** project on `secrets.avcd.ai` (credentials in `../infisical/.env`):
+
+```bash
+make upload-secret              # .env → Infisical dev environment
+make validate-secrets           # check deploy-required keys
+make help                       # INFISICAL_ENV, INFISICAL_PUSH_FILE, etc.
+```
+
+### Deployment (Kamal + Infisical)
+
+| Environment | Trigger | Workflow |
+|-------------|---------|----------|
+| **Development** | Push to `main` (path filters) | [`.github/workflows/deploy-digitalocean-dev.yml`](.github/workflows/deploy-digitalocean-dev.yml) |
+| **Production** | Tag `vX.Y.Z-release` (semantic-release on `main`) | [`.github/workflows/deploy-digitalocean-prod.yml`](.github/workflows/deploy-digitalocean-prod.yml) |
+
+**Releases** run on every push to `main` via [semantic-release](https://github.com/semantic-release/semantic-release) ([`.github/workflows/release.yml`](.github/workflows/release.yml)):
+
+- [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `BREAKING CHANGE:`) determine semver
+- Updates `CHANGELOG.md`, `package.json`, and creates a **GitHub Release**
+- Pushes tag `vX.Y.Z-release` (triggers prod Kamal deploy)
+- `chore:` / `docs:` only merges may skip a release (no prod deploy that push)
+
+Commit format is enforced locally (`husky` + `commitlint`) and on PRs ([`pr-checks.yml`](.github/workflows/pr-checks.yml)).
+
+```bash
+# Examples
+git commit -m "feat(auth): add Keycloak session refresh"
+git commit -m "fix(deploy): correct Infisical env slug"
+git commit -m "feat(api)!: remove legacy Auth0 routes"  # minor/major per BREAKING
+```
+
+Manual tag (optional): `git tag v1.0.0-release && git push origin v1.0.0-release`
+
+PRs run lint, test, build, and commitlint via [`.github/workflows/pr-checks.yml`](.github/workflows/pr-checks.yml).
+
+See [`docs/deploy-droplet.md`](docs/deploy-droplet.md) and [`deploy/production/README.md`](deploy/production/README.md) (Compose manual fallback).
 
 ## 🎯 Key Features
 

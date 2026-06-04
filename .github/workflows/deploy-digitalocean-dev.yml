@@ -160,7 +160,7 @@ jobs:
           echo "docr_url=$R" >> "$GITHUB_OUTPUT"
 
       - name: Deploy web with Kamal
-        uses: Avocado-Technology/avcd-actions/kamal-deploy@v5.2
+        uses: Avocado-Technology/avcd-actions/kamal-deploy@v5.5
         with:
           deploy_host: ${{ steps.deploy.outputs.host }}
           deploy_user: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER }}
@@ -171,7 +171,10 @@ jobs:
           infisical_infra_project_id: ${{ vars.INFISICAL_INFRA_PROJECT_ID || 'e9b80cfd-9be4-4024-a1d6-753db87bc3b9' }}
           infisical_oidc_identity_id: ${{ vars.INFISICAL_OIDC_IDENTITY_ID }}
           infisical_oidc_audience: ${{ vars.INFISICAL_OIDC_AUDIENCE || 'https://github.com/Avocado-Technology' }}
-          kamal_version: ${{ vars.KAMAL_VERSION || '2.5.3' }}
+          infisical_env: dev
+          public_host: ${{ steps.traefik_host.outputs.host }}
+          kamal_version: ${{ vars.KAMAL_VERSION || '2.11.0' }}
           kamal_destination: development
+          skip_accessory_boot: "true"
           verify_url: ${{ vars.DO_WEB_HEALTH_URL || steps.deploy.outputs.health_url }}
           verify_body_substring: '"status":"ok"'

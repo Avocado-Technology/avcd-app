@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Enforce semver release tags when KAMAL_IMAGE_VERSION is set (prod CI).
+set -euo pipefail
+
+if [ -z "${KAMAL_IMAGE_VERSION:-}" ]; then
+  exit 0
+fi
+
+if ! [[ "${KAMAL_IMAGE_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "KAMAL_IMAGE_VERSION must be semver x.y.z (got: ${KAMAL_IMAGE_VERSION})" >&2
+  exit 1
+fi
+
+if [ -n "${GITHUB_REF_NAME:-}" ] && [[ "${GITHUB_REF_NAME}" == *-release ]]; then
+  expected="${GITHUB_REF_NAME%-release}"
+  expected="${expected#v}"
+  if [ "${KAMAL_IMAGE_VERSION}" != "${expected}" ]; then
+    echo "Tag ${GITHUB_REF_NAME} implies version ${expected}, but KAMAL_IMAGE_VERSION=${KAMAL_IMAGE_VERSION}" >&2
+    exit 1
+  fi
+fi
