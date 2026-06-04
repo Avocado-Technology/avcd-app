@@ -3,12 +3,22 @@
 service: avcd-web
 image: avcd/web
 
+# Kamal 2: no root-level healthcheck; Traefik routes traffic (proxy: false).
+deploy_timeout: 180
+
 servers:
   web:
     hosts:
       - __DO_DEPLOY_HOST__
+    proxy: false
     options:
       network: avcd_edge
+      health-cmd: >-
+        node -e "fetch('http://127.0.0.1:3000/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      health-interval: 10s
+      health-retries: 12
+      health-timeout: 5s
+      health-start-period: 90s
     labels:
       traefik.enable: "true"
       traefik.docker.network: avcd_edge
@@ -71,8 +81,3 @@ env:
     NEXT_PUBLIC_PROFILE_ROUTE: /api/auth/profile
     NEXT_PUBLIC_FINANCE_DATA_SOURCE: mock
     CHAT_MODEL: gpt-4o
-
-healthcheck:
-  path: /health
-  port: 3000
-  max_attempts: 15
