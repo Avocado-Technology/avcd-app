@@ -32,8 +32,9 @@ tar -xzf /tmp/kamal-secrets-bundle.tgz -C "\$REMOTE_DIR"
 rm -f /tmp/kamal-secrets-bundle.tgz
 
 if ! command -v infisical >/dev/null 2>&1; then
-  curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.deb.sh' | bash
-  apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y infisical
+  curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.deb.sh' | sudo -E bash
+  sudo apt-get update -qq
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y infisical
 fi
 
 OIDC_JWT="\$(printf '%s' '${OIDC_B64}' | base64 -d)"
