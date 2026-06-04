@@ -1,6 +1,7 @@
 # Deploy Next.js web stack from this repository root (Docker + Traefik on avcd_edge).
 # GitHub bootstrap: org secrets/vars via Infisical sync + pulumi-infra github stack (avcd-app).
-# App secrets: Infisical project avcd-web on secrets.dev.avcd.ai (OIDC via deploy host SSH).
+# App secrets: Infisical avcd-web (OIDC via deploy host SSH). Default API: secrets.avcd.ai
+# (secrets.dev.avcd.ai is not reachable from the dev droplet until firewall allows it).
 
 name: Deploy web to DigitalOcean (dev)
 
@@ -51,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: development
     env:
-      INFISICAL_API_URL: ${{ vars.INFISICAL_API_URL || 'https://secrets.dev.avcd.ai/api' }}
+      INFISICAL_API_URL: ${{ vars.INFISICAL_API_URL || 'https://secrets.avcd.ai/api' }}
       DEPLOY_USER: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER || 'deploy' }}
     steps:
       - name: Checkout

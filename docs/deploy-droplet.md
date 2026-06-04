@@ -29,7 +29,7 @@ Configure **Settings → Environments** → `development` / `production` on **`a
 | `DOCR_REGISTRY_URL` | Variable | DigitalOcean container registry URL |
 | `INFISICAL_PROJECT_ID` | Variable | Infisical **avcd-web** project ID |
 | `INFISICAL_OIDC_IDENTITY_ID` | Variable | Machine identity for GitHub OIDC |
-| `INFISICAL_API_URL` | Variable | `https://secrets.dev.avcd.ai/api` (dev instance; CI reaches it via SSH on deploy host) |
+| `INFISICAL_API_URL` | Variable | `https://secrets.avcd.ai/api` (use `secrets.dev.avcd.ai` only if the deploy host can reach it) |
 | `INFISICAL_OIDC_AUDIENCE` | Variable | Default `https://github.com/Avocado-Technology` |
 | `INFISICAL_INFRA_PROJECT_ID` | Variable | **avcd-infra** project for bootstrap path (DOCR creds) |
 | `INFISICAL_BOOTSTRAP_PATH` | Variable | Optional; default `/ci-bootstrap` (override if dev instance uses `/infra`) |
