@@ -1,6 +1,6 @@
 # Deploy Next.js web stack from this repository root (Docker + Traefik on avcd_edge).
-# GitHub bootstrap: org secrets/vars via Infisical sync + Terraform (infra enable_github_org_bootstrap).
-# App secrets: Infisical project web — fetched at runtime via OIDC + infisical export.
+# GitHub bootstrap: org secrets/vars via Infisical sync + Terraform (pulumi-infra github stack).
+# App secrets: Infisical project avcd-web on secrets.dev.avcd.ai (OIDC via deploy host SSH).
 
 name: Deploy web to DigitalOcean (dev)
 
@@ -25,6 +25,7 @@ on:
       - "package-lock.json"
       - "auth.ts"
       - ".github/**"
+      - "scripts/ci/**"
   workflow_dispatch:
 
 concurrency:
@@ -39,6 +40,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: development
+    env:
+      INFISICAL_API_URL: ${{ vars.INFISICAL_API_URL || 'https://secrets.dev.avcd.ai/api' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -70,81 +73,6 @@ jobs:
           echo "host=$H" >> "$GITHUB_OUTPUT"
           echo "health_url=https://${H}/health" >> "$GITHUB_OUTPUT"
 
-      - name: Install Infisical CLI
-        run: |
-          curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.deb.sh' | sudo -E bash
-          sudo apt-get update && sudo apt-get install -y infisical
-          infisical --version
-
-      - name: Fetch Secrets from Infisical
-        env:
-          INFISICAL_API_URL: ${{ vars.INFISICAL_API_URL || 'https://secrets.avcd.ai/api' }}
-          INFISICAL_PROJECT_ID: ${{ vars.INFISICAL_PROJECT_ID }}
-          INFISICAL_OIDC_IDENTITY_ID: ${{ vars.INFISICAL_OIDC_IDENTITY_ID }}
-          INFISICAL_OIDC_AUDIENCE: ${{ vars.INFISICAL_OIDC_AUDIENCE || 'https://github.com/Avocado-Technology' }}
-          PUBLIC_HOST: ${{ steps.traefik_host.outputs.host }}
-        run: |
-          set -euo pipefail
-          [ -n "${INFISICAL_OIDC_IDENTITY_ID:-}" ] || { echo "::error::Set INFISICAL_OIDC_IDENTITY_ID on the development environment (Terraform github-org-bootstrap)."; exit 1; }
-          [ -n "${INFISICAL_PROJECT_ID:-}" ] || { echo "::error::Set INFISICAL_PROJECT_ID on the development environment (Terraform github-org-bootstrap)."; exit 1; }
-          OIDC_JWT=$(curl -sS -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
-            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${INFISICAL_OIDC_AUDIENCE}" | jq -r .value)
-          if [ -z "${OIDC_JWT:-}" ] || [ "$OIDC_JWT" = "null" ]; then
-            echo "::error::Failed to obtain GitHub OIDC token (check id-token: write and audience ${INFISICAL_OIDC_AUDIENCE})"
-            exit 1
-          fi
-          export INFISICAL_TOKEN=$(infisical login --method=oidc-auth \
-            --machine-identity-id="$INFISICAL_OIDC_IDENTITY_ID" \
-            --oidc-jwt="$OIDC_JWT" \
-            --domain="${INFISICAL_API_URL%/api}" --silent --plain)
-          infisical export --env=dev --path=/ \
-            --projectId="$INFISICAL_PROJECT_ID" --token="$INFISICAL_TOKEN" \
-            --format=dotenv --domain="${INFISICAL_API_URL%/api}" --silent \
-            > .env.infisical
-          test -s .env.infisical || (echo "::error::Infisical export empty (web project, env dev)" && exit 1)
-          {
-            echo "PUBLIC_HOST=${PUBLIC_HOST}"
-            echo "NEXT_PUBLIC_GRAPHQL_ENDPOINT=https://${PUBLIC_HOST}/api/graphql"
-            echo "NEXT_PUBLIC_MCP_SERVER_URL=https://${PUBLIC_HOST}/mcp"
-          } >> .env.infisical
-          echo "Verifying required secrets from Infisical (dev)..."
-          set -a
-          # shellcheck disable=SC1091
-          source .env.infisical
-          set +a
-          for key in AUTH_SECRET KEYCLOAK_CLIENT_SECRET KEYCLOAK_AUDIENCE KEYCLOAK_URL KEYCLOAK_CLIENT_ID KEYCLOAK_OIDC_SCOPE; do
-            eval "val=\${$key:-}"
-            if [ -z "$val" ]; then
-              echo "::error::Missing $key in Infisical (project web, env dev)"
-              exit 1
-            fi
-            echo "::add-mask::$val"
-          done
-          if echo "$KEYCLOAK_OIDC_SCOPE" | grep -q offline_access; then
-            echo "::error::KEYCLOAK_OIDC_SCOPE must not include offline_access (see infra modules/keycloak-config/web_oauth.tf)"
-            exit 1
-          fi
-          if [[ "${KEYCLOAK_AUDIENCE}" == */ ]]; then
-            echo "::error::KEYCLOAK_AUDIENCE must not end with / (use https://dev.avcd.ai/api not https://dev.avcd.ai/)"
-            exit 1
-          fi
-          sudo apt-get update && sudo apt-get install -y jq
-          response="$(curl -s -X POST "${KEYCLOAK_URL%/}/realms/${KEYCLOAK_REALM:-avcd}/protocol/openid-connect/token" \
-            -H "Content-Type: application/x-www-form-urlencoded" \
-            -d "client_id=${KEYCLOAK_CLIENT_ID}" \
-            -d "client_secret=${KEYCLOAK_CLIENT_SECRET}" \
-            -d "grant_type=authorization_code" \
-            -d "code=avcd-verify-web-oidc-client-secret" \
-            -d "redirect_uri=https://${PUBLIC_HOST}/api/auth/callback/keycloak")"
-          error="$(echo "$response" | jq -r '.error // empty')"
-          if [ "$error" != "invalid_grant" ]; then
-            echo "::error::KEYCLOAK_CLIENT_SECRET rejected by Keycloak ($error). Re-run infra keycloak-config-apply and redeploy."
-            echo "$response" >&2
-            exit 1
-          fi
-          echo "✓ Keycloak accepted avcd-web client credentials from Infisical"
-          echo "✓ Infisical export ready"
-
       - name: Resolve deploy targets
         id: deploy
         env:
@@ -158,6 +86,81 @@ jobs:
           echo "host=$H" >> "$GITHUB_OUTPUT"
           echo "health_url=https://${H}/health" >> "$GITHUB_OUTPUT"
           echo "docr_url=$R" >> "$GITHUB_OUTPUT"
+          echo "ssh_host=${DO_DEPLOY_HOST:-$H}" >> "$GITHUB_OUTPUT"
+
+      - name: Configure SSH key
+        run: |
+          set -euo pipefail
+          install -d -m 700 ~/.ssh
+          umask 077
+          printf '%s\n' "${{ secrets.DO_DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+      - name: Render Kamal secrets via deploy host (Infisical OIDC)
+        env:
+          DEPLOY_HOST: ${{ steps.deploy.outputs.ssh_host }}
+          DEPLOY_USER: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER || 'root' }}
+          SSH_KEY_FILE: ~/.ssh/deploy_key
+          INFISICAL_PROJECT_ID: ${{ vars.INFISICAL_PROJECT_ID }}
+          INFISICAL_INFRA_PROJECT_ID: ${{ vars.INFISICAL_INFRA_PROJECT_ID || 'e9b80cfd-9be4-4024-a1d6-753db87bc3b9' }}
+          INFISICAL_OIDC_IDENTITY_ID: ${{ vars.INFISICAL_OIDC_IDENTITY_ID }}
+          INFISICAL_OIDC_AUDIENCE: ${{ vars.INFISICAL_OIDC_AUDIENCE || 'https://github.com/Avocado-Technology' }}
+          PUBLIC_HOST: ${{ steps.traefik_host.outputs.host }}
+          REPO_ROOT: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          [ -n "${INFISICAL_OIDC_IDENTITY_ID:-}" ] || { echo "::error::Set INFISICAL_OIDC_IDENTITY_ID on the development environment."; exit 1; }
+          [ -n "${INFISICAL_PROJECT_ID:-}" ] || { echo "::error::Set INFISICAL_PROJECT_ID on the development environment."; exit 1; }
+          sudo apt-get update -qq && sudo apt-get install -y jq
+          OIDC_JWT=$(curl -sS -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${INFISICAL_OIDC_AUDIENCE}" | jq -r .value)
+          if [ -z "${OIDC_JWT:-}" ] || [ "$OIDC_JWT" = "null" ]; then
+            echo "::error::Failed to obtain GitHub OIDC token"
+            exit 1
+          fi
+          export OIDC_JWT INFISICAL_API_URL
+          chmod +x scripts/ci/render-secrets-via-deploy-host.sh
+          ./scripts/ci/render-secrets-via-deploy-host.sh
+
+      - name: Verify Keycloak secrets from Infisical
+        env:
+          PUBLIC_HOST: ${{ steps.traefik_host.outputs.host }}
+        run: |
+          set -euo pipefail
+          set -a
+          # shellcheck disable=SC1091
+          source .kamal/secrets
+          set +a
+          for key in AUTH_SECRET KEYCLOAK_CLIENT_SECRET KEYCLOAK_AUDIENCE KEYCLOAK_URL KEYCLOAK_CLIENT_ID KEYCLOAK_OIDC_SCOPE; do
+            eval "val=\${$key:-}"
+            if [ -z "$val" ]; then
+              echo "::error::Missing $key in Infisical (project web, env dev)"
+              exit 1
+            fi
+            echo "::add-mask::$val"
+          done
+          if echo "$KEYCLOAK_OIDC_SCOPE" | grep -q offline_access; then
+            echo "::error::KEYCLOAK_OIDC_SCOPE must not include offline_access"
+            exit 1
+          fi
+          if [[ "${KEYCLOAK_AUDIENCE}" == */ ]]; then
+            echo "::error::KEYCLOAK_AUDIENCE must not end with /"
+            exit 1
+          fi
+          response="$(curl -s -X POST "${KEYCLOAK_URL%/}/realms/${KEYCLOAK_REALM:-avcd}/protocol/openid-connect/token" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "client_id=${KEYCLOAK_CLIENT_ID}" \
+            -d "client_secret=${KEYCLOAK_CLIENT_SECRET}" \
+            -d "grant_type=authorization_code" \
+            -d "code=avcd-verify-web-oidc-client-secret" \
+            -d "redirect_uri=https://${PUBLIC_HOST}/api/auth/callback/keycloak")"
+          error="$(echo "$response" | jq -r '.error // empty')"
+          if [ "$error" != "invalid_grant" ]; then
+            echo "::error::KEYCLOAK_CLIENT_SECRET rejected by Keycloak ($error)"
+            echo "$response" >&2
+            exit 1
+          fi
+          echo "✓ Keycloak accepted avcd-web client credentials from Infisical"
 
       - name: Deploy web with Kamal
         uses: Avocado-Technology/avcd-actions/kamal-deploy@v5.5
@@ -166,7 +169,7 @@ jobs:
           deploy_user: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER }}
           ssh_key: ${{ secrets.DO_DEPLOY_SSH_KEY }}
           docr_registry_url: ${{ steps.deploy.outputs.docr_url }}
-          infisical_api_url: ${{ vars.INFISICAL_API_URL || 'https://secrets.avcd.ai/api' }}
+          infisical_api_url: ${{ env.INFISICAL_API_URL }}
           infisical_project_id: ${{ vars.INFISICAL_PROJECT_ID }}
           infisical_infra_project_id: ${{ vars.INFISICAL_INFRA_PROJECT_ID || 'e9b80cfd-9be4-4024-a1d6-753db87bc3b9' }}
           infisical_oidc_identity_id: ${{ vars.INFISICAL_OIDC_IDENTITY_ID }}
@@ -176,5 +179,6 @@ jobs:
           kamal_version: ${{ vars.KAMAL_VERSION || '2.11.0' }}
           kamal_destination: development
           skip_accessory_boot: "true"
+          skip_secrets_render: "true"
           verify_url: ${{ vars.DO_WEB_HEALTH_URL || steps.deploy.outputs.health_url }}
           verify_body_substring: '"status":"ok"'
