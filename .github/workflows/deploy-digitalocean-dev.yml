@@ -177,10 +177,15 @@ jobs:
           # shellcheck disable=SC1091
           source .kamal/secrets
           set +a
-          for key in AUTH_SECRET KEYCLOAK_CLIENT_SECRET KEYCLOAK_AUDIENCE KEYCLOAK_URL KEYCLOAK_CLIENT_ID KEYCLOAK_OIDC_SCOPE; do
+          KEYCLOAK_URL="${KEYCLOAK_URL:-https://auth.avcd.ai}"
+          KEYCLOAK_REALM="${KEYCLOAK_REALM:-avcd}"
+          KEYCLOAK_CLIENT_ID="${KEYCLOAK_CLIENT_ID:-avcd-web}"
+          KEYCLOAK_AUDIENCE="https://${PUBLIC_HOST}/api"
+          KEYCLOAK_OIDC_SCOPE="${KEYCLOAK_OIDC_SCOPE:-openid profile email}"
+          for key in AUTH_SECRET KEYCLOAK_CLIENT_SECRET; do
             eval "val=\${$key:-}"
             if [ -z "$val" ]; then
-              echo "::error::Missing $key in Infisical (project web, env dev)"
+              echo "::error::Missing $key in Infisical (avcd-web, env dev)"
               exit 1
             fi
             echo "::add-mask::$val"
@@ -193,7 +198,7 @@ jobs:
             echo "::error::KEYCLOAK_AUDIENCE must not end with /"
             exit 1
           fi
-          response="$(curl -s -X POST "${KEYCLOAK_URL%/}/realms/${KEYCLOAK_REALM:-avcd}/protocol/openid-connect/token" \
+          response="$(curl -s -X POST "${KEYCLOAK_URL%/}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token" \
             -H "Content-Type: application/x-www-form-urlencoded" \
             -d "client_id=${KEYCLOAK_CLIENT_ID}" \
             -d "client_secret=${KEYCLOAK_CLIENT_SECRET}" \
