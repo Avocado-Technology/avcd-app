@@ -89,18 +89,34 @@ jobs:
           echo "ssh_host=${DO_DEPLOY_HOST:-$H}" >> "$GITHUB_OUTPUT"
 
       - name: Configure SSH key
+        env:
+          DEPLOY_HOST: ${{ steps.deploy.outputs.ssh_host }}
+          DEPLOY_USER: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER || 'root' }}
+          SSH_PRIVATE_KEY: ${{ secrets.DO_DEPLOY_SSH_KEY }}
         run: |
           set -euo pipefail
+          [ -n "${SSH_PRIVATE_KEY:-}" ] || { echo "::error::DO_DEPLOY_SSH_KEY is empty. Set org/environment secret."; exit 1; }
           install -d -m 700 ~/.ssh
           umask 077
-          printf '%s\n' "${{ secrets.DO_DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+          ssh-keygen -R "${DEPLOY_HOST}" -f ~/.ssh/known_hosts 2>/dev/null || true
+          ssh-keyscan "${DEPLOY_HOST}" >> ~/.ssh/known_hosts 2>/dev/null || true
+          {
+            printf 'Host %s\n' "${DEPLOY_HOST}"
+            printf '  HostName %s\n' "${DEPLOY_HOST}"
+            printf '  User %s\n' "${DEPLOY_USER}"
+            printf '  IdentityFile ~/.ssh/deploy_key\n'
+            printf '  StrictHostKeyChecking accept-new\n'
+          } >> ~/.ssh/config
+          chmod 600 ~/.ssh/config
+          ssh -o BatchMode=yes "${DEPLOY_USER}@${DEPLOY_HOST}" "echo ok" \
+            || { echo "::error::SSH to ${DEPLOY_USER}@${DEPLOY_HOST} failed. Add DO_DEPLOY_SSH_KEY pubkey to the droplet authorized_keys."; exit 1; }
 
       - name: Render Kamal secrets via deploy host (Infisical OIDC)
         env:
           DEPLOY_HOST: ${{ steps.deploy.outputs.ssh_host }}
           DEPLOY_USER: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER || 'root' }}
-          SSH_KEY_FILE: ~/.ssh/deploy_key
           INFISICAL_PROJECT_ID: ${{ vars.INFISICAL_PROJECT_ID }}
           INFISICAL_INFRA_PROJECT_ID: ${{ vars.INFISICAL_INFRA_PROJECT_ID || 'e9b80cfd-9be4-4024-a1d6-753db87bc3b9' }}
           INFISICAL_OIDC_IDENTITY_ID: ${{ vars.INFISICAL_OIDC_IDENTITY_ID }}

@@ -5,7 +5,6 @@ set -euo pipefail
 
 : "${DEPLOY_HOST:?}"
 : "${DEPLOY_USER:?}"
-: "${SSH_KEY_FILE:?}"
 : "${OIDC_JWT:?}"
 : "${INFISICAL_API_URL:?}"
 : "${INFISICAL_PROJECT_ID:?}"
@@ -17,15 +16,15 @@ set -euo pipefail
 
 INFISICAL_DOMAIN="${INFISICAL_API_URL%/api}"
 REMOTE_DIR="/tmp/avcd-web-kamal-secrets-$$"
-SSH_OPTS=(-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null -i "$SSH_KEY_FILE")
+SSH_TARGET="${DEPLOY_USER}@${DEPLOY_HOST}"
 
 install -d -m 700 .kamal
 tar -C "$REPO_ROOT" -czf /tmp/kamal-secrets-bundle.tgz .kamal/secrets.ci.template
-scp "${SSH_OPTS[@]}" /tmp/kamal-secrets-bundle.tgz "${DEPLOY_USER}@${DEPLOY_HOST}:/tmp/kamal-secrets-bundle.tgz"
+scp -o BatchMode=yes /tmp/kamal-secrets-bundle.tgz "${SSH_TARGET}:/tmp/kamal-secrets-bundle.tgz"
 
 OIDC_B64=$(printf '%s' "$OIDC_JWT" | base64 -w0 2>/dev/null || printf '%s' "$OIDC_JWT" | base64)
 
-ssh "${SSH_OPTS[@]}" "${DEPLOY_USER}@${DEPLOY_HOST}" bash -s <<REMOTE
+ssh -o BatchMode=yes "${SSH_TARGET}" bash -s <<REMOTE
 set -euo pipefail
 REMOTE_DIR="${REMOTE_DIR}"
 mkdir -p "\$REMOTE_DIR/.kamal"
@@ -58,13 +57,13 @@ chmod 600 .kamal/secrets
 test -s .kamal/secrets
 REMOTE
 
-scp "${SSH_OPTS[@]}" "${DEPLOY_USER}@${DEPLOY_HOST}:${REMOTE_DIR}/.kamal/secrets" .kamal/secrets
+scp -o BatchMode=yes "${SSH_TARGET}:${REMOTE_DIR}/.kamal/secrets" .kamal/secrets
 chmod 600 .kamal/secrets
 cp .kamal/secrets .kamal/secrets-common
 chmod 600 .kamal/secrets-common
 cp .kamal/secrets .kamal/secrets.development
 chmod 600 .kamal/secrets.development
 
-ssh "${SSH_OPTS[@]}" "${DEPLOY_USER}@${DEPLOY_HOST}" "rm -rf ${REMOTE_DIR} /tmp/kamal-secrets-bundle.tgz"
+ssh -o BatchMode=yes "${SSH_TARGET}" "rm -rf ${REMOTE_DIR} /tmp/kamal-secrets-bundle.tgz"
 
 echo "✓ Rendered .kamal/secrets via ${DEPLOY_USER}@${DEPLOY_HOST}"
