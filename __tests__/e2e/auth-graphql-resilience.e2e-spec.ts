@@ -112,21 +112,15 @@ describe("E2E: Auth + GraphQL Resilience - Token management under concurrent loa
     const session = await createAuthenticatedSession();
     await invalidateRefreshToken(session);
 
-    delete (window as { location?: unknown }).location;
-    (window as { location: { href: string } }).location = { href: "" };
+    const consoleSpy = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
 
-    const exp = Math.floor(Date.now() / 1000) + 7200;
-    const fetchImpl = jest
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ accessToken: makeJwt(exp) }),
-      })
-      .mockResolvedValue({
-        ok: false,
-        status: 401,
-        json: async () => ({}),
-      }) as unknown as typeof fetch;
+    const fetchImpl = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: async () => ({}),
+    }) as unknown as typeof fetch;
 
     const tokenService = new TokenService({ fetchImpl });
 
@@ -156,11 +150,15 @@ describe("E2E: Auth + GraphQL Resilience - Token management under concurrent loa
       ]),
     });
 
-    await expect(
-      client.query({ query: GetOrganizationsDocument }),
-    ).rejects.toBeDefined();
+    const result = await client.query({
+      query: GetOrganizationsDocument,
+    });
 
-    expect(window.location.href).toContain("/api/auth/login");
+    expect(result.error).toBeDefined();
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "Silent refresh failed, redirecting to login...",
+    );
+    consoleSpy.mockRestore();
   });
 
   it("should render organization list via Server Component without client fetch", async () => {

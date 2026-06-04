@@ -1,4 +1,5 @@
-import { describe, it, expect } from "@jest/globals";
+import { it, expect } from "@jest/globals";
+import { describeMonorepoInfra as describe } from "../helpers/test-guards";
 import * as path from "path";
 import { execSync } from "child_process";
 import { avcdRepoRoot, readInfraOutputsTf, canQueryTerraformOutputs } from "../helpers/avcd-repo-root";

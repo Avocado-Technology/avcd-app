@@ -1,11 +1,14 @@
 /**
  * @jest-environment node
  */
+import { describeLiveDeployE2e } from "../helpers/test-guards";
+
 /**
  * E2E: validates deployed web stack uses Infisical-sourced Keycloak config.
  * Skip locally with E2E_SKIP_DEPLOY=1 when dev.avcd.ai is unreachable.
+ * Skipped in CI (no live dev host).
  */
-describe("E2E: Web Infisical deploy — Goal: OIDC export enables Keycloak login", () => {
+describeLiveDeployE2e("E2E: Web Infisical deploy — Goal: OIDC export enables Keycloak login", () => {
   it("should redirect /api/auth/login to Keycloak when deployed with Infisical secrets", async () => {
     if (process.env.E2E_SKIP_DEPLOY === "1") {
       return;

@@ -5,15 +5,16 @@ import * as path from 'path';
 
 describe('Development Docker Setup - Hot Reload', () => {
   const webRoot = path.join(__dirname, '../..');
-  
-  describe('Dockerfile.dev', () => {
-    it('should exist', () => {
-      const dockerfilePath = path.join(webRoot, 'Dockerfile.dev');
-      expect(fs.existsSync(dockerfilePath)).toBe(true);
+
+  describe('Dockerfile (dev target)', () => {
+    it('should define a dev stage', () => {
+      const dockerfilePath = path.join(webRoot, 'Dockerfile');
+      const content = fs.readFileSync(dockerfilePath, 'utf8');
+      expect(content).toMatch(/FROM\s+.*\s+AS\s+dev/i);
     });
 
     it('should start the dev server via docker-entrypoint-dev.sh', () => {
-      const dockerfilePath = path.join(webRoot, 'Dockerfile.dev');
+      const dockerfilePath = path.join(webRoot, 'Dockerfile');
       const content = fs.readFileSync(dockerfilePath, 'utf8');
       expect(content).toMatch(
         /ENTRYPOINT\s+\[\s*"sh"\s*,\s*".\/docker-entrypoint-dev.sh"\s*\]/,
@@ -24,15 +25,8 @@ describe('Development Docker Setup - Hot Reload', () => {
       expect(script).toContain('exec npm run dev:local');
     });
 
-    it('should be single-stage build (no multi-stage FROM)', () => {
-      const dockerfilePath = path.join(webRoot, 'Dockerfile.dev');
-      const content = fs.readFileSync(dockerfilePath, 'utf8');
-      const fromStatements = content.match(/^FROM /gm) || [];
-      expect(fromStatements.length).toBe(1);
-    });
-
-    it('should use Node 22', () => {
-      const dockerfilePath = path.join(webRoot, 'Dockerfile.dev');
+    it('should use Node 22 in base image', () => {
+      const dockerfilePath = path.join(webRoot, 'Dockerfile');
       const content = fs.readFileSync(dockerfilePath, 'utf8');
       expect(content).toMatch(/FROM\s+node:22/);
     });
@@ -42,11 +36,12 @@ describe('Development Docker Setup - Hot Reload', () => {
     type DevComposeFile = {
       services: {
         web: {
-          build: { dockerfile: string };
+          build: { dockerfile: string; target?: string };
           volumes: string[];
           environment: Record<string, string>;
           ports: string[];
           labels?: Record<string, string>;
+          develop?: { watch: unknown[] };
         };
       };
       volumes?: Record<string, unknown>;
@@ -65,14 +60,18 @@ describe('Development Docker Setup - Hot Reload', () => {
       expect(fs.existsSync(composePath)).toBe(true);
     });
 
-    it('should use Dockerfile.dev', () => {
-      expect(composeConfig.services.web.build.dockerfile).toBe('Dockerfile.dev');
+    it('should use Dockerfile with dev target', () => {
+      expect(composeConfig.services.web.build.dockerfile).toBe('Dockerfile');
+      expect(composeConfig.services.web.build.target).toBe('dev');
+    });
+
+    it('should use Compose Watch for source sync', () => {
+      expect(composeConfig.services.web.develop?.watch?.length).toBeGreaterThan(0);
     });
 
     it('should not have bind mount for source code (watch handles sync)', () => {
       const volumes = composeConfig.services.web.volumes;
       expect(volumes).toBeDefined();
-      // Source code is synced via develop.watch, not bind mount
       expect(volumes.some((v: string) => v.startsWith('.:/app'))).toBe(false);
     });
 
@@ -82,7 +81,6 @@ describe('Development Docker Setup - Hot Reload', () => {
         volumes.some((v: string) => v === 'app_node_modules:/app/node_modules'),
       ).toBe(true);
       expect(composeConfig.volumes?.app_node_modules).toBeDefined();
-      // No source bind mount when using watch
       expect(volumes.some((v: string) => v.startsWith('.:/app'))).toBe(false);
     });
 

@@ -27,8 +27,9 @@ describe('Docker Setup Integration', () => {
     expect(fs.existsSync(prodPath)).toBe(true);
   });
 
-  it('dev should use Dockerfile.dev', () => {
-    expect(devComposeConfig.services.web.build.dockerfile).toBe('Dockerfile.dev');
+  it('dev should use Dockerfile with dev target', () => {
+    expect(devComposeConfig.services.web.build.dockerfile).toBe('Dockerfile');
+    expect(devComposeConfig.services.web.build.target).toBe('dev');
   });
 
   it('prod should use Dockerfile (production)', () => {
@@ -58,11 +59,11 @@ describe('Docker Setup Integration', () => {
     expect(prodPorts.some((p: string) => p.includes('3000'))).toBe(true);
   });
 
-  it('Dockerfile.dev and Dockerfile should both exist', () => {
-    const devDockerfilePath = path.join(webRoot, 'Dockerfile.dev');
-    const prodDockerfilePath = path.join(webRoot, 'Dockerfile');
-    
-    expect(fs.existsSync(devDockerfilePath)).toBe(true);
-    expect(fs.existsSync(prodDockerfilePath)).toBe(true);
+  it('Dockerfile should exist with dev and runner stages', () => {
+    const dockerfilePath = path.join(webRoot, 'Dockerfile');
+    const content = fs.readFileSync(dockerfilePath, 'utf8');
+    expect(fs.existsSync(dockerfilePath)).toBe(true);
+    expect(content).toMatch(/FROM\s+.*\s+AS\s+dev/i);
+    expect(content).toMatch(/FROM\s+.*\s+AS\s+runner/i);
   });
 });

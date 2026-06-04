@@ -1,4 +1,5 @@
-import { describe, it, expect } from "@jest/globals";
+import { it, expect } from "@jest/globals";
+import { describeMonorepoInfra as describe } from "../helpers/test-guards";
 import { readInfraAuth0Main } from "../helpers/avcd-repo-root";
 
 const here = __dirname;
