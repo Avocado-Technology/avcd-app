@@ -147,7 +147,7 @@ jobs:
           INFISICAL_PROJECT_ID: ${{ vars.INFISICAL_PROJECT_ID }}
           INFISICAL_INFRA_PROJECT_ID: ${{ vars.INFISICAL_INFRA_PROJECT_ID || 'e9b80cfd-9be4-4024-a1d6-753db87bc3b9' }}
           INFISICAL_OIDC_IDENTITY_ID: ${{ vars.INFISICAL_OIDC_IDENTITY_ID }}
-          INFISICAL_OIDC_AUDIENCE: ${{ vars.INFISICAL_OIDC_AUDIENCE || 'https://github.com/Avocado-Technology' }}
+          INFISICAL_OIDC_AUDIENCE: ${{ vars.INFISICAL_OIDC_AUDIENCE || 'https://secrets.avcd.ai' }}
           INFISICAL_BOOTSTRAP_PATH: ${{ vars.INFISICAL_BOOTSTRAP_PATH || '/ci-bootstrap' }}
           PUBLIC_HOST: ${{ steps.traefik_host.outputs.host }}
           REPO_ROOT: ${{ github.workspace }}
@@ -217,7 +217,7 @@ jobs:
           infisical_project_id: ${{ vars.INFISICAL_PROJECT_ID }}
           infisical_infra_project_id: ${{ vars.INFISICAL_INFRA_PROJECT_ID || 'e9b80cfd-9be4-4024-a1d6-753db87bc3b9' }}
           infisical_oidc_identity_id: ${{ vars.INFISICAL_OIDC_IDENTITY_ID }}
-          infisical_oidc_audience: ${{ vars.INFISICAL_OIDC_AUDIENCE || 'https://github.com/Avocado-Technology' }}
+          infisical_oidc_audience: ${{ vars.INFISICAL_OIDC_AUDIENCE || 'https://secrets.avcd.ai' }}
           infisical_env: dev
           public_host: ${{ steps.traefik_host.outputs.host }}
           kamal_version: ${{ vars.KAMAL_VERSION || '2.11.0' }}
