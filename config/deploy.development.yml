@@ -1,1 +1,2 @@
-# Kamal destination `development` — env comes from config/deploy.yml (__DO_DEPLOY_HOST__ rendered at deploy).
+# Kamal destination `development` — base config in config/deploy.yml (__DO_DEPLOY_HOST__ rendered at deploy).
+{}
