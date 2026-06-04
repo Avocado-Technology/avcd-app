@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { applySignOutCookies } from "@/lib/auth/apply-sign-out-cookies";
 import { auth, signOut } from "@/lib/auth/keycloak";
 import { buildKeycloakAuthConfig } from "@/lib/auth/config";
 
@@ -24,18 +25,15 @@ export async function GET(request: NextRequest) {
 
   if (federated) {
     try {
-      const { issuer } = buildKeycloakAuthConfig(process.env);
+      const { issuer, clientId } = buildKeycloakAuthConfig(process.env);
       const logoutUrl = new URL(`${issuer}/protocol/openid-connect/logout`);
+      logoutUrl.searchParams.set("client_id", clientId);
       logoutUrl.searchParams.set("post_logout_redirect_uri", `${baseUrl}/`);
       if (session?.idToken) {
         logoutUrl.searchParams.set("id_token_hint", session.idToken);
       }
       const response = NextResponse.redirect(logoutUrl);
-      clearSession.headers.forEach((value: string, key: string) => {
-        if (key.toLowerCase() === "set-cookie") {
-          response.headers.append(key, value);
-        }
-      });
+      applySignOutCookies(response, clearSession);
       return response;
     } catch {
       // Fall through to app-only logout
@@ -43,10 +41,6 @@ export async function GET(request: NextRequest) {
   }
 
   const response = NextResponse.redirect(`${baseUrl}/`);
-  clearSession.headers.forEach((value: string, key: string) => {
-    if (key.toLowerCase() === "set-cookie") {
-      response.headers.append(key, value);
-    }
-  });
+  applySignOutCookies(response, clearSession);
   return response;
 }
