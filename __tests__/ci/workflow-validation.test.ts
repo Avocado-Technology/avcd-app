@@ -85,4 +85,31 @@ describe('GitHub Actions Workflow Configuration', () => {
       expect(workflow.on.pull_request.branches).toContain('main');
     });
   });
+
+  describe('release-tag-on-merge.yml', () => {
+    let workflow: ReturnType<typeof yaml.parse>;
+
+    beforeAll(() => {
+      const workflowPath = path.join(webRoot, '.github/workflows/release-tag-on-merge.yml');
+      workflow = yaml.parse(fs.readFileSync(workflowPath, 'utf8'));
+    });
+
+    it('should run only when a PR to main is merged', () => {
+      expect(workflow.on.pull_request.types).toContain('closed');
+      expect(workflow.on.pull_request.branches).toContain('main');
+      expect(workflow.jobs['tag-release'].if).toBe('github.event.pull_request.merged == true');
+    });
+
+    it('should use github-tag-action for semver analysis', () => {
+      const step = workflow.jobs['tag-release'].steps.find(
+        (s: { name?: string }) => s.name === 'Analyze commits for semver bump',
+      );
+      expect(step?.uses).toBe('step-security/github-tag-action@v6');
+      expect(step?.with?.dry_run).toBe(true);
+    });
+
+    it('should require contents write to push tags', () => {
+      expect(workflow.permissions?.contents).toBe('write');
+    });
+  });
 });

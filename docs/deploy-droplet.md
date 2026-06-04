@@ -9,6 +9,7 @@ uses: Avocado-Technology/avcd-actions/kamal-deploy@v5.5
 Workflows:
 
 - [`.github/workflows/deploy-digitalocean-dev.yml`](../.github/workflows/deploy-digitalocean-dev.yml) — `environment: development`, push to `main`
+- [`.github/workflows/release-tag-on-merge.yml`](../.github/workflows/release-tag-on-merge.yml) — on merged PR to `main`, bumps semver and pushes `vX.Y.Z-release`
 - [`.github/workflows/deploy-digitalocean-prod.yml`](../.github/workflows/deploy-digitalocean-prod.yml) — tag `*-release` (e.g. `v1.2.3-release` → Kamal `--version=1.2.3`)
 - [`.github/workflows/pr-checks.yml`](../.github/workflows/pr-checks.yml) — lint, test, build on pull requests
 
@@ -55,7 +56,10 @@ In **avcd-actions**: **Settings → Actions → General → Access** — allow *
 # Dev (automatic on merge to main)
 git push origin main
 
-# Prod (versioned)
+# Prod (automatic: merge PR → release-tag-on-merge → vX.Y.Z-release → prod deploy)
+# Bump hints in PR title: #patch (default), #minor, #major
+
+# Prod (manual tag, if needed)
 git tag v1.2.3-release
 git push origin v1.2.3-release
 

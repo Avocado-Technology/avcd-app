@@ -1,0 +1,119 @@
+# On merge to main: semver bump → push vX.Y.Z-release → triggers prod Kamal deploy.
+#
+# Bump hints (in PR title or body):
+#   #major  — major bump (or BREAKING CHANGE in commits)
+#   #minor  — minor bump
+#   (default patch)
+#
+# Uses step-security/github-tag-action (dry_run) for conventional-commit analysis,
+# then applies the bump to the latest v*-release tag (AVCD convention).
+
+name: Release tag on PR merge
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+concurrency:
+  group: release-tag-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  tag-release:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout merge commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
+
+      - name: Analyze commits for semver bump
+        id: semver
+        uses: step-security/github-tag-action@v6
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          dry_run: true
+          fetch_all_tags: true
+          release_branches: main
+          default_bump: patch
+
+      - name: Resolve bump level
+        id: bump
+        env:
+          PR_TEXT: ${{ github.event.pull_request.title }} ${{ github.event.pull_request.body }}
+          RELEASE_TYPE: ${{ steps.semver.outputs.release_type }}
+        run: |
+          set -euo pipefail
+          level="patch"
+          if echo "$PR_TEXT" | grep -qE '(#major|BREAKING CHANGE)'; then
+            level="major"
+          elif echo "$PR_TEXT" | grep -qE '#minor'; then
+            level="minor"
+          elif echo "$PR_TEXT" | grep -qE '#patch'; then
+            level="patch"
+          elif [ -n "${RELEASE_TYPE:-}" ]; then
+            case "$RELEASE_TYPE" in
+              major|pre-major) level="major" ;;
+              minor|pre-minor) level="minor" ;;
+              *) level="patch" ;;
+            esac
+          fi
+          echo "level=$level" >> "$GITHUB_OUTPUT"
+
+      - name: Compute and push release tag
+        id: release
+        env:
+          BUMP_LEVEL: ${{ steps.bump.outputs.level }}
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+
+          LAST=$(git tag -l 'v*-release' --sort=-v:refname | head -1 || true)
+          if [ -n "$LAST" ]; then
+            CUR="${LAST#v}"
+            CUR="${CUR%-release}"
+          else
+            CUR="0.0.0"
+          fi
+
+          IFS=. read -r MA MI PA <<< "$CUR"
+          MA=${MA:-0}; MI=${MI:-0}; PA=${PA:-0}
+
+          case "$BUMP_LEVEL" in
+            major) MA=$((MA + 1)); MI=0; PA=0 ;;
+            minor) MI=$((MI + 1)); PA=0 ;;
+            *) PA=$((PA + 1)) ;;
+          esac
+
+          NEW_VER="${MA}.${MI}.${PA}"
+          TAG="v${NEW_VER}-release"
+
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "::warning::Tag $TAG already exists; skipping"
+            echo "tag=" >> "$GITHUB_OUTPUT"
+            echo "version=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Release $TAG (PR #${{ github.event.pull_request.number }})"
+          git push origin "$TAG"
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$NEW_VER" >> "$GITHUB_OUTPUT"
+          echo "Created $TAG — prod deploy workflow will run on tag push"
+
+      - name: Summary
+        if: steps.release.outputs.tag != ''
+        run: |
+          echo "### Release tag created" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Tag: \`${{ steps.release.outputs.tag }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Kamal version: \`${{ steps.release.outputs.version }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Prod workflow: \`deploy-digitalocean-prod.yml\`" >> "$GITHUB_STEP_SUMMARY"
