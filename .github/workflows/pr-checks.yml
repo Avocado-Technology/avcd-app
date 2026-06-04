@@ -19,6 +19,8 @@ on:
       - "i18n/**"
       - "package.json"
       - "package-lock.json"
+      - "commitlint.config.js"
+      - ".releaserc.json"
       - "auth.ts"
       - "__tests__/**"
       - "jest.config.js"
@@ -37,6 +39,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -46,6 +50,13 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
+
+      - name: Validate commit messages
+        run: |
+          npx commitlint \
+            --from ${{ github.event.pull_request.base.sha }} \
+            --to ${{ github.event.pull_request.head.sha }} \
+            --verbose
 
       - name: Lint
         run: npm run lint

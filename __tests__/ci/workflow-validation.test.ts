@@ -84,32 +84,49 @@ describe('GitHub Actions Workflow Configuration', () => {
       const workflow = yaml.parse(fs.readFileSync(workflowPath, 'utf8'));
       expect(workflow.on.pull_request.branches).toContain('main');
     });
+
+    it('should validate commits with commitlint', () => {
+      const workflowPath = path.join(webRoot, '.github/workflows/pr-checks.yml');
+      const workflow = yaml.parse(fs.readFileSync(workflowPath, 'utf8'));
+      const step = workflow.jobs['lint-test-build'].steps.find(
+        (s: { name?: string }) => s.name === 'Validate commit messages',
+      );
+      expect(step?.run).toContain('commitlint');
+    });
   });
 
-  describe('release-tag-on-merge.yml', () => {
+  describe('release.yml', () => {
     let workflow: ReturnType<typeof yaml.parse>;
 
     beforeAll(() => {
-      const workflowPath = path.join(webRoot, '.github/workflows/release-tag-on-merge.yml');
+      const workflowPath = path.join(webRoot, '.github/workflows/release.yml');
       workflow = yaml.parse(fs.readFileSync(workflowPath, 'utf8'));
     });
 
-    it('should run only when a PR to main is merged', () => {
-      expect(workflow.on.pull_request.types).toContain('closed');
-      expect(workflow.on.pull_request.branches).toContain('main');
-      expect(workflow.jobs['tag-release'].if).toBe('github.event.pull_request.merged == true');
+    it('should run on push to main', () => {
+      expect(workflow.on.push.branches).toContain('main');
+      expect(workflow.on.pull_request).toBeUndefined();
     });
 
-    it('should use github-tag-action for semver analysis', () => {
-      const step = workflow.jobs['tag-release'].steps.find(
-        (s: { name?: string }) => s.name === 'Analyze commits for semver bump',
-      );
-      expect(step?.uses).toBe('step-security/github-tag-action@v6');
-      expect(step?.with?.dry_run).toBe(true);
+    it('should skip release commits with skip ci', () => {
+      expect(workflow.jobs.release.if).toContain('[skip ci]');
     });
 
-    it('should require contents write to push tags', () => {
+    it('should run semantic-release with full git permissions', () => {
       expect(workflow.permissions?.contents).toBe('write');
+      const step = workflow.jobs.release.steps.find(
+        (s: { name?: string }) => s.name === 'Run semantic-release',
+      );
+      expect(step?.run).toContain('semantic-release');
+    });
+  });
+
+  describe('.releaserc.json', () => {
+    it('should use vX.Y.Z-release tag format for prod deploy', () => {
+      const configPath = path.join(webRoot, '.releaserc.json');
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      expect(config.tagFormat).toBe('v${version}-release');
+      expect(config.branches).toContain('main');
     });
   });
 });

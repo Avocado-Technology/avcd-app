@@ -119,21 +119,27 @@ make help                       # INFISICAL_ENV, INFISICAL_PUSH_FILE, etc.
 | Environment | Trigger | Workflow |
 |-------------|---------|----------|
 | **Development** | Push to `main` (path filters) | [`.github/workflows/deploy-digitalocean-dev.yml`](.github/workflows/deploy-digitalocean-dev.yml) |
-| **Production** | Tag `vX.Y.Z-release` (auto on PR merge) | [`.github/workflows/deploy-digitalocean-prod.yml`](.github/workflows/deploy-digitalocean-prod.yml) |
+| **Production** | Tag `vX.Y.Z-release` (semantic-release on `main`) | [`.github/workflows/deploy-digitalocean-prod.yml`](.github/workflows/deploy-digitalocean-prod.yml) |
 
-**Release tags** are created automatically when a PR merges to `main` ([`release-tag-on-merge.yml`](.github/workflows/release-tag-on-merge.yml)):
+**Releases** run on every push to `main` via [semantic-release](https://github.com/semantic-release/semantic-release) ([`.github/workflows/release.yml`](.github/workflows/release.yml)):
 
-- Default: **patch** bump (`v1.2.3-release` → `v1.2.4-release`)
-- PR title/body: `#minor` or `#major` for larger bumps
-- Conventional commits (`feat:`, `fix:`, `BREAKING CHANGE:`) also influence the bump via [step-security/github-tag-action](https://github.com/step-security/github-tag-action)
+- [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `BREAKING CHANGE:`) determine semver
+- Updates `CHANGELOG.md`, `package.json`, and creates a **GitHub Release**
+- Pushes tag `vX.Y.Z-release` (triggers prod Kamal deploy)
+- `chore:` / `docs:` only merges may skip a release (no prod deploy that push)
 
-Manual tag (optional):
+Commit format is enforced locally (`husky` + `commitlint`) and on PRs ([`pr-checks.yml`](.github/workflows/pr-checks.yml)).
 
 ```bash
-git tag v1.0.0-release && git push origin v1.0.0-release
+# Examples
+git commit -m "feat(auth): add Keycloak session refresh"
+git commit -m "fix(deploy): correct Infisical env slug"
+git commit -m "feat(api)!: remove legacy Auth0 routes"  # minor/major per BREAKING
 ```
 
-PRs run lint, test, and build via [`.github/workflows/pr-checks.yml`](.github/workflows/pr-checks.yml).
+Manual tag (optional): `git tag v1.0.0-release && git push origin v1.0.0-release`
+
+PRs run lint, test, build, and commitlint via [`.github/workflows/pr-checks.yml`](.github/workflows/pr-checks.yml).
 
 See [`docs/deploy-droplet.md`](docs/deploy-droplet.md) and [`deploy/production/README.md`](deploy/production/README.md) (Compose manual fallback).
 

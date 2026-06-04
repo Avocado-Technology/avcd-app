@@ -5,10 +5,12 @@
 | Environment | Trigger | Workflow |
 |-------------|---------|----------|
 | Development | Push to `main` | `.github/workflows/deploy-digitalocean-dev.yml` |
-| Production | Tag `vX.Y.Z-release` | `.github/workflows/deploy-digitalocean-prod.yml` |
+| Production | Tag `vX.Y.Z-release` (from semantic-release on `main`) | `.github/workflows/deploy-digitalocean-prod.yml` |
+
+Releases are created by [semantic-release](https://github.com/semantic-release/semantic-release) (`.github/workflows/release.yml`) using [Conventional Commits](https://www.conventionalcommits.org/).
 
 ```bash
-# Production release (from repo root)
+# Manual production tag (emergency)
 git tag v1.0.0-release
 git push origin v1.0.0-release
 ```

@@ -9,9 +9,9 @@ uses: Avocado-Technology/avcd-actions/kamal-deploy@v5.5
 Workflows:
 
 - [`.github/workflows/deploy-digitalocean-dev.yml`](../.github/workflows/deploy-digitalocean-dev.yml) — `environment: development`, push to `main`
-- [`.github/workflows/release-tag-on-merge.yml`](../.github/workflows/release-tag-on-merge.yml) — on merged PR to `main`, bumps semver and pushes `vX.Y.Z-release`
+- [`.github/workflows/release.yml`](../.github/workflows/release.yml) — [semantic-release](https://github.com/semantic-release/semantic-release) on `main` → `CHANGELOG.md`, GitHub Release, tag `vX.Y.Z-release`
 - [`.github/workflows/deploy-digitalocean-prod.yml`](../.github/workflows/deploy-digitalocean-prod.yml) — tag `*-release` (e.g. `v1.2.3-release` → Kamal `--version=1.2.3`)
-- [`.github/workflows/pr-checks.yml`](../.github/workflows/pr-checks.yml) — lint, test, build on pull requests
+- [`.github/workflows/pr-checks.yml`](../.github/workflows/pr-checks.yml) — lint, test, build, [Conventional Commits](https://www.conventionalcommits.org/) validation on PRs
 
 Kamal config: [`config/deploy.yml`](../config/deploy.yml), destinations [`config/deploy.development.yml`](../config/deploy.development.yml) / [`config/deploy.production.yml`](../config/deploy.production.yml). Secrets template: [`.kamal/secrets.ci.template`](../.kamal/secrets.ci.template).
 
@@ -56,8 +56,8 @@ In **avcd-actions**: **Settings → Actions → General → Access** — allow *
 # Dev (automatic on merge to main)
 git push origin main
 
-# Prod (automatic: merge PR → release-tag-on-merge → vX.Y.Z-release → prod deploy)
-# Bump hints in PR title: #patch (default), #minor, #major
+# Prod (automatic: push to main → semantic-release → vX.Y.Z-release → prod deploy)
+# Use Conventional Commits: feat:, fix:, BREAKING CHANGE:
 
 # Prod (manual tag, if needed)
 git tag v1.2.3-release
