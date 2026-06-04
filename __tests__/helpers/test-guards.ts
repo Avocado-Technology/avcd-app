@@ -9,8 +9,9 @@ export const isCi =
 export const shouldRunLiveDeployE2e =
   !isCi && process.env.E2E_SKIP_DEPLOY !== "1";
 
-/** Terraform contract tests under ../infra (monorepo checkout only) */
-export const shouldRunMonorepoInfraTests = hasMonorepoInfra(here);
+/** Terraform contract tests under ../infra (local monorepo only; skipped in CI) */
+export const shouldRunMonorepoInfraTests =
+  hasMonorepoInfra(here) && !isCi;
 
 export const describeLiveDeployE2e = shouldRunLiveDeployE2e
   ? describe
