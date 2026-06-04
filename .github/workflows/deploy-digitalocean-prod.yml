@@ -1,5 +1,5 @@
-# Deploy web stack to **prod** (tag *-release or manual).
-# App secrets: Infisical project web — OIDC export (env prod).
+# Deploy web to **prod** (tag *-release or manual) via Kamal + Infisical OIDC.
+# Version: v1.2.3-release → kamal deploy -d production --version=1.2.3
 
 name: Deploy web to DigitalOcean (prod)
 
@@ -8,6 +8,21 @@ on:
     tags:
       - "*-release"
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Semver to deploy (e.g. 1.2.3). Required for manual runs without a release tag."
+        required: false
+        type: string
+      kamal_command:
+        description: "Kamal command (deploy, setup, rollback)"
+        required: false
+        default: deploy
+        type: choice
+        options:
+          - deploy
+          - setup
+          - rollback
+          - redeploy
 
 concurrency:
   group: deploy-web-do-prod
@@ -52,75 +67,58 @@ jobs:
           echo "host=$H" >> "$GITHUB_OUTPUT"
           echo "health_url=https://${H}/health" >> "$GITHUB_OUTPUT"
 
-      - name: Install Infisical CLI
-        run: |
-          curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.deb.sh' | sudo -E bash
-          sudo apt-get update && sudo apt-get install -y infisical
-          infisical --version
-
-      - name: Fetch Secrets from Infisical
+      - name: Resolve release version
+        id: version
         env:
-          INFISICAL_API_URL: ${{ vars.INFISICAL_API_URL || 'https://secrets.dev.avcd.ai/api' }}
-          INFISICAL_PROJECT_ID: ${{ vars.INFISICAL_PROJECT_ID }}
-          INFISICAL_OIDC_IDENTITY_ID: ${{ vars.INFISICAL_OIDC_IDENTITY_ID }}
-          INFISICAL_OIDC_AUDIENCE: ${{ vars.INFISICAL_OIDC_AUDIENCE || 'https://github.com/Avocado-Technology' }}
-          PUBLIC_HOST: ${{ steps.traefik_host.outputs.host }}
+          DISPATCH_VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
-          [ -n "${INFISICAL_OIDC_IDENTITY_ID:-}" ] || { echo "::error::Set INFISICAL_OIDC_IDENTITY_ID on the production environment."; exit 1; }
-          [ -n "${INFISICAL_PROJECT_ID:-}" ] || { echo "::error::Set INFISICAL_PROJECT_ID on the production environment."; exit 1; }
-          OIDC_JWT=$(curl -sS -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
-            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${INFISICAL_OIDC_AUDIENCE}" | jq -r .value)
-          if [ -z "${OIDC_JWT:-}" ] || [ "$OIDC_JWT" = "null" ]; then
-            echo "::error::Failed to obtain GitHub OIDC token (check id-token: write and audience ${INFISICAL_OIDC_AUDIENCE})"
+          if [ -n "${DISPATCH_VERSION:-}" ]; then
+            VERSION="${DISPATCH_VERSION#v}"
+          else
+            REF="${GITHUB_REF_NAME:-}"
+            VERSION="${REF%-release}"
+            VERSION="${VERSION#v}"
+          fi
+          if ! [[ "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Version must be semver x.y.z (from tag vX.Y.Z-release or workflow input)"
             exit 1
           fi
-          export INFISICAL_TOKEN=$(infisical login --method=oidc-auth \
-            --machine-identity-id="$INFISICAL_OIDC_IDENTITY_ID" \
-            --oidc-jwt="$OIDC_JWT" \
-            --domain="${INFISICAL_API_URL%/api}" --silent --plain)
-          infisical export --env=prod --path=/ \
-            --projectId="$INFISICAL_PROJECT_ID" --token="$INFISICAL_TOKEN" \
-            --format=dotenv --domain="${INFISICAL_API_URL%/api}" --silent \
-            > .env.infisical
-          test -s .env.infisical || (echo "::error::Infisical export empty (web project, env prod)" && exit 1)
-          {
-            echo "PUBLIC_HOST=${PUBLIC_HOST}"
-            echo "NEXT_PUBLIC_GRAPHQL_ENDPOINT=https://${PUBLIC_HOST}/api/graphql"
-            echo "NEXT_PUBLIC_MCP_SERVER_URL=https://${PUBLIC_HOST}/mcp"
-          } >> .env.infisical
-          set -a
-          # shellcheck disable=SC1091
-          source .env.infisical
-          set +a
-          for key in AUTH_SECRET KEYCLOAK_CLIENT_SECRET KEYCLOAK_AUDIENCE KEYCLOAK_URL KEYCLOAK_CLIENT_ID; do
-            eval "val=\${$key:-}"
-            if [ -z "$val" ]; then
-              echo "::error::Missing $key in Infisical (project web, env prod)"
-              exit 1
-            fi
-            echo "::add-mask::$val"
-          done
-          echo "✓ Infisical export ready"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Deploying avcd-web version ${VERSION}"
 
-      - name: Copy .env.infisical to deploy directory
+      - name: Resolve deploy targets
+        id: deploy
+        env:
+          DO_DEPLOY_HOST: ${{ vars.DO_DEPLOY_HOST || secrets.DO_DEPLOY_HOST }}
+          DOCR_REGISTRY_URL: ${{ vars.DOCR_REGISTRY_URL }}
         run: |
-          cp .env.infisical deploy/production/.env.infisical
-          ls -la deploy/production/.env.infisical
+          set -euo pipefail
+          H="${{ steps.traefik_host.outputs.host }}"
+          R="${DOCR_REGISTRY_URL:-}"
+          [ -n "$R" ] || { echo "::error::Set DOCR_REGISTRY_URL org variable"; exit 1; }
+          echo "host=$H" >> "$GITHUB_OUTPUT"
+          echo "health_url=https://${H}/health" >> "$GITHUB_OUTPUT"
+          echo "docr_url=$R" >> "$GITHUB_OUTPUT"
 
-      - name: Deploy web stack
-        uses: Avocado-Technology/avcd-actions/droplet-compose-deploy@v2
+      - name: Deploy web with Kamal
+        uses: Avocado-Technology/avcd-actions/kamal-deploy@feat/web-kamal-cicd
         with:
-          deploy_host: ${{ vars.DO_DEPLOY_HOST || secrets.DO_DEPLOY_HOST }}
+          deploy_host: ${{ steps.deploy.outputs.host }}
           deploy_user: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER }}
-          deploy_path: ${{ vars.DO_DEPLOY_PATH || secrets.DO_DEPLOY_PATH }}
           ssh_key: ${{ secrets.DO_DEPLOY_SSH_KEY }}
-          compose_subdirectory: "deploy/production"
+          docr_registry_url: ${{ steps.deploy.outputs.docr_url }}
+          infisical_api_url: ${{ vars.INFISICAL_API_URL || 'https://secrets.avcd.ai/api' }}
+          infisical_project_id: ${{ vars.INFISICAL_PROJECT_ID }}
+          infisical_infra_project_id: ${{ vars.INFISICAL_INFRA_PROJECT_ID || 'e9b80cfd-9be4-4024-a1d6-753db87bc3b9' }}
+          infisical_oidc_identity_id: ${{ vars.INFISICAL_OIDC_IDENTITY_ID }}
+          infisical_oidc_audience: ${{ vars.INFISICAL_OIDC_AUDIENCE || 'https://github.com/Avocado-Technology' }}
+          infisical_env: prod
           public_host: ${{ steps.traefik_host.outputs.host }}
-          acme_email: ""
-          pass_compose_tls_env: "false"
-          clear_published_ports: "3000"
-          verify_mode: http
-          verify_url: ${{ vars.DO_WEB_HEALTH_URL || steps.traefik_host.outputs.health_url }}
+          kamal_version: ${{ vars.KAMAL_VERSION || '2.11.0' }}
+          kamal_destination: production
+          kamal_command: ${{ inputs.kamal_command || 'deploy' }}
+          image_version: ${{ steps.version.outputs.version }}
+          skip_accessory_boot: "true"
+          verify_url: ${{ vars.DO_WEB_HEALTH_URL || steps.deploy.outputs.health_url }}
           verify_body_substring: '"status":"ok"'
-          verify_http_insecure_first: "false"

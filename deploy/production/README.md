@@ -1,44 +1,51 @@
-# Production Deployment - Next.js Web
+# Production deployment (manual fallback)
 
-## Prerequisites
+**Primary path:** GitHub Actions deploys with **Kamal** + **Infisical OIDC**.
 
-1. Traefik network exists: `docker network create avcd_edge`
-2. Auth0 configured (see .env.example)
-3. Environment variables in `.env` file
+| Environment | Trigger | Workflow |
+|-------------|---------|----------|
+| Development | Push to `main` | `.github/workflows/deploy-digitalocean-dev.yml` |
+| Production | Tag `vX.Y.Z-release` | `.github/workflows/deploy-digitalocean-prod.yml` |
 
-## Required Environment Variables
+```bash
+# Production release (from repo root)
+git tag v1.0.0-release
+git push origin v1.0.0-release
+```
 
-- `PUBLIC_HOST` - Your domain (e.g., dev.avcd.ai)
-- `AUTH0_SECRET` - Session encryption key (32+ chars)
-- `AUTH0_ISSUER_BASE_URL` - Auth0 tenant URL
-- `AUTH0_CLIENT_ID` - Auth0 web client ID
-- `AUTH0_CLIENT_SECRET` - Auth0 web client secret
-- `AUTH0_AUDIENCE` - API identifier
+Secrets live in Infisical project **avcd-web** (`make upload-secret`, `make validate-secrets`). GitHub Environment variables are provisioned via **pulumi-infra** `github` stack.
 
-## Deployment
+## Manual Compose fallback
+
+Use this only for emergency debugging on a host where Kamal is not used.
+
+### Prerequisites
+
+1. Traefik network: `docker network create avcd_edge`
+2. Runtime env in `.env.infisical` (from `make pull-secrets INFISICAL_ENV=prod`)
+
+### Required environment variables
+
+- `PUBLIC_HOST` — public hostname (e.g. `avcd.ai`)
+- `AUTH_SECRET` — Auth.js session secret (32+ chars)
+- `KEYCLOAK_URL`, `KEYCLOAK_REALM`, `KEYCLOAK_CLIENT_ID`, `KEYCLOAK_CLIENT_SECRET`, `KEYCLOAK_AUDIENCE`
+- `APP_BASE_URL`, `AUTH_URL` — canonical HTTPS origin
+
+### Deploy
 
 From this directory:
 
 ```bash
-# Deploy
 docker compose up -d --build
-
-# Check logs
 docker compose logs -f web
-
-# Check health
-curl https://${PUBLIC_HOST}/health
+curl -fsS "https://${PUBLIC_HOST}/health"
 ```
 
-## Traefik Routes
+### Rollback
 
-- Primary: `https://${PUBLIC_HOST}/` → web:3000
-- Auth routes: `https://${PUBLIC_HOST}/api/auth/*` → web:3000 (priority 150)
-
-## Rollback
+Redeploy a previous release tag via GitHub Actions, or on the host:
 
 ```bash
 docker compose down
-git checkout <previous-commit>
-docker compose up -d --build
+# restore previous image/tag manually
 ```
