@@ -1,3 +1,1 @@
-env:
-  clear:
-    KEYCLOAK_REALM: avcd
+# Kamal destination `development` — env comes from config/deploy.yml (__DO_DEPLOY_HOST__ rendered at deploy).

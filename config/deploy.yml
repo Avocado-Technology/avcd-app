@@ -49,22 +49,28 @@ builder:
     NEXT_PUBLIC_ENABLE_MOBILE_BOTTOM_NAV: "true"
 
 env:
+  # Infisical → .kamal/secrets (see config/infisical-secret-keys.list)
   secret:
     - AUTH_SECRET
     - KEYCLOAK_CLIENT_SECRET
-    - KEYCLOAK_URL
-    - KEYCLOAK_REALM
-    - KEYCLOAK_CLIENT_ID
-    - KEYCLOAK_AUDIENCE
-    - KEYCLOAK_OIDC_SCOPE
-    - AUTH_URL
-    - APP_BASE_URL
     - OPENAI_API_KEY
-    - CHAT_MODEL
+  # Non-sensitive runtime config (committed; no Infisical)
   clear:
+    NODE_ENV: production
+    KEYCLOAK_URL: https://auth.avcd.ai
+    KEYCLOAK_REALM: avcd
+    KEYCLOAK_CLIENT_ID: avcd-web
+    KEYCLOAK_AUDIENCE: https://__DO_DEPLOY_HOST__/api
+    KEYCLOAK_OIDC_SCOPE: openid profile email
+    AUTH_URL: https://__DO_DEPLOY_HOST__
+    APP_BASE_URL: https://__DO_DEPLOY_HOST__
     PUBLIC_HOST: __DO_DEPLOY_HOST__
     NEXT_PUBLIC_GRAPHQL_ENDPOINT: https://__DO_DEPLOY_HOST__/api/graphql
     NEXT_PUBLIC_MCP_SERVER_URL: https://__DO_DEPLOY_HOST__/mcp
+    NEXT_PUBLIC_APP_NAME: AVCD
+    NEXT_PUBLIC_PROFILE_ROUTE: /api/auth/profile
+    NEXT_PUBLIC_FINANCE_DATA_SOURCE: mock
+    CHAT_MODEL: gpt-4o
 
 healthcheck:
   path: /health

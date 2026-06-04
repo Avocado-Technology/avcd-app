@@ -6,14 +6,12 @@ INFISICAL_API_URL ?= https://secrets.avcd.ai/api
 INFISICAL_PROJECT_ID ?= 4c32b3c4-fb30-44a2-81bb-2ae4211404a3
 INFISICAL_SECRET_PATH ?= /
 INFISICAL_ENV ?= dev
-INFISICAL_PUSH_FILE ?= .env
+INFISICAL_PUSH_FILE ?= .env.local
 INFISICAL_PULL_FILE ?= .env.infisical
 INFISICAL_CREDENTIALS_FILE ?= ../infisical/.env
-INFISICAL_SKIP_KEYS ?= NODE_ENV,WATCHPACK_POLLING
-# Keys expected for DO deploy (pulumi web-secrets + deploy-digitalocean-*.yml)
-INFISICAL_REQUIRED_SECRETS := AUTH_SECRET KEYCLOAK_URL KEYCLOAK_REALM KEYCLOAK_CLIENT_ID KEYCLOAK_CLIENT_SECRET KEYCLOAK_AUDIENCE KEYCLOAK_OIDC_SCOPE AUTH_URL APP_BASE_URL PUBLIC_HOST NEXT_PUBLIC_GRAPHQL_ENDPOINT NEXT_PUBLIC_MCP_SERVER_URL CHAT_MODEL
+INFISICAL_SECRET_KEYS_FILE ?= config/infisical-secret-keys.list
 
-.PHONY: help check upload-secret upload-secrets pull-secrets infisical-check infisical-info validate-secrets
+.PHONY: help check test-upload-secret upload-secret upload-secrets pull-secrets infisical-check infisical-info validate-secrets bootstrap-deploy-secrets
 
 help:
 	@echo "Usage (from web/):"
@@ -21,10 +19,12 @@ help:
 	@echo "CI parity:"
 	@echo "  make check              lint + unit tests (CI mode) + production build"
 	@echo ""
-	@echo "Infisical (project avcd-web on secrets.avcd.ai):"
-	@echo "  make upload-secret      Upload keys from .env → Infisical ($(INFISICAL_ENV))"
+	@echo "Infisical (secrets only — see config/infisical-secret-keys.list):"
+	@echo "  make upload-secret      Upload allowlisted keys from .env.local → Infisical ($(INFISICAL_ENV))"
 	@echo "  make pull-secrets       Export Infisical secrets → $(INFISICAL_PULL_FILE)"
-	@echo "  make validate-secrets   Check deploy-required keys exist in Infisical"
+	@echo "  make validate-secrets   Check Infisical has required secrets"
+	@echo "  make bootstrap-deploy-secrets  Seed AUTH_SECRET + KEYCLOAK_CLIENT_SECRET (needs KEYCLOAK_CLIENT_SECRET)"
+	@echo "  Public env vars: config/deploy.yml env.clear (Kamal), .env for local dev"
 	@echo "  make infisical-check    Verify Infisical CLI + credentials"
 	@echo "  make infisical-info     Show project URL and secret counts"
 	@echo ""
@@ -33,13 +33,17 @@ help:
 	@echo "  INFISICAL_PROJECT_ID=$(INFISICAL_PROJECT_ID)"
 	@echo "  INFISICAL_ENV=$(INFISICAL_ENV)"
 	@echo "  INFISICAL_PUSH_FILE=$(INFISICAL_PUSH_FILE)"
+	@echo "  INFISICAL_SECRET_KEYS_FILE=$(INFISICAL_SECRET_KEYS_FILE)"
 	@echo "  INFISICAL_CREDENTIALS_FILE=$(INFISICAL_CREDENTIALS_FILE)"
 	@echo ""
 	@echo "Example:"
+	@echo "  cp .env.local.example .env.local   # add secrets"
 	@echo "  make upload-secret INFISICAL_ENV=dev"
-	@echo "  make upload-secret INFISICAL_PUSH_FILE=.env.dev INFISICAL_ENV=prod"
 
-check:
+test-upload-secret:
+	@bash tests/test_upload_secret.sh
+
+check: test-upload-secret
 	npm run lint
 	CI=true E2E_SKIP_DEPLOY=1 npm test
 	NEXT_TELEMETRY_DISABLED=1 \
@@ -67,7 +71,7 @@ upload-secret: infisical-check
 	  INFISICAL_ENV="$(INFISICAL_ENV)" \
 	  INFISICAL_PUSH_FILE="$(INFISICAL_PUSH_FILE)" \
 	  INFISICAL_CREDENTIALS_FILE="$(INFISICAL_CREDENTIALS_FILE)" \
-	  INFISICAL_SKIP_KEYS="$(INFISICAL_SKIP_KEYS)" \
+	  INFISICAL_SECRET_KEYS_FILE="$(INFISICAL_SECRET_KEYS_FILE)" \
 	  ./scripts/infisical-upload-env.sh
 
 upload-secrets: upload-secret
@@ -105,18 +109,15 @@ infisical-info: infisical-check
 	rm -f /tmp/web-infisical-count.json
 
 validate-secrets: infisical-check
-	@echo "Checking required secrets in $(INFISICAL_SECRET_PATH) ($(INFISICAL_ENV))..."
-	@set -a; [ -f "$(INFISICAL_CREDENTIALS_FILE)" ] && . "$(INFISICAL_CREDENTIALS_FILE)"; set +a; \
-	export INFISICAL_API_URL="$(INFISICAL_API_URL)"; \
-	INFISICAL_TOKEN=$$(infisical login --method=universal-auth \
-	  --client-id="$$INFISICAL_CLIENT_ID" --client-secret="$$INFISICAL_CLIENT_SECRET" \
-	  --domain="$${INFISICAL_API_URL%/api}" --silent --plain); \
-	missing=0; \
-	for s in $(INFISICAL_REQUIRED_SECRETS); do \
-	  if infisical secrets get "$$s" --env="$(INFISICAL_ENV)" --path="$(INFISICAL_SECRET_PATH)" \
-	    --projectId="$(INFISICAL_PROJECT_ID)" --token="$$INFISICAL_TOKEN" \
-	    --domain="$${INFISICAL_API_URL%/api}" --silent >/dev/null 2>&1; then \
-	    echo "  ✓ $$s"; \
-	  else echo "  ✗ $$s (missing)"; missing=1; fi; \
-	done; \
-	test $$missing -eq 0
+	@chmod +x scripts/validate-infisical-deploy.sh
+	@INFISICAL_API_URL="$(INFISICAL_API_URL)" \
+	  INFISICAL_PROJECT_ID="$(INFISICAL_PROJECT_ID)" \
+	  INFISICAL_SECRET_PATH="$(INFISICAL_SECRET_PATH)" \
+	  INFISICAL_ENV="$(INFISICAL_ENV)" \
+	  INFISICAL_CREDENTIALS_FILE="$(INFISICAL_CREDENTIALS_FILE)" \
+	  INFISICAL_SECRET_KEYS_FILE="$(INFISICAL_SECRET_KEYS_FILE)" \
+	  ./scripts/validate-infisical-deploy.sh
+
+bootstrap-deploy-secrets: infisical-check
+	@chmod +x scripts/infisical-bootstrap-deploy-dev.sh
+	@./scripts/infisical-bootstrap-deploy-dev.sh
