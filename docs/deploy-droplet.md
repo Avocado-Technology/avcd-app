@@ -29,7 +29,7 @@ Configure **Settings → Environments** → `development` / `production` (from *
 | `DOCR_REGISTRY_URL` | Variable | DigitalOcean container registry URL |
 | `INFISICAL_PROJECT_ID` | Variable | Infisical **avcd-web** project ID |
 | `INFISICAL_OIDC_IDENTITY_ID` | Variable | Machine identity for GitHub OIDC |
-| `INFISICAL_API_URL` | Variable | e.g. `https://secrets.dev.avcd.ai/api` (dev) or `https://secrets.avcd.ai/api` (prod) |
+| `INFISICAL_API_URL` | Variable | `https://secrets.avcd.ai/api` (public; use Infisical env `dev`/`prod` for separation) |
 | `INFISICAL_OIDC_AUDIENCE` | Variable | Default `https://github.com/Avocado-Technology` |
 | `INFISICAL_INFRA_PROJECT_ID` | Variable | **avcd-infra** project for `/ci-bootstrap` (DOCR creds) |
 | `KAMAL_VERSION` | Variable | Optional Kamal gem pin (default `2.11.0` in workflow) |

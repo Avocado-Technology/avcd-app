@@ -78,7 +78,7 @@ jobs:
 
       - name: Fetch Secrets from Infisical
         env:
-          INFISICAL_API_URL: ${{ vars.INFISICAL_API_URL || 'https://secrets.dev.avcd.ai/api' }}
+          INFISICAL_API_URL: ${{ vars.INFISICAL_API_URL || 'https://secrets.avcd.ai/api' }}
           INFISICAL_PROJECT_ID: ${{ vars.INFISICAL_PROJECT_ID }}
           INFISICAL_OIDC_IDENTITY_ID: ${{ vars.INFISICAL_OIDC_IDENTITY_ID }}
           INFISICAL_OIDC_AUDIENCE: ${{ vars.INFISICAL_OIDC_AUDIENCE || 'https://github.com/Avocado-Technology' }}
@@ -166,7 +166,7 @@ jobs:
           deploy_user: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER }}
           ssh_key: ${{ secrets.DO_DEPLOY_SSH_KEY }}
           docr_registry_url: ${{ steps.deploy.outputs.docr_url }}
-          infisical_api_url: ${{ vars.INFISICAL_API_URL || 'https://secrets.dev.avcd.ai/api' }}
+          infisical_api_url: ${{ vars.INFISICAL_API_URL || 'https://secrets.avcd.ai/api' }}
           infisical_project_id: ${{ vars.INFISICAL_PROJECT_ID }}
           infisical_infra_project_id: ${{ vars.INFISICAL_INFRA_PROJECT_ID || 'e9b80cfd-9be4-4024-a1d6-753db87bc3b9' }}
           infisical_oidc_identity_id: ${{ vars.INFISICAL_OIDC_IDENTITY_ID }}
