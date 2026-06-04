@@ -74,7 +74,8 @@ env:
     KEYCLOAK_REALM: avcd
     KEYCLOAK_CLIENT_ID: avcd-web
     KEYCLOAK_AUDIENCE: https://__DO_DEPLOY_HOST__/api
-    KEYCLOAK_OIDC_SCOPE: openid profile email
+    # Use "openid" until keycloak-config applies avcd-subject scope fix; then restore "openid profile email"
+    KEYCLOAK_OIDC_SCOPE: openid
     AUTH_URL: https://__DO_DEPLOY_HOST__
     APP_BASE_URL: https://__DO_DEPLOY_HOST__
     PUBLIC_HOST: __DO_DEPLOY_HOST__
