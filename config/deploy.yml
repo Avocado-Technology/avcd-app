@@ -6,6 +6,9 @@ image: avcd/web
 # Kamal 2: no root-level healthcheck; Traefik routes traffic (proxy: false).
 deploy_timeout: 180
 
+ssh:
+  user: __DO_DEPLOY_USER__
+
 servers:
   web:
     hosts:
