@@ -1,6 +1,15 @@
 #!/bin/bash
+# Kamal runs pre-deploy on the CI runner, not the droplet — check/create avcd_edge remotely.
 set -euo pipefail
-docker network inspect avcd_edge >/dev/null 2>&1 || {
-  echo "avcd_edge Docker network missing"
-  exit 1
-}
+
+DEPLOY_YML="${KAMAL_DEPLOY_CONFIG:-config/deploy.yml}"
+HOST=$(grep -m1 -E '^\s+-\s+' "$DEPLOY_YML" | sed -E 's/^[[:space:]]*-[[:space:]]*//; s/[[:space:]]+$//')
+USER=$(grep -E '^[[:space:]]*user:' "$DEPLOY_YML" | awk '{print $2}' | head -1)
+USER=${USER:-deploy}
+
+[ -n "$HOST" ] || { echo "Could not read deploy host from $DEPLOY_YML" >&2; exit 1; }
+
+ssh -o BatchMode=yes -o ConnectTimeout=15 "${USER}@${HOST}" \
+  'docker network inspect avcd_edge >/dev/null 2>&1 || docker network create avcd_edge'
+
+echo "✓ avcd_edge ready on ${USER}@${HOST}"
