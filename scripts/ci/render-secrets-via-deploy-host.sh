@@ -51,6 +51,8 @@ export INFISICAL_ENV="${INFISICAL_ENV_SLUG}"
 export INFISICAL_SECRETS_PATH="/"
 export INFISICAL_BOOTSTRAP_PATH="${INFISICAL_BOOTSTRAP_PATH:-/ci-bootstrap}"
 export PUBLIC_HOST="${PUBLIC_HOST}"
+export DOCR_USERNAME='${DOCR_USERNAME:-}'
+export DOCR_PASSWORD='${DOCR_PASSWORD:-}'
 
 cd "\$REMOTE_DIR"
 bash .kamal/secrets.ci.template > .kamal/secrets

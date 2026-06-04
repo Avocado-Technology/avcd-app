@@ -145,10 +145,12 @@ jobs:
           DEPLOY_HOST: ${{ steps.deploy.outputs.ssh_host }}
           DEPLOY_USER: ${{ env.DEPLOY_USER }}
           INFISICAL_PROJECT_ID: ${{ vars.INFISICAL_PROJECT_ID }}
-          INFISICAL_INFRA_PROJECT_ID: ${{ vars.INFISICAL_INFRA_PROJECT_ID || 'e9b80cfd-9be4-4024-a1d6-753db87bc3b9' }}
+          INFISICAL_INFRA_PROJECT_ID: ${{ vars.INFISICAL_INFRA_PROJECT_ID || 'db036f0e-7452-4e17-9573-e5471b45d65f' }}
           INFISICAL_OIDC_IDENTITY_ID: ${{ vars.INFISICAL_OIDC_IDENTITY_ID }}
           INFISICAL_OIDC_AUDIENCE: ${{ vars.INFISICAL_OIDC_AUDIENCE || 'https://secrets.avcd.ai' }}
           INFISICAL_BOOTSTRAP_PATH: ${{ vars.INFISICAL_BOOTSTRAP_PATH || '/ci-bootstrap' }}
+          DOCR_USERNAME: ${{ secrets.DOCR_USERNAME }}
+          DOCR_PASSWORD: ${{ secrets.DOCR_PASSWORD }}
           PUBLIC_HOST: ${{ steps.traefik_host.outputs.host }}
           REPO_ROOT: ${{ github.workspace }}
         run: |
@@ -215,11 +217,13 @@ jobs:
           docr_registry_url: ${{ steps.deploy.outputs.docr_url }}
           infisical_api_url: ${{ env.INFISICAL_API_URL }}
           infisical_project_id: ${{ vars.INFISICAL_PROJECT_ID }}
-          infisical_infra_project_id: ${{ vars.INFISICAL_INFRA_PROJECT_ID || 'e9b80cfd-9be4-4024-a1d6-753db87bc3b9' }}
+          infisical_infra_project_id: ${{ vars.INFISICAL_INFRA_PROJECT_ID || 'db036f0e-7452-4e17-9573-e5471b45d65f' }}
           infisical_oidc_identity_id: ${{ vars.INFISICAL_OIDC_IDENTITY_ID }}
           infisical_oidc_audience: ${{ vars.INFISICAL_OIDC_AUDIENCE || 'https://secrets.avcd.ai' }}
           infisical_env: dev
           public_host: ${{ steps.traefik_host.outputs.host }}
+          docr_username: ${{ secrets.DOCR_USERNAME }}
+          docr_password: ${{ secrets.DOCR_PASSWORD }}
           kamal_version: ${{ vars.KAMAL_VERSION || '2.11.0' }}
           kamal_destination: development
           kamal_command: ${{ github.event_name == 'workflow_dispatch' && inputs.kamal_command || 'deploy' }}

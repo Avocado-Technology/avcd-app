@@ -30,7 +30,7 @@ Configure **Settings → Environments** → `development` / `production` on **`a
 | `INFISICAL_PROJECT_ID` | Variable | Infisical **avcd-web** project ID |
 | `INFISICAL_OIDC_IDENTITY_ID` | Variable | Machine identity for GitHub OIDC |
 | `INFISICAL_API_URL` | Variable | `https://secrets.avcd.ai/api` (use `secrets.dev.avcd.ai` only if the deploy host can reach it) |
-| `INFISICAL_OIDC_AUDIENCE` | Variable | Default `https://github.com/Avocado-Technology` |
+| `INFISICAL_OIDC_AUDIENCE` | Variable | `https://secrets.avcd.ai` (must match Infisical `web-ci` bound audience) |
 | `INFISICAL_INFRA_PROJECT_ID` | Variable | **avcd-infra** project for bootstrap path (DOCR creds) |
 | `INFISICAL_BOOTSTRAP_PATH` | Variable | Optional; default `/ci-bootstrap` (override if dev instance uses `/infra`) |
 | `KAMAL_VERSION` | Variable | Optional Kamal gem pin (default `2.11.0` in workflow) |
