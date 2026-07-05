@@ -33,15 +33,11 @@ jobs:
       DEPLOY_USER: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER || 'deploy' }}
     steps:
       - uses: actions/checkout@v4
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "3.3"
-          bundler-cache: false
-      - run: gem install kamal -v "${{ vars.KAMAL_VERSION || '2.5.3' }}"
-      - name: Kamal remove (no Infisical)
+      - name: Remove containers via SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.DO_DEPLOY_SSH_KEY }}
           DEPLOY_HOST: ${{ vars.DO_DEPLOY_HOST || secrets.DO_DEPLOY_HOST }}
+          DEPLOY_USER: ${{ env.DEPLOY_USER }}
         run: |
           set -euo pipefail
           install -d -m 700 ~/.ssh
@@ -49,10 +45,9 @@ jobs:
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
-          export KAMAL_SSH_KEY_PATH=~/.ssh/deploy_key
-          touch .kamal/secrets && chmod 600 .kamal/secrets
-          kamal remove -d development
-          echo "PASS: avcd-web removed from dev droplet"
+          ssh -o BatchMode=yes -i ~/.ssh/deploy_key "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            'docker ps -a --format "{{.Names}}" | grep -E "avcd-web|avcd_web" | xargs -r docker rm -f'
+          echo "PASS: avcd-web containers removed from dev droplet"
 
   deploy:
     if: github.event.inputs.kamal_command != 'remove'
