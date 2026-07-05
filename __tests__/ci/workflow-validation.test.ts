@@ -26,10 +26,10 @@ describe('GitHub Actions Workflow Configuration', () => {
       expect(step?.with?.infisical_env).toBe('dev');
     });
 
-    it('should trigger on Kamal-related paths', () => {
-      const paths = workflow.on.push.paths as string[];
-      expect(paths).toContain('config/**');
-      expect(paths).toContain('.kamal/**');
+    it('should be manual workflow_dispatch only (no push deploy)', () => {
+      expect(workflow.on.push).toBeUndefined();
+      expect(workflow.on.workflow_dispatch).toBeDefined();
+      expect(workflow.on.workflow_dispatch.inputs.kamal_command.default).toBe('remove');
     });
 
     it('should request OIDC id-token for Infisical export', () => {
