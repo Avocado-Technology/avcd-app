@@ -1,40 +1,17 @@
-# Deploy Next.js web stack from this repository root (Docker + Traefik on avcd_edge).
-# GitHub bootstrap: org secrets/vars via Infisical sync + pulumi-infra github stack (avcd-app).
-# App secrets: Infisical avcd-web (OIDC via deploy host SSH). Default API: secrets.avcd.ai
-# (secrets.dev.avcd.ai is not reachable from the dev droplet until firewall allows it).
+# RETIRED: Legacy dev deploy — manual workflow_dispatch only (remove or one-off deploy).
 
-name: Deploy web to DigitalOcean (dev)
+name: Deploy web to DigitalOcean (dev) [retired]
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "app/**"
-      - "lib/**"
-      - "types/**"
-      - "components/**"
-      - "public/**"
-      - "config/**"
-      - ".kamal/**"
-      - "Dockerfile"
-      - "next.config.ts"
-      - "next.config.mjs"
-      - "middleware.ts"
-      - "messages/**"
-      - "i18n/**"
-      - "package.json"
-      - "package-lock.json"
-      - "auth.ts"
-      - ".github/**"
-      - "scripts/ci/**"
   workflow_dispatch:
     inputs:
       kamal_command:
-        description: Kamal command (deploy or setup for first run)
+        description: Kamal command (remove to decommission)
         required: false
-        default: deploy
+        default: remove
         type: choice
         options:
+          - remove
           - deploy
           - setup
           - redeploy
