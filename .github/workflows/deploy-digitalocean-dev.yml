@@ -1,40 +1,17 @@
-# Deploy Next.js web stack from this repository root (Docker + Traefik on avcd_edge).
-# GitHub bootstrap: org secrets/vars via Infisical sync + pulumi-infra github stack (avcd-app).
-# App secrets: Infisical avcd-web (OIDC via deploy host SSH). Default API: secrets.avcd.ai
-# (secrets.dev.avcd.ai is not reachable from the dev droplet until firewall allows it).
+# RETIRED: Legacy dev deploy — manual workflow_dispatch only (remove or one-off deploy).
 
-name: Deploy web to DigitalOcean (dev)
+name: Deploy web to DigitalOcean (dev) [retired]
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "app/**"
-      - "lib/**"
-      - "types/**"
-      - "components/**"
-      - "public/**"
-      - "config/**"
-      - ".kamal/**"
-      - "Dockerfile"
-      - "next.config.ts"
-      - "next.config.mjs"
-      - "middleware.ts"
-      - "messages/**"
-      - "i18n/**"
-      - "package.json"
-      - "package-lock.json"
-      - "auth.ts"
-      - ".github/**"
-      - "scripts/ci/**"
   workflow_dispatch:
     inputs:
       kamal_command:
-        description: Kamal command (deploy or setup for first run)
+        description: Kamal command (remove to decommission)
         required: false
-        default: deploy
+        default: remove
         type: choice
         options:
+          - remove
           - deploy
           - setup
           - redeploy
@@ -48,7 +25,34 @@ permissions:
   id-token: write
 
 jobs:
+  remove:
+    if: github.event.inputs.kamal_command == 'remove'
+    runs-on: ubuntu-latest
+    environment: development
+    env:
+      DEPLOY_USER: deploy
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove containers via SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DO_DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ vars.DO_DEPLOY_HOST || secrets.DO_DEPLOY_HOST }}
+          DEPLOY_USER: ${{ env.DEPLOY_USER }}
+        run: |
+          set -euo pipefail
+          [ -n "${SSH_PRIVATE_KEY:-}" ] || { echo "::error::DO_DEPLOY_SSH_KEY missing on development environment"; exit 1; }
+          [ -n "${DEPLOY_HOST:-}" ] || { echo "::error::DO_DEPLOY_HOST missing on development environment"; exit 1; }
+          install -d -m 700 ~/.ssh
+          umask 077
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          ssh -o BatchMode=yes -i ~/.ssh/deploy_key "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            'docker ps -a --format "{{.Names}}" | grep -E "avcd-web|avcd_web" | xargs -r docker rm -f'
+          echo "PASS: avcd-web containers removed from dev droplet"
+
   deploy:
+    if: github.event.inputs.kamal_command != 'remove'
     runs-on: ubuntu-latest
     environment: development
     env:
