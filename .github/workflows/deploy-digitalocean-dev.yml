@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: development
     env:
-      DEPLOY_USER: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER || 'deploy' }}
+      DEPLOY_USER: deploy
     steps:
       - uses: actions/checkout@v4
       - name: Remove containers via SSH
@@ -40,6 +40,8 @@ jobs:
           DEPLOY_USER: ${{ env.DEPLOY_USER }}
         run: |
           set -euo pipefail
+          [ -n "${SSH_PRIVATE_KEY:-}" ] || { echo "::error::DO_DEPLOY_SSH_KEY missing on development environment"; exit 1; }
+          [ -n "${DEPLOY_HOST:-}" ] || { echo "::error::DO_DEPLOY_HOST missing on development environment"; exit 1; }
           install -d -m 700 ~/.ssh
           umask 077
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
