@@ -25,7 +25,37 @@ permissions:
   id-token: write
 
 jobs:
+  remove:
+    if: github.event.inputs.kamal_command == 'remove'
+    runs-on: ubuntu-latest
+    environment: development
+    env:
+      DEPLOY_USER: ${{ vars.DO_DEPLOY_USER || secrets.DO_DEPLOY_USER || 'deploy' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: false
+      - run: gem install kamal -v "${{ vars.KAMAL_VERSION || '2.5.3' }}"
+      - name: Kamal remove (no Infisical)
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DO_DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ vars.DO_DEPLOY_HOST || secrets.DO_DEPLOY_HOST }}
+        run: |
+          set -euo pipefail
+          install -d -m 700 ~/.ssh
+          umask 077
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          export KAMAL_SSH_KEY_PATH=~/.ssh/deploy_key
+          touch .kamal/secrets && chmod 600 .kamal/secrets
+          kamal remove -d development
+          echo "PASS: avcd-web removed from dev droplet"
+
   deploy:
+    if: github.event.inputs.kamal_command != 'remove'
     runs-on: ubuntu-latest
     environment: development
     env:
